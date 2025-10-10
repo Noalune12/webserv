@@ -14,6 +14,18 @@ This project is about writing our own HTTP server. We will be able to test it wi
 
 > Subject asks to look at HTTP/1.0 instead of HTTP/1.1, might need to make a choice here, dont know yet whats required
 
-# dump
+[Important Things About HTTP Headers](https://bytebytego.com/guides/important-things-about-http-headers-you-may-not-know/)
+
+[Un peu peur que ca aide trop j'ai pas lu mais c'est le premier lien quand je tape webserv sur l'internet 3.0](https://hackmd.io/@fttranscendance/H1mLWxbr_)
+
+[github d'un webserv, plusieurs ressources dans le README (dont certaines pour faire un miniserv si tu veux)](https://github.com/cclaude42/webserv?tab=readme-ov-file)
+
+> des liens de redir vers des pages RFCs, chapitres importants
+
+# Dump
 
 [std::freopen](https://en.cppreference.com/w/cpp/io/c/freopen.html): ***std::freopen*** *is the only way to change the narrow/wide orientation of a stream once it has been established by an I/O operation or by std::fwide.*
+
+# Bonus
+
+[HTTP Cookies Explained With a Simple Diagram](https://bytebytego.com/guides/http-cookies-explained-with-a-simple-diagram/)
