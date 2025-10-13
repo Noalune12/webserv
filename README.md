@@ -22,6 +22,8 @@ This project is about writing our own HTTP server. We will be able to test it wi
 
 > des liens de redir vers des pages RFCs, chapitres importants
 
+[CodeQuoi: Programmation réseau via socket en C](https://www.codequoi.com/programmation-reseau-via-socket-en-c/)
+
 # Dump
 
 [std::freopen](https://en.cppreference.com/w/cpp/io/c/freopen.html): ***std::freopen*** *is the only way to change the narrow/wide orientation of a stream once it has been established by an I/O operation or by std::fwide.*
