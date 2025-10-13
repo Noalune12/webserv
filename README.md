@@ -29,3 +29,7 @@ This project is about writing our own HTTP server. We will be able to test it wi
 # Bonus
 
 [HTTP Cookies Explained With a Simple Diagram](https://bytebytego.com/guides/http-cookies-explained-with-a-simple-diagram/)
+
+[Session Management notion introduction (read before next link)](https://mojoauth.com/blog/session-management-a-beginners-guide-for-web-developers#conclusion)
+
+[Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
