@@ -26,6 +26,9 @@ This project is about writing our own HTTP server. We will be able to test it wi
 
 [std::freopen](https://en.cppreference.com/w/cpp/io/c/freopen.html): ***std::freopen*** *is the only way to change the narrow/wide orientation of a stream once it has been established by an I/O operation or by std::fwide.*
 
+[Linux kernel coding style (formatting code ? maybe not really interesting for this project tho)](https://docs.kernel.org/process/coding-style.html)
+
+
 # Bonus
 
 [HTTP Cookies Explained With a Simple Diagram](https://bytebytego.com/guides/http-cookies-explained-with-a-simple-diagram/)
