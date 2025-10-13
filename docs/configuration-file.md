@@ -76,7 +76,58 @@ http {
 }
 ```
 
+## Main context configuration detailed
 
+### user
+
+- `user`: Cette directive spécifie l'utilisateur système sous lequel les `working processes` d'Nginx s'exécuteront. Essentielle pour la gestion des privilèges, hors contexte spécifique, elle est nécessaire à la sécurisation des opérations du serveur web.
+  - Après que Nginx (ou le webserver) soit lancé (souvent avec des droits root pour set les privilèges tel que les ports (80, 443...)) on change les privilèges via cette spécification pour que les `worker children` n'ai pas tous ces droits, minimisant les risques si ces process soient compromis.
+  - Dans l'ensemble c'est de bonne pratique de spécifier le `user` pour éviter les vulnérabilités
+  - Par défaut, si cette directive n'est pas spécifiée, Nginx use un user par défaut (`nobody`, `nginx`, `www-data`) ou autre n'ayant qu'un minimum de droits (juste assez pour lire les fichiers html et/ou lire/écrire dans des fichiers de logs)
+  - **Si le `user` spécifié, il faut le créer** avec des droits appropriés
+
+⚠️ **De ce que le sujet demande, je ne pense pas que ce soit nécessaire de gérer/créer nous meme un/des user. Ca a l'air de complexifier pas mal le projet**
+
+### worker_processes
+
+- `worker_processes`: Spécifie au server le nombre d'`operating system processes` qu'Nginx doit créer pour les connexions entrantes.
+  - Il est recommandé de le set au nombre de CPU disponible, `auto` permet de mettre en place cette configuration de facon automatique.
+  - Chaque worker est `single-threaded`, ils gérent parallelement les requêtes entre eux en ce divisant les divisants.
+  - **Relation avec worker_connections**: Le nombre total de connexions que peut gérer Nginx est égal a la multiplication du nombre de `worker_processes` et du nombre de `worker_connections`.
+
+⚠️ **Meme chose que pour user, le sujet ne demande pas spéficiquement de gérer ce context. Dans l'idée on peut le set a un que la directive soit présente ou non, au moment ou j'écris ca je n'ai pas regardé si on nous autorise les fonctions nécessaire à l'identification du nombre de CPU disponible**
+
+
+### pid
+
+- `pid`: **Je ferrai plus tard si nécessaire, meme chose je n'ai pas l'impression qu'on nous donne les outils nécessaire à la gestion de cette directive**
+
+
+### error_log
+
+- `error_log`: Spéficie ou et a quel niveau de gravité les messages d'erreurs du webserver sont enregistrés.
+  - `error_log /path/to/logs`: le chemin du fichier ou les logs d'erreurs sont écrits.
+  - niveaux de gravités: `debug`, `info`, `notice`. Seules les erreurs égales ou supérieures seront écritent dans le fichier de logs si un niveau de gravité est définit.
+  - On peut positionné dans différents contexte cette directive, qui sera alors écrasé du/des contexte.s parent.
+
+Exemple:
+
+```nginxconf
+http {
+  error_log /var/log/nginx/error.log warn;
+
+  server {
+    error_log /var/log/nginx/domain.error.log error;
+    ...
+  }
+}
+```
+
+⚠️ **Pour le coup je pense que c'est cool si on l'implemente celle-ci. A voir si j'ai bien compris comment ca fonctionne mais si c'est les retours du client (browser) qui vont dans les logs ca peut etre stylé!**
+
+### include
+
+- `include`: **Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur**
 
 ## DUMP CONFIGURATION FILES, WILL TREAT LATER
 
