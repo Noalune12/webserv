@@ -129,6 +129,18 @@ http {
 
 - `include`: Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur
 
+
+## Events context setup detailed
+
+### worker_connections
+
+- `worker_connections`: Spécifie le nombre maximum de connexions simultanées que peut ouvrir un worker process (définis dans `worker_processes`). Si le serveur gère un grand nombre de connexions concurrentes, on peut atteindre cette limite, causant l'abandon des nouvelles connexions
+  - Ce paramètre est crucial à la gestion du nombre de clients servis en simultanée.
+
+### use
+
+- [To continue, was using this](https://mangohost.net/blog/understanding-the-nginx-configuration-file-structure-and-contexts/)
+
 ## DUMP CONFIGURATION FILES, WILL TREAT LATER
 
 ```nginxconf
