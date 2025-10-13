@@ -108,7 +108,7 @@ http {
 - `error_log`: Spéficie ou et a quel niveau de gravité les messages d'erreurs du webserver sont enregistrés.
   - `error_log /path/to/logs`: le chemin du fichier ou les logs d'erreurs sont écrits.
   - niveaux de gravités: `debug`, `info`, `notice`. Seules les erreurs égales ou supérieures seront écritent dans le fichier de logs si un niveau de gravité est définit.
-  - On peut positionné dans différents contexte cette directive, qui sera alors écrasé du/des contexte.s parent.
+  - On peut positionner dans différents contexte cette directive, qui sera alors écrasé du/des contexte.s parent.
 
 Exemple:
 
@@ -127,7 +127,7 @@ http {
 
 ### include
 
-- `include`: **Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur**
+- `include`: Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur
 
 ## DUMP CONFIGURATION FILES, WILL TREAT LATER
 
