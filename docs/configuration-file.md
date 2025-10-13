@@ -6,6 +6,9 @@
 
 [Understanding the Nginx Configuration File Structure and Contexts](https://mangohost.net/blog/understanding-the-nginx-configuration-file-structure-and-contexts/)
 
+[Nginx common configuration video](https://www.youtube.com/watch?v=MP3Wm9dtHSQ)
+
+[Comprendre directives nginx](https://www.nicelydev.com/nginx/comprendre-nginx-conf)
 
 ### Nginx configuration structure:
 

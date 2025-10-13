@@ -30,6 +30,7 @@ This project is about writing our own HTTP server. We will be able to test it wi
 
 [Linux kernel coding style (formatting code ? maybe not really interesting for this project tho)](https://docs.kernel.org/process/coding-style.html)
 
+[URL vs URI: les différences et quand les utiliser](https://www.hostinger.com/fr/tutoriels/uri-vs-url#:~:text=URI%20est%20l'acronyme%20d,un%20emplacement%20ou%20les%20deux.)
 
 # Bonus
 
