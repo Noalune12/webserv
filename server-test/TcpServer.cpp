@@ -1,5 +1,6 @@
 #include "TcpServer.hpp"
 #include "colors.h"
+#include <sstream>
 
 TcpServer::TcpServer(std::string ip, int port) : _ipAddress(ip), \
     _port(port), _incomingMsg(), _socketAddress(), \
@@ -57,24 +58,24 @@ void TcpServer::startServer() {
     status = bind(_socket, (struct sockaddr *)&_socketAddress, sizeof(_socketAddress));
     if (status != 0) {
         freeaddrinfo(res);
+        close(_socket);
         throw std::runtime_error(std::string("bind: ") + strerror(errno));
-
     }
 
     status = listen(_socket, _request);
     if (status != 0) {
         freeaddrinfo(res);
+        close(_socket);
         throw std::runtime_error(std::string("listen: ") + strerror(errno));
-
     }
 }
 
 void TcpServer::closeServer() {
-    std::cout << "====== Closing Server ======" << std::endl;;
+    std::cout << RED "====== Closing Server ======" RESET << std::endl;;
     freeaddrinfo(res);
     close(_socket);
     close (_clientFd);
-    exit(0);
+    // exit(0);
 }
 
 int TcpServer::getPort() const {
@@ -87,8 +88,54 @@ void TcpServer::acceptClient() {
 
     if (_clientFd == -1) {
         freeaddrinfo(res);
+        close(_socket);
+        close (_clientFd);
         throw std::runtime_error(std::string("accept: ") + strerror(errno));
     }
 
     std::cout << "Accepted new connection on socket: " << _clientFd << std::endl;
+
+    getRequest();
 }
+
+template <typename T>
+std::string NumberToString ( T N )
+{
+    std::ostringstream ss;
+    ss << N;
+    return ss.str();
+}
+
+void TcpServer::getRequest() {
+    ssize_t bytesRecieved;
+    std::string req;
+    char buffer[BUFSIZ];
+    memset(buffer, 0, sizeof(buffer));
+
+    while ((bytesRecieved = recv(_clientFd, buffer, sizeof(buffer) - 1, 0)) > 0) {
+        if (bytesRecieved < 0) 
+            throw std::runtime_error(std::string("recv: ") + strerror(errno));
+        if (bytesRecieved == 0) 
+            throw std::runtime_error("recv: client " + NumberToString(_clientFd) + " closed connection");
+        req += buffer;
+
+        if (req.find("\r\n\r\n") != std::string::npos)
+            break;
+
+        memset(buffer, 0, sizeof(buffer));
+    }
+    size_t pos = req.find("\r\n\r\n");
+    if (pos != std::string::npos) {
+        req = req.substr(0, pos);
+    }
+    std::cout << YELLOW "MESSAGE RECIEVED\n'" RESET << req << YELLOW "'MESSAGE END" RESET << std::endl;
+
+    // get line by line in a vector ? (\n)
+
+    std::string msg = "message well recieved\n";
+    int bytesSent = send(_clientFd, msg.c_str(), msg.size(), 0);
+    if (bytesSent < 0) 
+        throw std::runtime_error("send to client " + NumberToString(_clientFd) + strerror(errno));
+    std::cout << GREEN "\nMESSAGE SENT" RESET << std::endl;
+}
+

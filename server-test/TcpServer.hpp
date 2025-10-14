@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-
+#include <vector>
 
 class TcpServer {
     public:
@@ -38,8 +38,11 @@ class TcpServer {
         int _clientFd;
         int _request;
 
+        std::vector<std::string> _clientRequest;
+
         void startServer();
         void closeServer();
+        void getRequest();
 };
 
 #endif
