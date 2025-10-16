@@ -12,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <vector>
+#include <sys/epoll.h>  
 
 class TcpServer {
     public:
@@ -29,15 +30,16 @@ class TcpServer {
 
         std::string _ipAddress;
         int _port;
-        long _incomingMsg;
         struct sockaddr_in _socketAddress;
         unsigned int _socketAddress_len;
-        std::string _serverMessage;
         
         int _socket;
         int _clientFd;
         int _request;
 
+        int _epollFd;
+        struct epoll_event _ev;
+        std::vector<int> _clientsFd;
         std::vector<std::string> _clientRequest;
 
         void startServer();
