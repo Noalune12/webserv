@@ -30,7 +30,6 @@ types {
 
 # Virtual Hosting
 
-
 *Virtual hosting is a method for hosting multiple domain names (with separate handling of each name) on a single server (or pool of servers). This allows one server to share its resources, such as memory and processor cycles, without requiring all services provided to use the same host name.*
 
 - [link](https://www.geeksforgeeks.org/computer-networks/virtual-hosting-works/)
