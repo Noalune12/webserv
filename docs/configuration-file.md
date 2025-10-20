@@ -145,6 +145,7 @@ http {
 - `use`: Spécifie la méthode de gestion des événements I/O à utiliser (select, poll, epoll, kqueue, etc.). Par défaut, nginx sélectionne automatiquement la méthode la plus efficace disponible sur le système
   - Pour notre projet: le sujet mentionne qu'on peut utiliser poll(), select(), kqueue() ou epoll()
   - Ce paramètre détermine comment le serveur va multiplexer les I/O
+  - Sers à rien pour notre, je vois pas un monde ou on décide de multiplier notre codebase pour répondre à cette directive, ca fait pas sens.
 
 ## Server context setup detailed
 
@@ -181,7 +182,8 @@ http {
     - `error_page 404 =200 /empty.gif;` - change le code de réponse
   - **Important pour le sujet**: Le serveur doit avoir des pages d'erreur par défaut si aucune n'est fournie
   - Les URIs spécifiés sont relatifs à la directive `root` du contexte
-  - Si le fichier d'erreur n'existe pas, nginx utilise sa propre page d'erreur par défaut
+  - Si le fichier d'erreur n'existe pas, nginx utilise sa propre page d'erreur par défaut (nous on en aura, mais je sais pas si ils ont l'autorisation de delete nos fichiers, à prendre en compte)
+  - [nginx doc](https://nginx.org/en/docs/http/ngx_http_core_module.html#error_page)
 
 ### client_max_body_size
 
@@ -193,10 +195,9 @@ http {
   - Il nous est demandé de pouvoir configurer cette limite
   - Si une requête dépasse cette limite, le serveur retourne une erreur **413** (Request Entity Too Large)
   - Cette directive est cruciale pour:
-    - Protéger le serveur contre les attaques par upload massif
-    - Gérer l'upload de fichiers volumineux de manière contrôlée
+    - Protéger le serveur contre les attaques par upload massif et gérer l'upload de fichiers volumineux de manière contrôlée
   - La valeur par défaut dans nginx est 1M, à nous de choisir ce qu'on met
-  - Unités acceptées: k ou K (kilobytes), m ou M (megabytes), g ou G (gigabytes)
+  - **Unités acceptées**: k ou K (kilobytes), m ou M (megabytes), g ou G (gigabytes)
   - **Détail d'implémentation**: Le serveur doit vérifier le header `Content-Length` de la requête avant de commencer à lire le body. Si le Content-Length dépasse la limite, rejeter immédiatement la requête avec un 413
 
 ### root
@@ -209,7 +210,7 @@ http {
   - Le chemin final sera construit en ajoutant l'URI de la requête au chemin root
   - Exemple: si `root /var/www;` et requête pour `/images/photo.jpg`, le serveur cherchera `/var/www/images/photo.jpg`
   - **Important pour le sujet**: Peut être défini au niveau `server` (par défaut) ou `location` (pour override)
-  - Cette directive est héritée: si définie dans `server` mais pas dans `location`, la valeur du `server` est utilisée
+  - Cette directive est **héritée**: si définie dans `server` mais pas dans `location`, la valeur du `server` est utilisée
 
 ### index
 
@@ -222,8 +223,7 @@ http {
   - Le serveur teste les fichiers dans l'ordre spécifié et sert le premier qui existe
   - Si aucun fichier index n'existe et que `autoindex` est activé, une liste du répertoire est générée
   - Si aucun fichier index n'existe et que `autoindex` est désactivé, une erreur 403 (Forbidden) est retournée
-  - **Important pour le sujet**: Explicitement demandé comme directive configurable
-
+  - **Important pour le sujet**: Explicitement demandé comme directive configurable, mais un doute si on doit gérer autoindex, aucune idée de la compléxité que ca rajoute
 
 ## Location context setup detailed
 
@@ -273,7 +273,6 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
     - `return 301 /new-location;` - redirection permanente
     - `return 302 /temporary;` - redirection temporaire
     - `return 301 https://example.com$request_uri;` - redirection vers un autre domaine
-  - **Important pour le sujet**: Les redirections HTTP sont explicitement demandées
   - Codes de redirection communs:
     - 301: Moved Permanently (redirection permanente)
     - 302: Found (redirection temporaire)
@@ -284,6 +283,7 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
     1. Retourne le code de statut spécifié
     2. Ajoute un header `Location:` avec la nouvelle URL
     3. Ne traite pas le reste de la configuration de cette location
+  - J'ai pas compris ce que demande le sujet ici pour etre honnete, j'ai vu des redirection mais de la à gérer les différents code je suis pas persuadé que ce soit demandé
 
 ### alias vs root dans location
 
@@ -317,27 +317,12 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
         autoindex on;
     }
 ```
-  - **Important pour le sujet**: Explicitement demandé de pouvoir activer/désactiver cette fonctionnalité
   - Quand activé et qu'un répertoire est demandé sans fichier index:
     - Le serveur génère une page HTML listant les fichiers et sous-répertoires
     - Chaque entrée est un lien cliquable
   - Quand désactivé et qu'un répertoire est demandé sans fichier index:
     - Le serveur retourne une erreur 403 (Forbidden)
-  - Format typique d'un listing:
-```html
-    <html>
-    <head><title>Index of /downloads/</title></head>
-    <body>
-    <h1>Index of /downloads/</h1>
-    <hr>
-    <pre>
-    <a href="../">../</a>
-    <a href="file1.txt">file1.txt</a>     12-Jan-2024 10:30    1234
-    <a href="file2.pdf">file2.pdf</a>     15-Jan-2024 14:22   45678
-    </pre>
-    </body>
-    </html>
-```
+  - Format typique d'un [listing](http://188.165.227.112/portail/)
 
 ### upload_to (ou client_body_temp_path)
 
@@ -346,9 +331,8 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
   - Exemples:
     - `upload_to /var/www/uploads;`
     - `upload_to /tmp/uploads;`
-  - **Important pour le sujet**: Explicitement demandé - le serveur doit autoriser l'upload de fichiers
   - Cette directive doit être combinée avec:
-    - Une méthode POST ou PUT autorisée
+    - **Une méthode POST**
     - Un `client_max_body_size` approprié pour accepter les fichiers
   - Considérations d'implémentation:
     - Vérifier que le répertoire existe et est accessible en écriture
@@ -358,7 +342,7 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
   - Le serveur doit gérer les uploads avec `Content-Type: multipart/form-data` ou `application/octet-stream`
   - **Détail d'implémentation**:
     - Pour les requêtes POST avec multipart/form-data, parser les boundaries
-    - Extraire le nom du fichier du header Content-Disposition
+    - Extraire le nom du fichier du header `Content-Disposition`
     - Écrire les données reçues dans le fichier de destination
     - Retourner 201 (Created) en cas de succès, avec un header Location pointant vers la ressource créée
 
