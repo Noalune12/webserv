@@ -395,19 +395,6 @@ server {
     }
 }
 ```
----
-D
----
-E
----
-L
----
-E
----
-T
----
-E
----
 
 ## DUMP CONFIGURATION FILES, WILL TREAT LATER
 
