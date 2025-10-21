@@ -95,7 +95,7 @@ http {
 
 - `worker_processes`: Spécifie au server le nombre d'`operating system processes` qu'Nginx doit créer pour les connexions entrantes.
   - Il est recommandé de le set au nombre de CPU disponible, `auto` permet de mettre en place cette configuration de facon automatique.
-  - Chaque worker est `single-threaded`, ils gérent parallelement les requêtes entre eux en ce divisant les divisants.
+  - Chaque worker est `single-threaded`, ils gèrent parallèlement les requêtes entre eux en se divisant les connexions.
   - **Relation avec worker_connections**: Le nombre total de connexions que peut gérer Nginx est égal a la multiplication du nombre de `worker_processes` et du nombre de `worker_connections`.
 
 ⚠️ **Meme chose que pour user, le sujet ne demande pas spéficiquement de gérer ce context. Dans l'idée on peut le set a un que la directive soit présente ou non, au moment ou j'écris ca je n'ai pas regardé si on nous autorise les fonctions nécessaire à l'identification du nombre de CPU disponible**
