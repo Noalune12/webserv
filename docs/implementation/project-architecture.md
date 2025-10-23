@@ -30,7 +30,7 @@ server.start();
 
 - Utiliser une façade si besoin d'une interface limitée mais directe à un sous-système complexe.
 - **Utiliser une façade si besoin de structurer un sous-système en plusieurs couches (notre utilisation)**
--
+
 ```cpp
 // La façade Server masque toute la complexité interne:
 class Server {
@@ -69,14 +69,14 @@ class Server {
       Server& operator=(const Server&);       // Interdit l'assignation
 
   public:
-      static Server& getInstance(const std::string& configPath = "");
+      static Server& getInstance(const std::string& configPath);
 };
 ```
 
 Si notre code a accès à la classe du singleton, alors il pourra appeler sa méthode statique qui à chaque appel retournera toujours le même objet.
 ```cpp
 // Dans main.cpp:
-Server& srv = Server::getInstance("webserv.conf");
+Server& srv = Server::getInstance("/path/to/webserv.conf");
 srv.start();
 
 // Ailleurs dans le code, on récupère la même instance:
@@ -85,4 +85,4 @@ Server& srv2 = Server::getInstance();  // Même objet que srv
 
 ⚠️ **Les deux vont souvent ensemble, maintenant je pense pas que ce soit totalement nécessaire vu qu'on construit un projet fini. On peut garder l'idée de coté mais j'ai un doute sur la nécessité de mettre ça en place**
 
-et si jamais: [doc singleton (FR](https://refactoring.guru/fr/design-patterns/singleton)
+et si jamais: [doc singleton (FR)](https://refactoring.guru/fr/design-patterns/singleton)
