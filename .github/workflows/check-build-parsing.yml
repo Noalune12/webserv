@@ -46,7 +46,7 @@ jobs:
   test-parser:
     needs: check-branch
     if: needs.check-branch.outputs.should-run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
@@ -73,7 +73,7 @@ jobs:
   test-summary:
     needs: [check-branch, test-parser]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Test summary
         run: |
