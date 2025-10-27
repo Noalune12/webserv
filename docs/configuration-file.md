@@ -346,6 +346,10 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
     - Écrire les données reçues dans le fichier de destination
     - Retourner 201 (Created) en cas de succès, avec un header Location pointant vers la ressource créée
 
+## [tdameros documentation for the webserv configuration file](https://github.com/tdameros/42-webserv/blob/main/docs/config_file.md)
+
+> A prendre comme référence, il reprend le format de la doc de Nginx et limite les directives a celle sont requises par le sujet (nos fichiers de configs de test sont basé sur la hiérarchies décrite dans sa doc).
+
 ### Exemple complet de configuration location
 ```nginxconf
 server {
