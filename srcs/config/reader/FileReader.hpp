@@ -15,18 +15,19 @@ class FileReader {
 
 	private:
 		std::string _filePath;
+		std::string _fileContent;
 
 		FileReader();
 
 		// Exception si le fichier n'existe pas ou n'est pas accessible ?
 		bool	extensionVerification(const std::string& configFile, const char *extension);
+		// Lit le fichier et retourne son contenu sous forme de string
+		std::string	readFile(void);
 
 	public:
 		FileReader(const std::string& filePath);
 		~FileReader();
 
-		// Lit le fichier et retourne son contenu sous forme de string
-		// std::string readFile();
 };
 
 #endif
