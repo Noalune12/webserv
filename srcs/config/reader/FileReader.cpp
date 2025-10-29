@@ -60,17 +60,19 @@ void	FileReader::readFile(void) {
 
 	// fileName.close(); // test 2 pour que ca pète
 	buffer << fileName.rdbuf();
+	// fileName.clear(std::ios::badbit); // test 3 pour que ca pète
 	// il me semble que c'est plus juste de checker !buffer car ca check le retour de .rdbuf (extraction) mais aussi l'insertion dans buffer
 	// (autre check -> !fileName.fail())
-	// !buffer ca check aussi si le fichier est vide, décision a prendre: message d'erreur global ou spécifique (implique de split les checks)
+	// !buffer ca check aussi si le fichier est vide, décision a prendre: message d'erreur global ou spécifique
 	if (!buffer) {
 		fileName.close();
+		if (buffer.str().empty()) {
+			throw std::runtime_error("Configuration file is empty: " + _filePath);
+		}
 		throw std::runtime_error("Error reading file: " + _filePath);
 	}
 	fileName.close();
 	_fileContent = buffer.str();
-	// if (_fileContent.empty())
-	// 	throw std::runtime_error("Configuration file is empty: " + _filePath);
 }
 
 const std::string&	FileReader::getFileContent(void) const {
