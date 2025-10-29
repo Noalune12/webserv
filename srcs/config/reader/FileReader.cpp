@@ -67,7 +67,7 @@ void	FileReader::readFile(void) {
 	if (!buffer) {
 		fileName.close();
 		if (buffer.str().empty()) {
-			throw std::runtime_error("Configuration file is empty: " + _filePath);
+			throw std::runtime_error("Configuration file is empty: " + _filePath); // je crois que ca marche pas ca me saoul...
 		}
 		throw std::runtime_error("Error reading file: " + _filePath);
 	}
