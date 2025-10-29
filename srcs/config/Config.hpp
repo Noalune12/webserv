@@ -23,11 +23,13 @@ class Config {
 		// Donnees de configuration parsées et validées (au fur et a mesure)
 		// std::vector<ServerBlock> _servers;
 		// GlobalDirectives _globalDirectives; // classe interface ?
-		Config();
 
 	public:
+
+		Config(); // je l'ai mis la parce que j'avais une erreur dans le fichier Server.cpp quand je le met en privée, surement parce qu'on a un membre Config dans la classe Server
+
 		// Constructeur: orchestre tout le parsing et stocke la configuration
-		Config(const std::string& configFilePath);
+		Config(const std::string& configFileContent);
 		~Config();
 };
 
