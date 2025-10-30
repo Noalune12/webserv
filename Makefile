@@ -10,7 +10,7 @@ DEPS		:= $(OBJS:.o=.d)
 
 CXX			:= c++
 CFLAGS		:= -Wall -Wextra -Werror -std=c++98 -g3
-CPPFLAGS	:= -MMD -MP -I incs/
+CPPFLAGS	:= -MMD -MP -I incs/ -I $(SRCSDIR) $(addprefix -I $(SRCSDIR), $(SUBDIRS))
 
 RM			:= rm -f
 RMDIR		:= -r
