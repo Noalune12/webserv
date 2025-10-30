@@ -1,16 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
 #include <stdexcept>
-
 
 #include "FileReader.hpp"
 
-// define car on sait qu'on veut accepter que ce format, pas besoin que ce soit en parametre des fonctions, cette valeur ne changera jamais
 #define EXTENSION ".conf"
-
-FileReader::FileReader() {}
 
 FileReader::FileReader(const std::string& filePath) : _filePath(filePath) {
 
@@ -32,10 +27,8 @@ void	FileReader::extensionVerification(const std::string& configFile)
 	size_t last_dot = configFile.find_last_of('.');
 	size_t last_slash = configFile.find_last_of('/');
 
-	// recupère la position exact du début du nom du fichier, apres les / si il y a des sous-dossiers
 	size_t filename_start = (last_slash == std::string::npos) ? 0 : last_slash + 1;
 
-	// dégage les fichiers sans extension et les .conf ou /.conf MAIS accepte .conf.conf
 	if (last_dot == std::string::npos || last_dot == filename_start) {
 		throw std::invalid_argument("Missing file extension");
 	}
@@ -57,14 +50,10 @@ void	FileReader::readFile(void) {
 
 	std::stringstream buffer;
 
-	fileName.exceptions(std::ifstream::badbit | std::ifstream::failbit); // will throw error if methods called on fileName fails, I dont like the formating but fk it
 	buffer << fileName.rdbuf();
-	// il me semble que c'est plus juste de checker !buffer car ca check le retour de .rdbuf (extraction) mais aussi l'insertion dans buffer
-	// (autre check -> !fileName.fail())
-	// !buffer ca check aussi si le fichier est vide, décision a prendre: message d'erreur global ou spécifique
-	if (buffer.str().empty() /* !buffer */) {
+	if (!buffer) {
 		fileName.close();
-		throw std::runtime_error("Configuration file is empty: " + _filePath);
+		throw std::runtime_error("Error retrieving configuration file: " + _filePath);
 	}
 	fileName.close();
 	_fileContent = buffer.str();

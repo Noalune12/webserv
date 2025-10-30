@@ -17,11 +17,7 @@ class FileReader {
 		std::string _filePath;
 		std::string _fileContent;
 
-		FileReader();
-
 		void	extensionVerification(const std::string& configFile);
-
-		// Lit le fichier et stock son contenu sous forme de string
 		void	readFile(void);
 
 	public:
