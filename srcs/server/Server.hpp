@@ -15,7 +15,8 @@ class Server {
 		// Facade principale: gère tout le processus de parsing et validation du fichier de configuration
 		Config _config;
 
-		Server();
+		// Supprimer le constructeur par defaut parce que ca fait pas sens d'avoir une Config vide ?
+		// Server();
 
 	public:
 		// Constructeur: délègue le parsing du fichier à la facade Config

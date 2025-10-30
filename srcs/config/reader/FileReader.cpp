@@ -51,32 +51,27 @@ void	FileReader::readFile(void) {
 
 	std::ifstream fileName(_filePath.c_str());
 
-	// fileName.close(); // test 1 pour que ca pète
 	if (!fileName.is_open()) {
 		throw std::runtime_error("Cannot open file: " + _filePath);
 	}
 
 	std::stringstream buffer;
 
-	// fileName.close(); // test 2 pour que ca pète
+	fileName.exceptions(std::ifstream::badbit | std::ifstream::failbit); // will throw error if methods called on fileName fails, I dont like the formating but fk it
 	buffer << fileName.rdbuf();
-	// fileName.clear(std::ios::badbit); // test 3 pour que ca pète
 	// il me semble que c'est plus juste de checker !buffer car ca check le retour de .rdbuf (extraction) mais aussi l'insertion dans buffer
 	// (autre check -> !fileName.fail())
 	// !buffer ca check aussi si le fichier est vide, décision a prendre: message d'erreur global ou spécifique
-	if (!buffer) {
+	if (buffer.str().empty() /* !buffer */) {
 		fileName.close();
-		if (buffer.str().empty()) {
-			throw std::runtime_error("Configuration file is empty: " + _filePath); // je crois que ca marche pas ca me saoul...
-		}
-		throw std::runtime_error("Error reading file: " + _filePath);
+		throw std::runtime_error("Configuration file is empty: " + _filePath);
 	}
 	fileName.close();
 	_fileContent = buffer.str();
 }
 
 const std::string&	FileReader::getFileContent(void) const {
-	return (this->_fileContent);
+	return (_fileContent);
 }
 
 
