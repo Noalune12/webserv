@@ -15,8 +15,8 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
+		throw;
 	}
-
 }
 
 Config::~Config() {}

@@ -12,6 +12,7 @@ Server::Server(const std::string& configFile) : _config(configFile) {
 
 	} catch(const std::exception& e) {
         std::cerr << "Server initialization failed: " << e.what() << std::endl;
+		throw;
 	}
 }
 
