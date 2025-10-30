@@ -1,12 +1,10 @@
 #!/bin/bash
 
-
-set -e
-
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 RESET='\033[0m' # No Color
 
 # Default values
@@ -99,11 +97,13 @@ run_test() {
     local config_file="$1"
     local should_succeed="$2"
     local test_name=$(basename "$config_file")
+    local test_category=$(dirname "$config_file")
+    test_category=${test_category##*/}  # Get just the last directory name
 
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
     if [ $VERBOSE -eq 1 ]; then
-        echo -e "${BLUE}Testing: $test_name${RESET}"
+        echo -e "${BLUE}Testing: [$test_category] $test_name${RESET}"
     fi
 
     # Run the command and capture output
@@ -111,34 +111,38 @@ run_test() {
     local exit_code
 
     if [ $USE_VALGRIND -eq 1 ]; then
-        output=$($VALGRIND_CMD timeout 3 $WEBSERV_BIN "$config_file" 2>&1 || true)
-        exit_code=$?
+        output=$($VALGRIND_CMD timeout 3 $WEBSERV_BIN "$config_file" 2>&1) || exit_code=$?
+        if [ -z "$exit_code" ]; then
+            exit_code=0
+        fi
 
         # Check valgrind log for errors
         if [ $exit_code -eq 42 ]; then
-            echo -e "${RED}✗ $test_name - VALGRIND ERROR${RESET}"
+            echo -e "${RED}✗ [$test_category] $test_name - VALGRIND ERROR${RESET}"
             if [ $VERBOSE -eq 1 ]; then
                 echo -e "${YELLOW}Valgrind output:${RESET}"
-                cat "$VALGRIND_LOG"
+                cat "$VALGRIND_LOG" 2>/dev/null || echo "Could not read valgrind log"
             fi
             FAILED_TESTS=$((FAILED_TESTS + 1))
             return 1
         fi
     else
         # Normal execution with timeout to prevent hanging
-        output=$(timeout 2 $WEBSERV_BIN "$config_file" 2>&1 || true)
-        exit_code=$?
+        output=$(timeout 2 $WEBSERV_BIN "$config_file" 2>&1) || exit_code=$?
+        if [ -z "$exit_code" ]; then
+            exit_code=0
+        fi
     fi
 
     # Check if the result matches expectations
     if [ $should_succeed -eq 1 ]; then
         # Valid config - should succeed (exit code 0 or timeout since server starts)
         if [ $exit_code -eq 0 ] || [ $exit_code -eq 124 ]; then
-            echo -e "${GREEN}✓ $test_name - Valid config parsed successfully${RESET}"
+            echo -e "${GREEN}✓ [$test_category] $test_name - Valid config parsed successfully${RESET}"
             PASSED_TESTS=$((PASSED_TESTS + 1))
             return 0
         else
-            echo -e "${RED}✗ $test_name - Valid config FAILED to parse (exit code: $exit_code)${RESET}"
+            echo -e "${RED}✗ [$test_category] $test_name - Valid config FAILED to parse (exit code: $exit_code)${RESET}"
             if [ $VERBOSE -eq 1 ]; then
                 echo -e "${YELLOW}Output:${RESET}"
                 echo "$output"
@@ -149,7 +153,7 @@ run_test() {
     else
         # Invalid config - should fail (non-zero exit code, but not timeout)
         if [ $exit_code -ne 0 ] && [ $exit_code -ne 124 ]; then
-            echo -e "${GREEN}✓ $test_name - Invalid config correctly rejected${RESET}"
+            echo -e "${GREEN}✓ [$test_category] $test_name - Invalid config correctly rejected${RESET}"
             if [ $VERBOSE -eq 1 ]; then
                 echo -e "${YELLOW}Error message:${RESET}"
                 echo "$output"
@@ -157,7 +161,7 @@ run_test() {
             PASSED_TESTS=$((PASSED_TESTS + 1))
             return 0
         else
-            echo -e "${RED}✗ $test_name - Invalid config was NOT rejected (exit code: $exit_code)${RESET}"
+            echo -e "${RED}✗ [$test_category] $test_name - Invalid config was NOT rejected (exit code: $exit_code)${RESET}"
             if [ $VERBOSE -eq 1 ]; then
                 echo -e "${YELLOW}Output:${RESET}"
                 echo "$output"
@@ -178,15 +182,17 @@ echo ""
 echo -e "${BLUE}Testing valid configurations...${RESET}"
 echo ""
 
-valid_count=$(find "$VALID_CONFIGS_DIR" -name "*.conf" 2>/dev/null | wc -l)
-if [ $valid_count -eq 0 ]; then
-    echo -e "${YELLOW}No valid config files found in $VALID_CONFIGS_DIR${RESET}"
+if [ -d "$VALID_CONFIGS_DIR" ]; then
+    # Find all .conf files recursively
+    while IFS= read -r -d '' config; do
+        run_test "$config" 1 || true  # Continue even if test fails
+    done < <(find "$VALID_CONFIGS_DIR" -type f -name "*.conf" -print0 2>/dev/null | sort -z)
+
+    if [ $? -ne 0 ] || [ $(find "$VALID_CONFIGS_DIR" -type f -name "*.conf" 2>/dev/null | wc -l) -eq 0 ]; then
+        echo -e "${YELLOW}No valid config files found in $VALID_CONFIGS_DIR${RESET}"
+    fi
 else
-    for config in "$VALID_CONFIGS_DIR"/*.conf; do
-        if [ -f "$config" ]; then
-            run_test "$config" 1
-        fi
-    done
+    echo -e "${YELLOW}Valid configs directory not found: $VALID_CONFIGS_DIR${RESET}"
 fi
 
 echo ""
@@ -195,15 +201,17 @@ echo ""
 echo -e "${BLUE}Testing invalid configurations...${RESET}"
 echo ""
 
-invalid_count=$(find "$INVALID_CONFIGS_DIR" -name "*.conf" 2>/dev/null | wc -l)
-if [ $invalid_count -eq 0 ]; then
-    echo -e "${YELLOW}No invalid config files found in $INVALID_CONFIGS_DIR${RESET}"
+if [ -d "$INVALID_CONFIGS_DIR" ]; then
+    # Find all .conf files recursively, organized by subdirectory
+    while IFS= read -r -d '' config; do
+        run_test "$config" 0 || true  # Continue even if test fails
+    done < <(find "$INVALID_CONFIGS_DIR" -type f -name "*.conf" -print0 2>/dev/null | sort -z)
+
+    if [ $? -ne 0 ] || [ $(find "$INVALID_CONFIGS_DIR" -type f -name "*.conf" 2>/dev/null | wc -l) -eq 0 ]; then
+        echo -e "${YELLOW}No invalid config files found in $INVALID_CONFIGS_DIR${RESET}"
+    fi
 else
-    for config in "$INVALID_CONFIGS_DIR"/*.conf; do
-        if [ -f "$config" ]; then
-            run_test "$config" 0
-        fi
-    done
+    echo -e "${YELLOW}Invalid configs directory not found: $INVALID_CONFIGS_DIR${RESET}"
 fi
 
 # Cleanup valgrind log

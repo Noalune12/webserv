@@ -64,10 +64,10 @@ jobs:
         run: chmod +x scripts/test_parser.sh
 
       - name: Run parser tests (basic)
-        run: scripts/test_parser.sh -v
+        run: cd scripts/ && ./scripts/test_parser.sh -v
 
       - name: Run parser tests (with valgrind)
-        run: scripts/test_parser.sh --valgrind
+        run: ./scripts/test_parser.sh --valgrind
         continue-on-error: false
 
   test-summary:
