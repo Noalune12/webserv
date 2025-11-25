@@ -36,7 +36,7 @@ override MAIN			:= \
 SRC += $(addprefix $(SUBD_TESTDIR), $(addsuffix .cpp, $(SUBD_TESTSRC)))
 
 override SUBD_TESTSRC			:= \
-	test \
+	# test \
 
 
 
@@ -55,3 +55,8 @@ SRC += $(addprefix $(READERDIR), $(addsuffix .cpp, $(READERSRC)))
 
 override READERSRC	:= \
 	FileReader
+
+SRC += $(addprefix $(VALIDATORDIR), $(addsuffix .cpp, $(VALIDATORSRC)))
+
+override VALIDATORSRC	:= \
+	Validator
