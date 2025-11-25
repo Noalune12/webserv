@@ -16,7 +16,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		_filePath = reader.getFilePath();
 		_fileContent = reader.getFileContent();
 
-		std::cout << "\033[31m" << "#### FILE CONTENT ####\n" << "\033[0m" << _fileContent << std::endl;
+		// std::cout << "\033[31m" << "#### FILE CONTENT ####\n" << "\033[0m" << _fileContent << std::endl;
 
 		std::istringstream f(_fileContent);
 		std::string line;
@@ -33,19 +33,29 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 				std::cout << "THIS WAS ONLY A COMMENT OR AN EMPTY LINE" << std::endl;
 				continue;
 			}
-			else
-				std::cout << line << "~~~" << std::endl;
 
 			// check if context
 
 			index = line.find('{');
+			int open;
 			if (index != std::string::npos) {
+				open = 1;
+				while (getline(f, line)) {
+					if (line.find('{') != std::string::npos)
+						open++;
+					else if (line.find('}') != std::string::npos)
+						open--;
+					if (open == 0)
+						break;
+					std::cout << line << "~~~" << std::endl;
+				}
 				// create context and send the remaining of the isstringstream
 			} else {
 				// add to main directives
 				std::cout << "***** ADD MAIN DIRECTIVES *****" << std::endl;
 				addDirective(line);
 			}
+			// std::cout << line << "~~~" << std::endl;
 		}
 		std::cout << "\033[31m" << "#### GLOBAL DIR ####\n" << "\033[0m" << std::endl;
 		printMap();
@@ -117,7 +127,6 @@ void Config::addDirective(std::string line) {
 		pos = std::distance(line.begin(), it);
 		line = line.substr(pos, line.length());
 
-		std::cout << line << std::endl;
 		it = std::find_if(line.begin(), line.end(), isWhitespace);
 		if (it == line.end() && !isOnlyWSpace(line)) {
 			arg.push_back(line.substr(0, line.length()));
