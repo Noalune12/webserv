@@ -105,6 +105,25 @@ http {
 
 - `pid`: **Je ferrai plus tard si nécessaire, meme chose je n'ai pas l'impression qu'on nous donne les outils nécessaire à la gestion de cette directive**
 
+### include
+
+- `include`: Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur
+
+
+## Events context setup detailed
+
+### worker_connections
+
+- `worker_connections`: Spécifie le nombre maximum de connexions simultanées que peut ouvrir un worker process (définis dans `worker_processes`). Si le serveur gère un grand nombre de connexions concurrentes, on peut atteindre cette limite, causant l'abandon des nouvelles connexions
+  - Ce paramètre est crucial à la gestion du nombre de clients servis en simultanée.
+
+### use
+
+- `use`: Spécifie la méthode de gestion des événements I/O à utiliser (select, poll, epoll, kqueue, etc.). Par défaut, nginx sélectionne automatiquement la méthode la plus efficace disponible sur le système
+  - Pour notre projet: le sujet mentionne qu'on peut utiliser poll(), select(), kqueue() ou epoll()
+  - Ce paramètre détermine comment le serveur va multiplexer les I/O
+  - Sers à rien pour notre, je vois pas un monde ou on décide de multiplier notre codebase pour répondre à cette directive, ca fait pas sens.
+
 ---
 # Séparation avec le dessus, on gere pas ca
 
@@ -131,24 +150,7 @@ http {
 
 ⚠️ **Pour le coup je pense que c'est cool si on l'implemente celle-ci. A voir si j'ai bien compris comment ca fonctionne mais si c'est les retours du client (browser) qui vont dans les logs ca peut etre stylé!**
 
-### include
 
-- `include`: Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur
-
-
-## Events context setup detailed
-
-### worker_connections
-
-- `worker_connections`: Spécifie le nombre maximum de connexions simultanées que peut ouvrir un worker process (définis dans `worker_processes`). Si le serveur gère un grand nombre de connexions concurrentes, on peut atteindre cette limite, causant l'abandon des nouvelles connexions
-  - Ce paramètre est crucial à la gestion du nombre de clients servis en simultanée.
-
-### use
-
-- `use`: Spécifie la méthode de gestion des événements I/O à utiliser (select, poll, epoll, kqueue, etc.). Par défaut, nginx sélectionne automatiquement la méthode la plus efficace disponible sur le système
-  - Pour notre projet: le sujet mentionne qu'on peut utiliser poll(), select(), kqueue() ou epoll()
-  - Ce paramètre détermine comment le serveur va multiplexer les I/O
-  - Sers à rien pour notre, je vois pas un monde ou on décide de multiplier notre codebase pour répondre à cette directive, ca fait pas sens.
 
 ## Server context setup detailed
 
