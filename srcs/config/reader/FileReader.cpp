@@ -63,5 +63,8 @@ const std::string&	FileReader::getFileContent(void) const {
 	return (_fileContent);
 }
 
+const std::string&	FileReader::getFilePath(void) const {
+	return (_filePath);
+}
 
 FileReader::~FileReader() {}

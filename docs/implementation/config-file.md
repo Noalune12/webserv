@@ -1,10 +1,10 @@
 # TODO (ordered ?)
 
-- [ ] creer un fichier default.conf avec toutes les spec que nous gerrerons (des directives seront rajoutées/supprimées au fur et a mesure du temps)
-- [ ] creer un dossier avec differents fichiers de config qui fonctionne/fonctionne pas pour une potentielle github action
+- [x] creer un fichier default.conf avec toutes les spec que nous gerrerons (des directives seront rajoutées/supprimées au fur et a mesure du temps)
+- [x] creer un dossier avec differents fichiers de config qui fonctionne/fonctionne pas pour une potentielle github action
 - [x] trouver une structure cool
 - [x] creer les dossiers/fichiers de la structure
-- [ ] github actions config file + siege (plus tard)?
+- [x] github actions config file + siege (plus tard)?
 
 
 [CONFIGURATION FILE STRUCTURE](https://nginx.org/en/docs/beginners_guide.html#conf_structure) (useful to create accepted and rejected configuration files)

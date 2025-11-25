@@ -2,6 +2,10 @@
 # define CONFIG_HPP
 
 # include <string>
+# include <map>
+# include <vector>
+
+# include "Context.hpp"
 
 /*
  * Facade principale pour le parsing du fichier de configuration
@@ -20,12 +24,14 @@
 class Config {
 
 	private:
-		std::string _filePath;
-		std::string _fileContent;
+		const std::string& _filePath; // FileReader.getFilePath()
+		const std::string& _fileContent; // FileReader.getFileContent()
 
 		// Donnees de configuration parsées et validées (au fur et a mesure)
 		// std::vector<ServerBlock> _servers;
-		// GlobalDirectives _globalDirectives; // classe interface ?
+
+		std::map<std::string, std::vector<std::string> >	_globalDirectives;
+		std::vector<Context>								_context;
 
 		// Config();
 

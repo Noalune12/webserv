@@ -25,6 +25,7 @@ class FileReader {
 		~FileReader();
 
 		const std::string& getFileContent(void) const;
+		const std::string& getFilePath(void) const;
 };
 
 #endif
