@@ -24,8 +24,8 @@
 class Config {
 
 	private:
-		std::string _filePath;
-		std::string& _fileContent; // FileReader.getFileContent()
+		const std::string& _filePath; // FileReader.getFilePath()
+		const std::string& _fileContent; // FileReader.getFileContent()
 
 		// Donnees de configuration parsées et validées (au fur et a mesure)
 		// std::vector<ServerBlock> _servers;
