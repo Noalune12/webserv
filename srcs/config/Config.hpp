@@ -24,8 +24,8 @@
 class Config {
 
 	private:
-		const std::string& _filePath; // FileReader.getFilePath()
-		const std::string& _fileContent; // FileReader.getFileContent()
+		std::string _filePath; // FileReader.getFilePath()
+		std::string _fileContent; // FileReader.getFileContent()
 
 		// Donnees de configuration parsées et validées (au fur et a mesure)
 		// std::vector<ServerBlock> _servers;
@@ -41,6 +41,10 @@ class Config {
 		// Constructeur: orchestre tout le parsing et stocke la configuration
 		Config(const std::string& configFileContent);
 		~Config();
+		bool isOnlyWSpace(std::string line) const;
+		void addDirective(std::string line);
+		void printMap() const;
+		// void removeWSpaces();
 };
 
 #endif

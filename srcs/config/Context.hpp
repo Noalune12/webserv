@@ -6,10 +6,10 @@
 class Context {
 
 	private:
-		std::map<std::string, std::vector<std::string> >	_directives;
-		std::vector<Context>								_context;
-		std::string											_name;
-		bool												_close;
+		// std::map<std::string, std::vector<std::string> >	_directives;
+		// std::vector<Context>								_context;
+		// std::string											_name;
+		// bool												_close;
 
 
 
