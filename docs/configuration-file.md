@@ -105,6 +105,9 @@ http {
 
 - `pid`: **Je ferrai plus tard si nécessaire, meme chose je n'ai pas l'impression qu'on nous donne les outils nécessaire à la gestion de cette directive**
 
+---
+# Séparation avec le dessus, on gere pas ca
+
 
 ### error_log
 
