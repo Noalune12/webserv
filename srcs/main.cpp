@@ -1,22 +1,43 @@
-#include "main.hpp"
-
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
-int	main(void) {
+#include "main.hpp"
+#include "Server.hpp"
 
-	Test test;
+#define DEFAULT_CONFIGURATION_FILE "/config-files/default.conf"
 
-	std::cout << (test._value ? test._value : 100) << std::endl;
+int	main(int ac, char **av) {
 
-	/* main behavior:
+	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
+	// std::cout << configFile << std::endl;
+	// return (0);
 
-	"Your program must use a configuration file, provided as an argument on the command line, or available in a default path."
+	// if (ac == 2) {
+	// 	configFile = av[1];
+	// }
+	// else {
+	// 	configFile = DEFAULT_CONFIGURATION_FILE;
+	// }
 
-	check if one arg	-> must be configuration file
-	if no arg			-> launch server with own config file.
 
-	*/
+	try
+	{
+		Server server(configFile); // calls the facade, once its build the configuration file is parsed etc
+		/*
+			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
+			Faire en sorte que cette loop gere les events de facon asynchrone
+
+			Ecoute en continue -> execution asynchrone des methodes,
+			De maniere a faire en sorte que les requetes soient non bloquantes
+
+			methode qui se termine -> retour a l'event loop (je sais plus pourquoi j'ai écris ca je comprend plus lol)
+
+		*/
+	}
+	catch(const std::exception& e)
+	{
+		return (EXIT_FAILURE);
+	}
 
 	return (EXIT_SUCCESS);
 }

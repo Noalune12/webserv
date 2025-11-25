@@ -1,0 +1,90 @@
+name: Configuration Parser Tests
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - 'srcs/config/**'
+      - 'config/**'
+      - 'test_parser.sh'
+  push:
+    branches:
+      - 'main'
+
+# The paths directive could make us remove branch name checks (below).
+# I'd like to make the parsing test only if the configuration parsing files are modified.
+# To prevent extra layers of actions on code that does not need it... Cannot test it rn anyway it is too early
+
+jobs:
+  check-branch:
+    runs-on: ubuntu-22.04
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+    steps:
+      - name: Check branch name
+        id: check
+        run: |
+          # Get the source branch name
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          echo "Branch name: $BRANCH_NAME"
+
+          # Check if branch name contains parser, parsing, or parse
+          if [[ "$BRANCH_NAME" =~ parser|parsing|parse ]]; then
+            echo "Branch name matches parser-related keywords"
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            echo "Branch name does not match parser-related keywords"
+            echo "should-run=false" >> $GITHUB_OUTPUT
+          fi
+
+  test-parser:
+    needs: check-branch
+    if: needs.check-branch.outputs.should-run == 'true'
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential valgrind
+
+      - name: Build project
+        run: make
+
+      - name: Make test script executable
+        run: chmod +x scripts/test_parser.sh
+
+      - name: Run parser tests (basic)
+        run: cd scripts/ && ./scripts/test_parser.sh -v
+
+      - name: Run parser tests (with valgrind)
+        run: ./scripts/test_parser.sh --valgrind
+        continue-on-error: false
+
+  test-summary:
+    needs: [check-branch, test-parser]
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Test summary
+        run: |
+          if [ "${{ needs.check-branch.outputs.should-run }}" != "true" ]; then
+            echo "⏭️ Parser tests were skipped (branch name doesn't match)"
+            echo "ℹ️ Tests only run for branches containing: parser, parsing, or parse" 
+          elif [ "${{ needs.test-parser.result }}" == "success" ]; then
+            echo "✅ All parser tests passed!"
+          else
+            echo "❌ Parser tests failed!"
+            exit 1
+          fi
+
+# this summary needs to be modified as well, it doesn't match the paths behavior (if it works properly).
