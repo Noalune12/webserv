@@ -78,4 +78,12 @@ void Config::setUpTest(void) {
 
 
     _globalDirectives["client_max_body_size"] = tmp;
+
+	std::vector<std::string> tmp2;
+	tmp2.push_back("value;");
+	tmp2.push_back("value;something");
+	tmp2.push_back("value;something");
+
+	_globalDirectives[BLUE "besting" RESET] = tmp2;
+
 }
