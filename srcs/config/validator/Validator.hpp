@@ -1,6 +1,10 @@
 #ifndef VALIDATOR_HPP
 # define VALIDATOR_HPP
 
+# include "Config.hpp"
+
+// # include "rules.h" // header full of define ?
+
 /*
  * Validation de la configuration
  *
@@ -14,12 +18,18 @@
 class Validator {
 
 	private:
-		// Config& _configData; plus on avance moins je sais ce qu'on met ici
+		// Config& _configData; // plus on avance moins je sais ce qu'on met ici
+
 
 	public:
+		std::map<std::string, std::vector<std::string> >	_globalDirectives;
+
 		Validator();
 		~Validator();
 
+		void	printMap() const;
+
+		void	clientMaxBodySize(void) const;
 };
 
 #endif
