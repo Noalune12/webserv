@@ -34,7 +34,7 @@ class Validator {
 
 
 		void	keyNameCheck(void) const;
-		void	semicolonCheck(std::vector<std::string>& v) const;
+		void	semicolonCheck(const std::vector<std::string>& v) const;
 };
 
 #endif

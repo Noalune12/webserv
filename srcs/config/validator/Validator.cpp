@@ -35,7 +35,7 @@ void	Validator::keyNameCheck(void) const {
 			if (key == directives[i]) {
 				std::cout << key << std::endl;
 				found = true;
-				// semi-colon check
+				semicolonCheck(it->second);
 				break ;
 			}
 		}
@@ -45,16 +45,20 @@ void	Validator::keyNameCheck(void) const {
 	}
 }
 
-void	Validator::semicolonCheck(std::vector<std::string>& v) const {
+void	Validator::semicolonCheck(const std::vector<std::string>& v) const {
 
 	std::vector<std::string>::const_iterator itv;
 
-	for (itv == v.begin(); itv != v.end(); ++itv) {
+	for (itv = v.begin(); itv != v.end(); ++itv) {
 		const std::string& value = *itv;
-		value.find()
+		std::size_t found = value.find(";");
+		if (found == value.length() - 1 && itv == v.end() - 1) {
+			std::cout << GREEN "last char" RESET << std::endl;
+		} else {
+			std::cout << RED "not end of string: " << value << RESET << std::endl;
+		}
 	}
 }
-
 
 
 void	Validator::printMap() const {
@@ -79,7 +83,7 @@ static bool	validateUnity(char leftover) {
 }
 
 static bool	isWhitespace(char c) {
-    return (std::isspace(static_cast<unsigned char>(c)));
+	return (std::isspace(static_cast<unsigned char>(c)));
 }
 
 void	Validator::clientMaxBodySize(void) const {
