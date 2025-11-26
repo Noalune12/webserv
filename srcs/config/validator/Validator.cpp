@@ -10,11 +10,50 @@
 
 
 Validator::Validator() : _globalDirectives() {
-	// _configData = config.getConfig(config);
+	// keyNameCheck();
 }
 
 Validator::~Validator() {}
 
+
+
+void	Validator::keyNameCheck(void) const {
+
+	const char *directives[] = {
+		ERR_PAGE, ERR_LOG, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
+		LOCATION, ALL_METHODS, AUTOINDEX, UPLOAD_TO, RETURN, ALIAS, CGI_PATH, CGI_EXT
+	};
+
+	std::map<std::string, std::vector<std::string> >::const_iterator it;
+
+	const size_t directivesCount = sizeof(directives) / sizeof(directives[0]);
+
+	for (it = _globalDirectives.begin(); it != _globalDirectives.end(); ++it) {
+		const std::string&	key = it->first;
+		bool				found = false;
+		for (size_t i = 0; i < directivesCount; ++i) {
+			if (key == directives[i]) {
+				std::cout << key << std::endl;
+				found = true;
+				// semi-colon check
+				break ;
+			}
+		}
+		if (!found) {
+			std::cout << "key not found: " << key << std::endl;
+		}
+	}
+}
+
+void	Validator::semicolonCheck(std::vector<std::string>& v) const {
+
+	std::vector<std::string>::const_iterator itv;
+
+	for (itv == v.begin(); itv != v.end(); ++itv) {
+		const std::string& value = *itv;
+		value.find()
+	}
+}
 
 
 

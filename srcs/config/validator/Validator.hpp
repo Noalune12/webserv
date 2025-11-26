@@ -30,6 +30,11 @@ class Validator {
 		void	printMap() const;
 
 		void	clientMaxBodySize(void) const;
+
+
+
+		void	keyNameCheck(void) const;
+		void	semicolonCheck(std::vector<std::string>& v) const;
 };
 
 #endif

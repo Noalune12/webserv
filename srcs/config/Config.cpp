@@ -25,7 +25,8 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		validator._globalDirectives = this->getGlobalDirective();
 		// std::cout << validator._globalDirectives << std::endl;
 		validator.printMap();
-		validator.clientMaxBodySize();
+		validator.keyNameCheck();
+		// validator.clientMaxBodySize();
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		throw;
