@@ -13,7 +13,7 @@
 
 [another link, looks a bit more detailed](https://devdocs.io/nginx/beginners_guide#conf_structure)
 
-
+[Common nginx syntax errors](https://www.digitalocean.com/community/tutorials/common-nginx-syntax-errors)
 
 
 Si t'as un peu de temps tu peux me dire ce qui te convient le plus stp (dans l'idée je me pose ces questions dans le but de savoir a quel point on décide de faire un parsing compliqué):
