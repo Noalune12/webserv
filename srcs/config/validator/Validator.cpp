@@ -16,17 +16,16 @@ Validator::Validator() : _globalDirectives() {
 Validator::~Validator() {}
 
 
-
 void	Validator::keyNameCheck(void) const {
 
-	const char *directives[] = {
+	const char	*directives[] = {
 		ERR_PAGE, ERR_LOG, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
 		LOCATION, ALL_METHODS, AUTOINDEX, UPLOAD_TO, RETURN, ALIAS, CGI_PATH, CGI_EXT
 	};
 
-	std::map<std::string, std::vector<std::string> >::const_iterator it;
+	std::map<std::string, std::vector<std::string> >::const_iterator	it;
 
-	const size_t directivesCount = sizeof(directives) / sizeof(directives[0]);
+	const size_t	directivesCount = sizeof(directives) / sizeof(directives[0]);
 
 	for (it = _globalDirectives.begin(); it != _globalDirectives.end(); ++it) {
 		const std::string&	key = it->first;
@@ -36,11 +35,12 @@ void	Validator::keyNameCheck(void) const {
 				std::cout << key << std::endl;
 				found = true;
 				semicolonCheck(it->second);
+				// check directives settings via table of function pointer
 				break ;
 			}
 		}
 		if (!found) {
-			std::cout << "key not found: " << key << std::endl;
+			throw std::invalid_argument("Error in key: '" + it->first +  "' is an invalid directive");
 		}
 	}
 }
@@ -53,9 +53,16 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v) const {
 		const std::string& value = *itv;
 		std::size_t found = value.find(";");
 		if (found == value.length() - 1 && itv == v.end() - 1) {
-			std::cout << GREEN "last char" RESET << std::endl;
+			std::cout << GREEN "last char of last element of vector is semicolon: " << value <<  RESET << std::endl;
+			return ;
+		} else if (itv != v.end() - 1) {
+			if (value == " ") {
+				std::cout << YELLOW << "test" << RESET << std::endl;
+				continue ;
+			}
 		} else {
 			std::cout << RED "not end of string: " << value << RESET << std::endl;
+			throw std::invalid_argument("Error in value: '" + value +  "' ");
 		}
 	}
 }
