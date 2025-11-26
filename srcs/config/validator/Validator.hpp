@@ -13,18 +13,18 @@
  * - Valide les valeurs des directives (ex: port entre 1-65535, taille avec unités correctes)
  * - Vérifie la cohérence globale (pas de ports en conflit, chemins valides, etc.)
  * - S'assure que les directives obligatoires sont présentes
- * - Renvoie des exceptions détaillées en cas d'erreur de validation (retour d'erreur hyper précis)
+ * - Renvoie des exceptions détaillées en cas d'erreur de validation et log ces erreurs dans ./var/log/error.log
  */
 class Validator {
 
 	private:
-		// Config& _configData; // plus on avance moins je sais ce qu'on met ici
-
-
-	public:
+		const std::string&									_filePath;
+		std::string											_fileContent;
 		std::map<std::string, std::vector<std::string> >	_globalDirectives;
+		std::vector<Context>								_context;
+	public:
 
-		Validator();
+		Validator(Config& config);
 		~Validator();
 
 		void	printMap() const;
@@ -32,9 +32,10 @@ class Validator {
 		void	clientMaxBodySize(void) const;
 
 
-
 		void	keyNameCheck(void) const;
 		void	semicolonCheck(const std::vector<std::string>& v) const;
+
+		void	logger(const std::string& error) const;
 };
 
 #endif
