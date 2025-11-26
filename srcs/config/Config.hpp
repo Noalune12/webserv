@@ -24,27 +24,29 @@
 class Config {
 
 	private:
-		const std::string& _filePath; // FileReader.getFilePath()
-		std::string _fileContent; // FileReader.getFileContent()
+		const std::string&	_filePath;
+		std::string			_fileContent;
 
 		// Donnees de configuration parsées et validées (au fur et a mesure)
 		// std::vector<ServerBlock> _servers;
 		std::map<std::string, std::vector<std::string> >	_globalDirectives;
 		std::vector<Context>								_context;
 
-		// Config();
-
 	public:
 
-
 		// Constructeur: orchestre tout le parsing et stocke la configuration
-		Config(const std::string& configFileContent);
+		Config(const std::string& configFile);
 		~Config();
 
 		void printMap() const;
 
 		Config&	getConfig(void);
+
+		const std::string&									getFilePath(void) const;
+		std::string											getFileContent(void) const;
 		std::map<std::string, std::vector<std::string> >&	getGlobalDirective(void);
+		std::vector<Context>								getVectorContext(void) const;
+
 
 		void	setUpTest(void);
 };
