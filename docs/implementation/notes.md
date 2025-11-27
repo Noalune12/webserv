@@ -24,7 +24,7 @@ Si directives dupliquées:
 - creer une fonction globale qui ecrit dans le fichier de log
   - check des droits du fichier,
 - work in nginx docker container and check each error messages with `nginx -t`
-- create
+
 
 
 ## ⚠️ TODO
@@ -41,3 +41,16 @@ List of error strings we will handle:
 - "invalid number of arguments" -> if some directive have more than one arg, it prevails over the syntax of the argument
 - "directive %s is not terminated by ';'" -> if missing ; at the end of a directive
 - "directive is duplicate" -> if directive cannot be duplicated
+
+
+
+- Validation order:
+  - keyNameCheck (global)
+  - semiColonCheck (global for directives)
+  - bracketCheck (global for contexts)
+  -
+
+
+
+bracketCheck idea:
+- if the whole context is in a class and the class data contains the first to the last line of the context, including the closing bracket, then I can check the **last** element of the **first** line and the **first** element of the **last** line

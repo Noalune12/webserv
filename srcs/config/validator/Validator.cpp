@@ -10,6 +10,7 @@
 # define WEBSERV_ERROR_HEADER "webserv: "
 # define EMERGE "[emerge] "
 # define UNKNOWN_DIR "unknown directive "
+# define UNEXPECTED "unexpected "
 # define CONF_FILE "configuration file "
 # define TEST_FAILED "test failed\n"
 
@@ -18,6 +19,14 @@ Validator::Validator(Config& config) : _config(config) {}
 Validator::~Validator() {}
 
 void	Validator::validate(void) {
+
+	// loop sur globalDirectives -> je sais que ce sont des directives dont je peux faire:
+	// keyNameCheck -> semiColonCheck -> parameterCheck en fonctions de la directive. (tableaux de pointeurs sur fonctions ?)
+
+	// loop sur le vecteur de Context
+	// keyNameCheck -> bracketCheck pour la directive context -> parameterCheck
+	// puis meme chose que pour les globales directives mais a l'interieur du context.
+	// 
 	printMap();
 	keyNameCheck();
 	logger("test");

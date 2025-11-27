@@ -16,7 +16,6 @@
 class Validator {
 
 	private:
-
 		Config&	_config;
 
 	public:
@@ -34,7 +33,7 @@ class Validator {
 
 		void	logger(const std::string& error) const;
 
-
+		// main function, calls every subverification
 		void	validate(void);
 };
 
