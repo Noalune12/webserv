@@ -15,17 +15,14 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 		_fileContent = reader.getFileContent();
 
-		(void) _filePath;
 		// std::cout << _filePath << std::endl;
 		// std::cout << _fileContent << std::endl;
 
 		setUpTest();
 
 		Validator	validator(*this);
-		// validator.printMap();
-		// validator.keyNameCheck();
-		// validator.clientMaxBodySize();
-		// validator.logger("test");
+		validator.validate();
+
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		throw;

@@ -3,8 +3,6 @@
 
 # include "Config.hpp"
 
-// # include "rules.h" // header full of define ?
-
 /*
  * Validation de la configuration
  *
@@ -18,10 +16,9 @@
 class Validator {
 
 	private:
-		const std::string&									_filePath;
-		std::string											_fileContent;
-		std::map<std::string, std::vector<std::string> >	_globalDirectives;
-		std::vector<Context>								_context;
+
+		Config&	_config;
+
 	public:
 
 		Validator(Config& config);
@@ -36,6 +33,9 @@ class Validator {
 		void	semicolonCheck(const std::vector<std::string>& v) const;
 
 		void	logger(const std::string& error) const;
+
+
+		void	validate(void);
 };
 
 #endif

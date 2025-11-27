@@ -7,22 +7,21 @@
 #include "rules.h"
 #include "Validator.hpp"
 
-// #include "Tokenizer.hpp"
-
 # define WEBSERV_ERROR_HEADER "webserv: "
 # define EMERGE "[emerge] "
 # define UNKNOWN_DIR "unknown directive "
 # define CONF_FILE "configuration file "
 # define TEST_FAILED "test failed\n"
 
-Validator::Validator(Config& config) : _filePath(config.getFilePath()), _fileContent(config.getFileContent()), _globalDirectives(config.getGlobalDirective()), _context(config.getVectorContext()) {
+Validator::Validator(Config& config) : _config(config) {}
+
+Validator::~Validator() {}
+
+void	Validator::validate(void) {
 	printMap();
 	keyNameCheck();
 	logger("test");
 }
-
-Validator::~Validator() {}
-
 
 void	Validator::logger(const std::string& error) const {
 
@@ -30,8 +29,8 @@ void	Validator::logger(const std::string& error) const {
 	std::ofstream	file;
 
 	file.open(outputFile, std::ios::out | std::ios::app);
-	file << WEBSERV_ERROR_HEADER + error + "\n";
-	file << TEST_FAILED;
+	file << WEBSERV_ERROR_HEADER << error << "\n";
+	file << WEBSERV_ERROR_HEADER << CONF_FILE << "./" << _config.getFilePath() + " " << TEST_FAILED;
 	file.close();
 }
 
@@ -46,7 +45,7 @@ void	Validator::keyNameCheck(void) const {
 
 	const size_t	directivesCount = sizeof(directives) / sizeof(directives[0]);
 
-	for (it = _globalDirectives.begin(); it != _globalDirectives.end(); ++it) {
+	for (it = _config.getGlobalDirective().begin() ; it != _config.getGlobalDirective().end(); ++it) {
 		const std::string&	key = it->first;
 		bool				found = false;
 		for (size_t i = 0; i < directivesCount; ++i) {
@@ -103,7 +102,7 @@ void	Validator::printMap() const {
 
 	std::map<std::string, std::vector<std::string> >::const_iterator it;
 
-	for (it = _globalDirectives.begin(); it != _globalDirectives.end(); ++it) {
+	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
 		std::cout << it->first << ": ";
 
 		std::vector<std::string>::const_iterator itv;
@@ -126,7 +125,7 @@ void	Validator::clientMaxBodySize(void) const {
 
 	std::map<std::string, std::vector<std::string> >::const_iterator it;
 
-	for (it = _globalDirectives.begin(); it != _globalDirectives.end(); ++it) {
+	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
 
 		std::vector<std::string>::const_iterator itv;
 
