@@ -76,7 +76,7 @@ void Config::setUpTest(void) {
     std::vector<std::string> tmp;
 
     // Values with semicolons attached
-    tmp.push_back("10m;");
+    tmp.push_back("10m;a");
     tmp.push_back(" ");
     tmp.push_back("10m;");
 

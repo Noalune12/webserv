@@ -8,8 +8,8 @@
 #include "Validator.hpp"
 
 // a mettre ailleurs ?
-# define WEBSERV_ERROR_HEADER "webserv: "
-# define EMERGE "[emerge] "
+# define WEBSERV_PREFIX "webserv: "
+# define EMERG "[emerg] "
 # define UNKNOWN_DIR "unknown directive "
 # define UNEXPECTED "unexpected "
 # define CONF_FILE "configuration file "
@@ -35,7 +35,7 @@ void	Validator::validate(void) {
 
 	printMap();
 	keyNameCheck();
-	logger("test");
+	// logger("test");
 }
 
 void	Validator::initAllowedContext(void) {
@@ -98,8 +98,10 @@ void	Validator::logger(const std::string& error) const {
 	std::ofstream	file;
 
 	file.open(outputFile, std::ios::out | std::ios::app);
-	file << WEBSERV_ERROR_HEADER << error << "\n";
-	file << WEBSERV_ERROR_HEADER << CONF_FILE << "./" << _config.getFilePath() + " " << TEST_FAILED;
+
+	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl;
+	file << WEBSERV_PREFIX << "configuration file " << _config.getFilePath() << " test failed" << std::endl;
+
 	file.close();
 }
 
@@ -119,49 +121,46 @@ void	Validator::keyNameCheck(void) const {
 		bool				found = false;
 		for (size_t i = 0; i < directivesCount; ++i) {
 			if (key == directives[i]) {
-				std::cout << key << std::endl;
 				found = true;
-				semicolonCheck(it->second);
-				// check directives settings via table of function pointer
+				semicolonCheck(it->second, key);
 				break ;
 			}
 		}
 		if (!found) {
-			throw std::invalid_argument("Error in key: '" + it->first +  "' is an invalid directive");
+			std::string errorMsg = "unknown directive \"" + key + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
 		}
 	}
 }
 
-void	Validator::semicolonCheck(const std::vector<std::string>& v) const {
+void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const {
 
 	std::vector<std::string>::const_iterator itv;
 
-    for (itv = v.begin(); itv != v.end(); ++itv) {
-        const std::string&	value = *itv;
+	for (itv = v.begin(); itv != v.end(); ++itv) {
+		const std::string&	value = *itv;
 
-        if (value == " ") {
-            std::cout << YELLOW << "skipping space" << RESET << std::endl;
-            continue ;
-        }
+		if (value == " " || value.empty()) {
+			continue ;
+		}
 
-        std::size_t	found = value.find(";");
-        std::cout << "value: '" << value << "'" << std::endl << "found: " << found << std::endl << "length: " << value.length() - 1 << std::endl;
+		std::size_t	found = value.find(";");
 
-        if (found != std::string::npos && found != value.length() - 1) {
-            std::cout << RED << "Semicolon in wrong position in value: '" << value << "'" << RESET << std::endl;
-            throw std::invalid_argument("Error in value: '" + value + "' ");
-        }
+		if (found != std::string::npos && found != value.length() - 1) {
+			std::string errorMsg = "unexpected \";\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
 
-        if (itv == v.end() - 1) {
-            if (found == value.length() - 1) {
-                std::cout << GREEN << "last char of last element of vector is semicolon: " << value << RESET << std::endl;
-                return;
-            } else {
-                std::cout << RED << "Last element missing semicolon: " << value << RESET << std::endl;
-                throw std::invalid_argument("Last element must end with semicolon: '" + value + "' ");
-            }
-        }
-    }
+		if (itv == v.end() - 1) {
+			if (found != value.length() - 1) {
+				std::string errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			}
+		}
+	}
 }
 
 
@@ -208,15 +207,23 @@ void	Validator::clientMaxBodySize(void) const {
 			char				leftover;
 
 			if (!(iss >> value) || value <= 0) {
-				throw std::invalid_argument("Error in key: " + it->first + *itv + " cannot be negative");
+				std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
 			} else {
 				char nextChar = iss.peek();
 				if (isWhitespace(nextChar)) {
-					throw std::invalid_argument("Error in key: " + it->first + *itv + " has whitespaces");
+					std::string errorMsg = "invalid number of arguments in \"" + it->first + "\" directive";
+					logger(errorMsg);
+					throw std::invalid_argument(errorMsg);
 				} else if (!(iss >> leftover)) {
-					throw std::invalid_argument("Error in key: " + it->first + " " + *itv + " has no unity");
+					std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
+					logger(errorMsg);
+					throw std::invalid_argument(errorMsg);
 				} else if (!validateUnity(leftover)) {
-					throw std::invalid_argument("Error in key: " + it->first + *itv + " has a wrong unity");
+					std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
+					logger(errorMsg);
+					throw std::invalid_argument(errorMsg);
 				}
 			}
 		}

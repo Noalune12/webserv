@@ -23,7 +23,7 @@ class Validator {
 
 		void	clientMaxBodySize(void) const;
 		void	keyNameCheck(void) const;
-		void	semicolonCheck(const std::vector<std::string>& v) const;
+		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 
 		void	logger(const std::string& error) const;
 
