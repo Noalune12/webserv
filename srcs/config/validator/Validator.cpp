@@ -7,6 +7,7 @@
 #include "rules.h"
 #include "Validator.hpp"
 
+// a mettre ailleurs ?
 # define WEBSERV_ERROR_HEADER "webserv: "
 # define EMERGE "[emerge] "
 # define UNKNOWN_DIR "unknown directive "
@@ -14,11 +15,16 @@
 # define CONF_FILE "configuration file "
 # define TEST_FAILED "test failed\n"
 
-Validator::Validator(Config& config) : _config(config) {}
+Validator::Validator(Config& config) : _config(config), _allowedInContext() {
+	initAllowedContext();
+	initValidators();
+}
 
 Validator::~Validator() {}
 
 void	Validator::validate(void) {
+
+	// validation par contexte -> creer des regles de validation en fonction du contexte.
 
 	// loop sur globalDirectives -> je sais que ce sont des directives dont je peux faire:
 	// keyNameCheck -> semiColonCheck -> parameterCheck en fonctions de la directive. (tableaux de pointeurs sur fonctions ?)
@@ -26,10 +32,64 @@ void	Validator::validate(void) {
 	// loop sur le vecteur de Context
 	// keyNameCheck -> bracketCheck pour la directive context -> parameterCheck
 	// puis meme chose que pour les globales directives mais a l'interieur du context.
-	// 
+
 	printMap();
 	keyNameCheck();
 	logger("test");
+}
+
+void	Validator::initAllowedContext(void) {
+
+	// Global Context
+	_allowedInContext[GLOBAL].push_back(ERR_PAGE);
+	_allowedInContext[GLOBAL].push_back(ERR_LOG);
+	_allowedInContext[GLOBAL].push_back(CL_MAX_B_SYZE);
+	_allowedInContext[GLOBAL].push_back(SERV); //  a remove ? je sais pas encore si on considère les contexts comme des directives
+
+	// Server Context
+	_allowedInContext[SERV].push_back(LISTEN);
+	_allowedInContext[SERV].push_back(SERV_NAME);
+	_allowedInContext[SERV].push_back(ROOT);
+	_allowedInContext[SERV].push_back(ERR_PAGE);
+	_allowedInContext[SERV].push_back(CL_MAX_B_SYZE);
+	_allowedInContext[SERV].push_back(INDEX);
+	_allowedInContext[SERV].push_back(LOCATION); // same
+	_allowedInContext[SERV].push_back(ALL_METHODS);
+	_allowedInContext[SERV].push_back(AUTOINDEX);
+	_allowedInContext[SERV].push_back(UPLOAD_TO);
+	_allowedInContext[SERV].push_back(RETURN);
+
+	// Location Context
+	_allowedInContext[LOCATION].push_back(ERR_PAGE);
+	_allowedInContext[LOCATION].push_back(CL_MAX_B_SYZE);
+	_allowedInContext[LOCATION].push_back(ROOT);
+	_allowedInContext[LOCATION].push_back(INDEX);
+	_allowedInContext[LOCATION].push_back(ALL_METHODS);
+	_allowedInContext[LOCATION].push_back(AUTOINDEX);
+	_allowedInContext[LOCATION].push_back(UPLOAD_TO);
+	_allowedInContext[LOCATION].push_back(RETURN);
+	_allowedInContext[LOCATION].push_back(ALIAS);
+	_allowedInContext[LOCATION].push_back(CGI_PATH);
+	_allowedInContext[LOCATION].push_back(CGI_EXT);
+
+	// std::map<std::string, std::vector<std::string> >::const_iterator it;
+
+	// for (it = _allowedInContext.begin(); it != _allowedInContext.end(); ++it) {
+	// 	std::cout << it->first << ": ";
+
+	// 	std::vector<std::string>::const_iterator itv;
+	// 	for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
+	// 		std::cout << *itv;
+	// 		if (itv != it->second.end() - 1)
+	// 			std::cout << ", ";
+	// 	}
+	// 	std::cout << std::endl;
+	// }
+}
+
+void	Validator::initValidators(void) {
+
+	// _directiveValidators[CL_MAX_B_SYZE] = &Validator::clientMaxBodySize;
 }
 
 void	Validator::logger(const std::string& error) const {
@@ -116,7 +176,9 @@ void	Validator::printMap() const {
 
 		std::vector<std::string>::const_iterator itv;
 		for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-			std::cout << *itv << ", ";
+			std::cout << *itv;
+			if (itv != it->second.end() - 1)
+				std::cout << ", ";
 		}
 		std::cout << std::endl;
 	}
@@ -130,6 +192,8 @@ static bool	isWhitespace(char c) {
 	return (std::isspace(static_cast<unsigned char>(c)));
 }
 
+// en attendant de changer pour une fonction du tableau de pointeurs sur fonctions: next prototype
+// void	Validator::clientMaxBodySize(const std::vector<std::string>& values) const {
 void	Validator::clientMaxBodySize(void) const {
 
 	std::map<std::string, std::vector<std::string> >::const_iterator it;

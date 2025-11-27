@@ -17,6 +17,26 @@ class Validator {
 
 	private:
 		Config&	_config;
+		std::map<std::string, std::vector<std::string> > _allowedInContext;
+
+		void	initAllowedContext(void);
+
+		void	clientMaxBodySize(void) const;
+		void	keyNameCheck(void) const;
+		void	semicolonCheck(const std::vector<std::string>& v) const;
+
+		void	logger(const std::string& error) const;
+
+
+		// validateGlobalDirective()
+		// validateServerContexts()
+		// validateLocationContexts()
+
+		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
+
+		std::map<std::string, DirectiveValidator> _directiveValidators;
+
+		void	initValidators(void);
 
 	public:
 
@@ -25,16 +45,9 @@ class Validator {
 
 		void	printMap() const;
 
-		void	clientMaxBodySize(void) const;
-
-
-		void	keyNameCheck(void) const;
-		void	semicolonCheck(const std::vector<std::string>& v) const;
-
-		void	logger(const std::string& error) const;
-
 		// main function, calls every subverification
 		void	validate(void);
+
 };
 
 #endif
