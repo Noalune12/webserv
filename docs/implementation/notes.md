@@ -25,3 +25,19 @@ Si directives dupliquées:
   - check des droits du fichier,
 - work in nginx docker container and check each error messages with `nginx -t`
 - create
+
+
+## ⚠️ TODO
+
+- TAKE DECISION ON WHICH ERROR MESSAGES FOR DIFFERENT SYNTAX ERROR, nginx has a weird behavior that is not explained in the documentation, the only way to understand which message is written for which case is by reading the source code and I CBA doing that for a feature that is not required, I'll mimic as much as possible nginx behavior but by simplifying as much as I can. I don't want to spend a week on that...
+
+List of error strings we will handle:
+
+- "unknown directive" -> directive we do not accept
+- "unexpected end of file, expecting '}'" -> in case of missing } somewhere
+- "unexpected '}'" -> if duplicate (or more) }} somewhere
+- "unexpected '{'" -> if duplicate (or more) {{ somewhere
+- "unexpected ';'" -> if duplicate (or more) ;; somewhere
+- "invalid number of arguments" -> if some directive have more than one arg, it prevails over the syntax of the argument
+- "directive %s is not terminated by ';'" -> if missing ; at the end of a directive
+- "directive is duplicate" -> if directive cannot be duplicated
