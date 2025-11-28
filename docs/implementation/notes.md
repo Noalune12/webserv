@@ -95,3 +95,11 @@ LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)
 - 429 Too Many Requests (maybe)
 - 500 Internal Server Error
 - 505 HTTP Version Not Supported
+
+
+- ⚠️ TODO:
+  - pour check les code d'erreur
+    - je vais devoir identifier si il y un vecteur avec " ", si jamais il y a des duplicatas
+    - ensuite je check les nombres jusqu'a `v.end() - 1` pour supprimer le check du path des codes d'erreurs
+    - une fois que j'ai ce "sous-vecteur", il faut que je check le nombre de parametres (path compris) et qu'il soit >= 2
+    - maintenant je peux check les regles de chaques sous-vecteurs
