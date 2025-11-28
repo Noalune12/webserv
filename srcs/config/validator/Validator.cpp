@@ -28,15 +28,20 @@ void	Validator::validate(void) {
 
 	// loop sur globalDirectives -> je sais que ce sont des directives dont je peux faire:
 	// keyNameCheck -> semiColonCheck -> parameterCheck en fonctions de la directive. (tableaux de pointeurs sur fonctions ?)
-
+	// validateGlobalDirective();
 	// loop sur le vecteur de Context
 	// keyNameCheck -> bracketCheck pour la directive context -> parameterCheck
 	// puis meme chose que pour les globales directives mais a l'interieur du context.
 
-	printMap();
-	keyNameCheck();
+	validateGlobalDirective();
+	// printMap();
+	// keyNameCheck();
+	// clientMaxBodySize();
 	// logger("test");
 }
+
+
+
 
 void	Validator::initAllowedContext(void) {
 
@@ -44,7 +49,6 @@ void	Validator::initAllowedContext(void) {
 	_allowedInContext[GLOBAL].push_back(ERR_PAGE);
 	_allowedInContext[GLOBAL].push_back(ERR_LOG);
 	_allowedInContext[GLOBAL].push_back(CL_MAX_B_SYZE);
-	_allowedInContext[GLOBAL].push_back(SERV); //  a remove ? je sais pas encore si on considère les contexts comme des directives
 
 	// Server Context
 	_allowedInContext[SERV].push_back(LISTEN);
@@ -99,30 +103,44 @@ void	Validator::logger(const std::string& error) const {
 
 	file.open(outputFile, std::ios::out | std::ios::app);
 
-	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl;
+	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl; // will add line of the misconfiguration once we switch from map to pair, will need another paramater with will be the line
 	file << WEBSERV_PREFIX << "configuration file " << _config.getFilePath() << " test failed" << std::endl;
 
 	file.close();
 }
 
-void	Validator::keyNameCheck(void) const {
 
-	const char	*directives[] = {
-		ERR_PAGE, ERR_LOG, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
-		LOCATION, ALL_METHODS, AUTOINDEX, UPLOAD_TO, RETURN, ALIAS, CGI_PATH, CGI_EXT
-	};
+/* does the whole validation of global directives */
+void	Validator::validateGlobalDirective(void) const {
+
+	// check du nom de la directive
+	// check de la syntax des semicolons
+	// check de la validite des parametres de la directives (propre a chaque directives)
+
+	keyNameCheck(GLOBAL);
+	// parameterCheck();
+}
+
+void Validator::keyNameCheck(const std::string& context) const {
 
 	std::map<std::string, std::vector<std::string> >::const_iterator	it;
 
-	const size_t	directivesCount = sizeof(directives) / sizeof(directives[0]);
+	std::map<std::string, std::vector<std::string> >::const_iterator	contextIt;
+	contextIt = _allowedInContext.find(context);
 
-	for (it = _config.getGlobalDirective().begin() ; it != _config.getGlobalDirective().end(); ++it) {
+	const std::vector<std::string>&	allowedDirectives = contextIt->second;
+
+	const std::map<std::string, std::vector<std::string> >& directivesToCheck = _config.getGlobalDirective();
+
+	for (it = directivesToCheck.begin(); it != directivesToCheck.end(); ++it) {
 		const std::string&	key = it->first;
 		bool				found = false;
-		for (size_t i = 0; i < directivesCount; ++i) {
-			if (key == directives[i]) {
+
+		std::vector<std::string>::const_iterator	allowedIt;
+		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
+			if (key == *allowedIt) {
 				found = true;
-				semicolonCheck(it->second, key);
+				semicolonCheck(it->second, key); // not good
 				break ;
 			}
 		}
@@ -194,8 +212,10 @@ void	Validator::printMap() const {
 	}
 }
 
-static bool	validateUnity(char leftover) {
-	return (leftover == 'k' || leftover == 'K' || leftover == 'm' || leftover == 'M' || leftover == 'g' || leftover == 'G');
+static bool	validateUnity(std::string leftover) {
+	if (leftover.length() > 2)
+		return (false);
+	return (leftover[0] == 'k' || leftover[0] == 'K' || leftover[0] == 'm' || leftover[0] == 'M' || leftover[0] == 'g' || leftover[0] == 'G');
 }
 
 static bool	isWhitespace(char c) {
@@ -210,32 +230,30 @@ void	Validator::clientMaxBodySize(void) const {
 
 	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
 
-		std::vector<std::string>::const_iterator itv;
+		std::vector<std::string>::const_iterator itv = it->second.end() - 1;
 
-		for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-			std::istringstream	iss(*itv);
-			int					value;
-			char				leftover;
+		std::istringstream	iss(*itv);
+		int					value;
+		std::string			leftover;
 
-			if (!(iss >> value) || value <= 0) {
+		if (!(iss >> value) || value <= 0) {
+			std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		} else {
+			char nextChar = iss.peek();
+			if (isWhitespace(nextChar)) {
+				std::string errorMsg = "invalid number of arguments in \"" + it->first + "\" directive";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			} else if (!(iss >> leftover) && leftover.length() > 1) {
 				std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
 				logger(errorMsg);
 				throw std::invalid_argument(errorMsg);
-			} else {
-				char nextChar = iss.peek();
-				if (isWhitespace(nextChar)) {
-					std::string errorMsg = "invalid number of arguments in \"" + it->first + "\" directive";
-					logger(errorMsg);
-					throw std::invalid_argument(errorMsg);
-				} else if (!(iss >> leftover)) {
-					std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
-					logger(errorMsg);
-					throw std::invalid_argument(errorMsg);
-				} else if (!validateUnity(leftover)) {
-					std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
-					logger(errorMsg);
-					throw std::invalid_argument(errorMsg);
-				}
+			} else if (!validateUnity(leftover)) {
+				std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
 			}
 		}
 	}

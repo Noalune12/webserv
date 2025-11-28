@@ -20,15 +20,16 @@ class Validator {
 		std::map<std::string, std::vector<std::string> > _allowedInContext;
 
 		void	initAllowedContext(void);
+		void	initValidators(void);
 
 		void	clientMaxBodySize(void) const;
-		void	keyNameCheck(void) const;
+		void	keyNameCheck(const std::string& context) const;
 		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 
 		void	logger(const std::string& error) const;
 
 
-		// validateGlobalDirective()
+		void	validateGlobalDirective(void) const;
 		// validateServerContexts()
 		// validateLocationContexts()
 
@@ -36,7 +37,6 @@ class Validator {
 
 		std::map<std::string, DirectiveValidator> _directiveValidators;
 
-		void	initValidators(void);
 
 	public:
 
