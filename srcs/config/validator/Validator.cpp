@@ -135,7 +135,6 @@ void	Validator::keyNameCheck(void) const {
 }
 
 void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const {
-
 	std::vector<std::string>::const_iterator itv;
 
 	for (itv = v.begin(); itv != v.end(); ++itv) {
@@ -145,20 +144,30 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 			continue ;
 		}
 
-		std::size_t	found = value.find(";");
+		std::size_t	firstSemicolon = value.find(";");
+		std::string	errorMsg;
 
-		if (found != std::string::npos && found != value.length() - 1) {
-			std::string errorMsg = "unexpected \";\"";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
-		}
+		if (firstSemicolon != std::string::npos && firstSemicolon != value.length() - 1) {
 
-		if (itv == v.end() - 1) {
-			if (found != value.length() - 1) {
-				std::string errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+			std::size_t nextNonSemicolon = value.find_first_not_of(";", firstSemicolon);
+
+			if (nextNonSemicolon != std::string::npos && nextNonSemicolon < value.length()) {
+				std::string	unknownPart = value.substr(firstSemicolon + 1);
+				unknownPart = unknownPart.substr(0, unknownPart.find_first_of(";"));
+				errorMsg = "unknown directive \"" + unknownPart + "\"";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			} else {
+				errorMsg = "unexpected \";\"";
 				logger(errorMsg);
 				throw std::invalid_argument(errorMsg);
 			}
+		}
+
+		if (firstSemicolon != value.length() - 1) {
+			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
 		}
 	}
 }
