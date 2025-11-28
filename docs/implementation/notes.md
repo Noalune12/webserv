@@ -54,3 +54,13 @@ List of error strings we will handle:
 
 bracketCheck idea:
 - if the whole context is in a class and the class data contains the first to the last line of the context, including the closing bracket, then I can check the **last** element of the **first** line and the **first** element of the **last** line
+
+
+
+
+
+### Architecture de Context
+
+- _name: la premiere ligne du context. ex: `std::string _name = "server {"` | `std::string _name = "location / {"`
+- vecteur de pair des directives
+- normalement a la fin la bracket fermant dans le premier element de la pair egalement
