@@ -117,12 +117,37 @@ void	Validator::validateGlobalDirective(void) const {
 	// check de la validite des parametres de la directives (propre a chaque directives)
 
 	keyNameCheck(GLOBAL);
-	// parameterCheck();
+	const std::map<std::string, std::vector<std::string> >& directives = _config.getGlobalDirective();
+
+	std::map<std::string, std::vector<std::string> >::const_iterator it;
+
+	for (it = directives.begin(); it != directives.end(); ++it) {
+		directiveCheck(it->first, it->second);
+	}
 }
 
-// void	Validator::identifyDirective(const std::vector<std::string>& v, const std::string& directive) const {
+// void	Validator::validateErrorPage(const std::vector<std::string>& value) const {
 
 // }
+
+void	Validator::directiveCheck(const std::string& directive, const std::vector<std::string>& values) const {
+
+	(void) values;
+	if (directive == ERR_PAGE) {
+		// validateErrorPage() -> parameter check first
+		// semicolonCheck()
+	} else if (directive ==  ERR_LOG) {
+		// semicolonCheck()
+		// validateErrorLog()
+	} else if (directive == CL_MAX_B_SYZE) {
+		// not sure yet
+	} else {
+		// security but should no be required since we identified it in keyNameCheck()
+		std::string errorMsg = "no validator found for directive \"" + directive + "\"";
+        logger(errorMsg);
+        throw std::runtime_error(errorMsg);
+	}
+}
 
 
 void Validator::keyNameCheck(const std::string& context) const {
@@ -151,8 +176,7 @@ void Validator::keyNameCheck(const std::string& context) const {
 		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
 			if (key == *allowedIt) {
 				found = true;
-				// identify directive then proceed the checks of parameters (proper to directives) and semicolonCheck
-				semicolonCheck(it->second, key); // not good maybe move elsewhere
+				// semicolonCheck(it->second, key); // not good maybe move elsewhere
 				break ;
 			}
 		}
@@ -174,6 +198,7 @@ void Validator::keyNameCheck(const std::string& context) const {
 
 // Maybe will had another layer of check depending on the directive name, some rules prevails over the semicolon check
 void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const {
+
 	std::vector<std::string>::const_iterator itv;
 
 	for (itv = v.begin(); itv != v.end(); ++itv) {

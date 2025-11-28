@@ -38,7 +38,13 @@ class Validator {
 		std::map<std::string, DirectiveValidator> _directiveValidators;
 
 
-		// void	identifyDirective(const std::vector<std::string>& v, const std::string& directive) const;
+		void	directiveCheck(const std::string& directive, const std::vector<std::string>& values) const;
+
+
+		// void	validateErrorPage(const std::vector<std::string>& values) const;
+		// void	validateErrorLog(const std::vector<std::string>& values) const;
+		// void	validateClientMaxBodySize(const std::vector<std::string>& values) const; // adapt clientMaxBodySize()
+
 
 	public:
 
