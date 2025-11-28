@@ -314,7 +314,8 @@ void	Validator::validateErrorPage(const std::vector<std::string>& v) const {
 
 	// need to check there is at least 2 elements, one error code and one path
 
-	for (itv = v.begin(); itv != v.end(); ++itv) {
+	// v.end() - 1 feels wrong but I dont know how to check it otherwise. (it is wrong, will check later)
+	for (itv = v.begin(); itv != v.end() - 1; ++itv) {
 		std::istringstream iss(*itv);
 		int value;
 

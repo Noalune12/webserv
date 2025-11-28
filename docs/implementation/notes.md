@@ -3,7 +3,7 @@
 Tout ce qui est apres un ; est une erreur de syntaxe.
 
 Si directives dupliquées:
-- Certaines directives acceptent plusieurs parametres, alors les traitent ensemble
+- Certaines directives acceptent plusieurs parametres, alors les traiter ensemble
 - Les autres directives s'overrident, on prend en compte seulement la derniere occurence des duplicatas
 
 
@@ -23,7 +23,6 @@ Si directives dupliquées:
 - Lancer un container docker nginx et check chaque message d'erreur avec `nginx -t`
 - creer une fonction globale qui ecrit dans le fichier de log
   - check des droits du fichier,
-- work in nginx docker container and check each error messages with `nginx -t`
 
 
 
