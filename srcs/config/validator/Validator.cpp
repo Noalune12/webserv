@@ -57,7 +57,6 @@ void	Validator::initAllowedContext(void) {
 	_allowedInContext[SERV].push_back(ERR_PAGE);
 	_allowedInContext[SERV].push_back(CL_MAX_B_SYZE);
 	_allowedInContext[SERV].push_back(INDEX);
-	_allowedInContext[SERV].push_back(LOCATION); // same
 	_allowedInContext[SERV].push_back(ALL_METHODS);
 	_allowedInContext[SERV].push_back(AUTOINDEX);
 	_allowedInContext[SERV].push_back(UPLOAD_TO);
@@ -113,7 +112,7 @@ void	Validator::logger(const std::string& error) const {
 /* does the whole validation of global directives */
 void	Validator::validateGlobalDirective(void) const {
 
-	// check du nom de la directive
+	// check du nom de la directive -> done
 	// check de la syntax des semicolons
 	// check de la validite des parametres de la directives (propre a chaque directives)
 
@@ -121,7 +120,19 @@ void	Validator::validateGlobalDirective(void) const {
 	// parameterCheck();
 }
 
+// void	Validator::identifyDirective(const std::vector<std::string>& v, const std::string& directive) const {
+
+// }
+
+
 void Validator::keyNameCheck(const std::string& context) const {
+
+	static const char	*directives[] = {
+		ERR_PAGE, ERR_LOG, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
+		LOCATION, ALL_METHODS, AUTOINDEX, UPLOAD_TO, RETURN, ALIAS, CGI_PATH, CGI_EXT
+	};
+
+	const size_t	directivesCount = sizeof(directives) / sizeof(directives[0]);
 
 	std::map<std::string, std::vector<std::string> >::const_iterator	it;
 
@@ -140,14 +151,22 @@ void Validator::keyNameCheck(const std::string& context) const {
 		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
 			if (key == *allowedIt) {
 				found = true;
-				semicolonCheck(it->second, key); // not good
+				// identify directive then proceed the checks of parameters (proper to directives) and semicolonCheck
+				semicolonCheck(it->second, key); // not good maybe move elsewhere
 				break ;
 			}
 		}
 		if (!found) {
-			std::string errorMsg = "unknown directive \"" + key + "\"";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
+			for (size_t i = 0; i < directivesCount; ++i) {
+			if (key == directives[i]) {
+				std::string errorMsg = "\"" + key + "\" directive is not allowed here in ";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			}
+		}
+		std::string errorMsg = "unknown directive \"" + key + "\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
 		}
 	}
 }

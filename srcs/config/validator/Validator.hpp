@@ -38,6 +38,8 @@ class Validator {
 		std::map<std::string, DirectiveValidator> _directiveValidators;
 
 
+		// void	identifyDirective(const std::vector<std::string>& v, const std::string& directive) const;
+
 	public:
 
 		Validator(Config& config);
