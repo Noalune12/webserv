@@ -73,32 +73,26 @@ std::vector<Context>	Config::getVectorContext(void) const {
 void Config::setUpTest(void) {
 
     /* client_max_body_size */
-    std::vector<std::string> tmp;
+    std::vector<std::string> cl_max_b_size;
 
-    // Values with semicolons attached
-    tmp.push_back("10m;a");
-    tmp.push_back(" ");
-    tmp.push_back("10m;");
-
-    // tmp.push_back("100M;");
-
-    // tmp.push_back("-1;");
-    // tmp.push_back("200K;");
-    // tmp.push_back("3g;");
-    // tmp.push_back("300G");
-    // tmp.push_back(";");
-    // tmp.push_back("a");
-    // tmp.push_back("a;");
-    // tmp.push_back(";");
+    cl_max_b_size.push_back("10m;");
 
 
-    _globalDirectives["client_max_body_size"] = tmp;
+    /* error_page */
+    std::vector<std::string> error_page;
 
-	// std::vector<std::string> tmp2;
-	// tmp2.push_back("value;");
-	// tmp2.push_back("value;something");
-	// tmp2.push_back("value;something");
+	error_page.push_back("404");
+	error_page.push_back("./test-path-/404-test.html;");
 
-	// _globalDirectives["server_name"] = tmp2;
+    /* error_log */
+    std::vector<std::string> error_log;
 
+	error_log.push_back("./var/logs/error.log;");
+
+
+	/* globalDirectives temporary tester */
+
+    _globalDirectives["client_max_body_size"] = cl_max_b_size;
+    _globalDirectives["error_page"] = error_page;
+    _globalDirectives["error_log"] = error_log;
 }
