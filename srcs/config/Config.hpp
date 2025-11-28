@@ -41,10 +41,10 @@ class Config {
 
 		Config&	getConfig(void);
 
-		const std::string&									getFilePath(void) const;
-		std::string											getFileContent(void) const;
-		std::map<std::string, std::vector<std::string> >&	getGlobalDirective(void);
-		std::vector<Context>								getVectorContext(void) const;
+		const std::string&													getFilePath(void) const;
+		std::string															getFileContent(void) const;
+		std::vector<std::pair<std::string, std::vector<std::string> > >&	getGlobalDirective(void);
+		std::vector<Context>												getVectorContext(void) const;
 
 
 		void	setUpTest(void);

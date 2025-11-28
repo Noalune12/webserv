@@ -17,7 +17,7 @@ class Validator {
 
 	private:
 		Config&	_config;
-		std::map<std::string, std::vector<std::string> > _allowedInContext;
+		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
 		void	initAllowedContext(void);
 		void	initValidators(void);

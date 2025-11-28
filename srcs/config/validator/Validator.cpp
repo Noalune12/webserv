@@ -41,49 +41,45 @@ void	Validator::validate(void) {
 }
 
 
-
-
 void	Validator::initAllowedContext(void) {
 
-	// Global Context
-	_allowedInContext[GLOBAL].push_back(ERR_PAGE);
-	_allowedInContext[GLOBAL].push_back(ERR_LOG);
-	_allowedInContext[GLOBAL].push_back(CL_MAX_B_SYZE);
+	_allowedInContext.push_back(std::make_pair(GLOBAL, std::vector<std::string>()));
+	_allowedInContext.push_back(std::make_pair(SERV, std::vector<std::string>()));
+	_allowedInContext.push_back(std::make_pair(LOCATION, std::vector<std::string>()));
 
-	// Server Context
-	_allowedInContext[SERV].push_back(LISTEN);
-	_allowedInContext[SERV].push_back(SERV_NAME);
-	_allowedInContext[SERV].push_back(ROOT);
-	_allowedInContext[SERV].push_back(ERR_PAGE);
-	_allowedInContext[SERV].push_back(CL_MAX_B_SYZE);
-	_allowedInContext[SERV].push_back(INDEX);
-	_allowedInContext[SERV].push_back(ALL_METHODS);
-	_allowedInContext[SERV].push_back(AUTOINDEX);
-	_allowedInContext[SERV].push_back(UPLOAD_TO);
-	_allowedInContext[SERV].push_back(RETURN);
+	_allowedInContext[0].second.push_back(ERR_PAGE);
+	_allowedInContext[0].second.push_back(ERR_LOG);
+	_allowedInContext[0].second.push_back(CL_MAX_B_SYZE);
 
-	// Location Context
-	_allowedInContext[LOCATION].push_back(ERR_PAGE);
-	_allowedInContext[LOCATION].push_back(CL_MAX_B_SYZE);
-	_allowedInContext[LOCATION].push_back(ROOT);
-	_allowedInContext[LOCATION].push_back(INDEX);
-	_allowedInContext[LOCATION].push_back(ALL_METHODS);
-	_allowedInContext[LOCATION].push_back(AUTOINDEX);
-	_allowedInContext[LOCATION].push_back(UPLOAD_TO);
-	_allowedInContext[LOCATION].push_back(RETURN);
-	_allowedInContext[LOCATION].push_back(ALIAS);
-	_allowedInContext[LOCATION].push_back(CGI_PATH);
-	_allowedInContext[LOCATION].push_back(CGI_EXT);
+	_allowedInContext[1].second.push_back(LISTEN);
+	_allowedInContext[1].second.push_back(SERV_NAME);
+	_allowedInContext[1].second.push_back(ROOT);
+	_allowedInContext[1].second.push_back(ERR_PAGE);
+	_allowedInContext[1].second.push_back(CL_MAX_B_SYZE);
+	_allowedInContext[1].second.push_back(INDEX);
+	_allowedInContext[1].second.push_back(ALL_METHODS);
+	_allowedInContext[1].second.push_back(AUTOINDEX);
+	_allowedInContext[1].second.push_back(UPLOAD_TO);
+	_allowedInContext[1].second.push_back(RETURN);
 
-	// std::map<std::string, std::vector<std::string> >::const_iterator it;
+	_allowedInContext[2].second.push_back(ERR_PAGE);
+	_allowedInContext[2].second.push_back(CL_MAX_B_SYZE);
+	_allowedInContext[2].second.push_back(ROOT);
+	_allowedInContext[2].second.push_back(INDEX);
+	_allowedInContext[2].second.push_back(ALL_METHODS);
+	_allowedInContext[2].second.push_back(AUTOINDEX);
+	_allowedInContext[2].second.push_back(UPLOAD_TO);
+	_allowedInContext[2].second.push_back(RETURN);
+	_allowedInContext[2].second.push_back(ALIAS);
+	_allowedInContext[2].second.push_back(CGI_PATH);
+	_allowedInContext[2].second.push_back(CGI_EXT);
 
-	// for (it = _allowedInContext.begin(); it != _allowedInContext.end(); ++it) {
-	// 	std::cout << it->first << ": ";
+	// for (size_t i = 0; i < _allowedInContext.size(); ++i) {
+	// 	std::cout << _allowedInContext[i].first << ": ";
 
-	// 	std::vector<std::string>::const_iterator itv;
-	// 	for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-	// 		std::cout << *itv;
-	// 		if (itv != it->second.end() - 1)
+	// 	for (size_t j = 0; j < _allowedInContext[i].second.size(); ++j) {
+	// 		std::cout << _allowedInContext[i].second[j];
+	// 		if (j != _allowedInContext[i].second.size() - 1)
 	// 			std::cout << ", ";
 	// 	}
 	// 	std::cout << std::endl;
@@ -117,9 +113,9 @@ void	Validator::validateGlobalDirective(void) const {
 	// check de la validite des parametres de la directives (propre a chaque directives)
 
 	keyNameCheck(GLOBAL);
-	const std::map<std::string, std::vector<std::string> >& directives = _config.getGlobalDirective();
+	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
 
-	std::map<std::string, std::vector<std::string> >::const_iterator it;
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		directiveCheck(it->first, it->second);
@@ -144,13 +140,13 @@ void	Validator::directiveCheck(const std::string& directive, const std::vector<s
 	} else {
 		// security but should no be required since we identified it in keyNameCheck()
 		std::string errorMsg = "no validator found for directive \"" + directive + "\"";
-        logger(errorMsg);
-        throw std::runtime_error(errorMsg);
+		logger(errorMsg);
+		throw std::runtime_error(errorMsg);
 	}
 }
 
 
-void Validator::keyNameCheck(const std::string& context) const {
+void	Validator::keyNameCheck(const std::string& context) const {
 
 	static const char	*directives[] = {
 		ERR_PAGE, ERR_LOG, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
@@ -159,14 +155,19 @@ void Validator::keyNameCheck(const std::string& context) const {
 
 	const size_t	directivesCount = sizeof(directives) / sizeof(directives[0]);
 
-	std::map<std::string, std::vector<std::string> >::const_iterator	it;
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 
-	std::map<std::string, std::vector<std::string> >::const_iterator	contextIt;
-	contextIt = _allowedInContext.find(context);
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator contextIt;
+
+	for (contextIt = _allowedInContext.begin(); contextIt != _allowedInContext.end(); ++contextIt) {
+		if (contextIt->first == context) {
+			break ;
+		}
+	}
 
 	const std::vector<std::string>&	allowedDirectives = contextIt->second;
 
-	const std::map<std::string, std::vector<std::string> >& directivesToCheck = _config.getGlobalDirective();
+	const std::vector<std::pair<std::string, std::vector<std::string> > >& directivesToCheck = _config.getGlobalDirective();
 
 	for (it = directivesToCheck.begin(); it != directivesToCheck.end(); ++it) {
 		const std::string&	key = it->first;
@@ -241,7 +242,7 @@ void	Validator::printMap() const {
 
 	std::cout << GREEN "Validator:" RESET << std::endl;
 
-	std::map<std::string, std::vector<std::string> >::const_iterator it;
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
 	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
 		std::cout << it->first << ": ";
@@ -270,7 +271,7 @@ static bool	isWhitespace(char c) {
 // void	Validator::clientMaxBodySize(const std::vector<std::string>& values) const {
 void	Validator::clientMaxBodySize(void) const {
 
-	std::map<std::string, std::vector<std::string> >::const_iterator it;
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
 	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
 

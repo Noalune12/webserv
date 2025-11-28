@@ -30,7 +30,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 				continue;
 			}
 
-    		std::istringstream iss(line);
+			std::istringstream	iss(line);
 			std::string temp;
 			line.clear();
 
@@ -135,7 +135,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		}
 		// std::cout << "\033[31m" << "#### GLOBAL DIR ####\n" << "\033[0m" << std::endl;
 		// printMap();
-		printContent();
+		// printContent();
 
 
 		// std::cout << _filePath << std::endl;
@@ -162,10 +162,10 @@ bool Config::isOnlyWSpace(std::string line) const {
 	size_t count = 0;
 
 	for (size_t i = 0; i < line.length(); ++i) {
-        if (isspace(line[i])) {
-            count++;
-        }
-    }
+		if (isspace(line[i])) {
+			count++;
+		}
+	}
 	if (line.length() == count)
 		return true;
 	return false;
@@ -262,23 +262,23 @@ bool Config::isOnlyWSpace(std::string line) const {
 
 void Config::addDirective(std::string line) {
 
-    std::istringstream iss(line);
-    std::string dir;
+	std::istringstream iss(line);
+	std::string dir;
 
-    // Extract directive name (skips whitespace, the >> operator does it by itself)
-    if (!(iss >> dir)) {
-        return ; // Return here because you already removed the comments in the while (getline) so if its empty then its an empty line
-    }
+	// Extract directive name (skips whitespace, the >> operator does it by itself)
+	if (!(iss >> dir)) {
+		return ; // Return here because you already removed the comments in the while (getline) so if its empty then its an empty line
+	}
 
-    // Extract all arguments, again skipping whitespace automaticaly
-    std::vector<std::string> args;
-    std::string arg;
-    while (iss >> arg) {
-        args.push_back(arg);
-    }
+	// Extract all arguments, again skipping whitespace automaticaly
+	std::vector<std::string> args;
+	std::string arg;
+	while (iss >> arg) {
+		args.push_back(arg);
+	}
 
-    // Check for duplicate directives and merge if needed, we can use find with the current token extracted
-    // std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.find(dir);
+	// Check for duplicate directives and merge if needed, we can use find with the current token extracted
+	// std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.find(dir);
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.begin();
 	for (; itm != _globalDirectives.end(); itm++) {
@@ -287,16 +287,16 @@ void Config::addDirective(std::string line) {
 	}
 
 
-    if (itm != _globalDirectives.end()) {
-        // Directive already exists - append new arguments with separator
-        // I use second here to interact directly in the string vector instead of declaring new memory
-        itm->second.push_back(" "); // Keeping the separation, might not be needed anympre
-        itm->second.insert(itm->second.end(), args.begin(), args.end());
-    } else {
-        // New directive
+	if (itm != _globalDirectives.end()) {
+		// Directive already exists - append new arguments with separator
+		// I use second here to interact directly in the string vector instead of declaring new memory
+		itm->second.push_back(" "); // Keeping the separation, might not be needed anympre
+		itm->second.insert(itm->second.end(), args.begin(), args.end());
+	} else {
+		// New directive
 		_globalDirectives.push_back(std::make_pair(dir, args));
-        // _globalDirectives[dir] = args;
-    }
+		// _globalDirectives[dir] = args;
+	}
 }
 
 void Config::printMap() const {
@@ -323,8 +323,8 @@ std::string			Config::getFileContent(void) const {
 	return (this->_fileContent);
 }
 
-std::map<std::string, std::vector<std::string> >&	Config::getGlobalDirective(void) {
-	// return (this->_globalDirectives);
+std::vector<std::pair<std::string, std::vector<std::string> > >&	Config::getGlobalDirective(void) {
+	return (this->_globalDirectives);
 }
 
 std::vector<Context>	Config::getVectorContext(void) const {
@@ -336,29 +336,29 @@ std::vector<Context>	Config::getVectorContext(void) const {
 
 void Config::setUpTest(void) {
 
-    /* client_max_body_size */
-    std::vector<std::string> cl_max_b_size;
+	/* client_max_body_size */
+	// std::vector<std::string> cl_max_b_size;
 
-    cl_max_b_size.push_back("10m;");
-
-
-    /* error_page */
-    std::vector<std::string> error_page;
-
-	error_page.push_back("404");
-	error_page.push_back("./test-path-/404-test.html;");
-
-    /* error_log */
-    std::vector<std::string> error_log;
-
-	error_log.push_back("./var/logs/error.log;");
+	// cl_max_b_size.push_back("10m;");
 
 
-	/* globalDirectives temporary tester */
+	// /* error_page */
+	// std::vector<std::string> error_page;
 
-    // _globalDirectives["client_max_body_size"] = cl_max_b_size;
-    // _globalDirectives["error_page"] = error_page;
-    // _globalDirectives["error_log"] = error_log;
+	// error_page.push_back("404");
+	// error_page.push_back("./test-path-/404-test.html;");
+
+	// /* error_log */
+	// std::vector<std::string> error_log;
+
+	// error_log.push_back("./var/logs/error.log;");
+
+
+	// /* globalDirectives temporary tester */
+
+	// _globalDirectives.push_back(std::make_pair("client_max_body_size", cl_max_b_size));
+	// _globalDirectives.push_back(std::make_pair("error_page", error_page));
+	// _globalDirectives.push_back(std::make_pair("error_log", error_log));
 }
 
 void	Config::printContent() const {
