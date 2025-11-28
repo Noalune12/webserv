@@ -43,7 +43,7 @@ class Config {
 		bool isOnlyWSpace(std::string line) const;
 		void addDirective(std::string line);
 		void printMap() const;
-		// void removeWSpaces();
+		void printContent() const;
 };
 
 #endif
