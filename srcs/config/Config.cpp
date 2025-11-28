@@ -8,10 +8,6 @@
 
 // Config::Config() {}
 
-// bool isNotBracket(char c) {
-//     return !std::isspace(static_cast<unsigned char>(c));
-// }
-
 Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chose dans mes fichiers de test */) {
 
 	try {
@@ -27,7 +23,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 		while (getline(f, line)) {
 
-			std::cout << "START" << std::endl;
+			// std::cout << "START" << std::endl;
 
 			if (line.empty() || isOnlyWSpace(line)) {
 				// std::cout << "HELLO" << std::endl;
@@ -53,12 +49,12 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 					line = line.substr(0, index);
 			}
 			if (line.empty() || isOnlyWSpace(line)) {
-				std::cout << "THIS WAS ONLY A COMMENT OR AN EMPTY LINE" << std::endl;
+				// std::cout << "THIS WAS ONLY A COMMENT OR AN EMPTY LINE" << std::endl;
 				continue;
 			}
 
 			index = line.find('{');
-			std::cout << index << std::endl;
+			// std::cout << index << std::endl;
 			if (!content.empty() && index != 0) {
 				// add to main directives
 				// std::cout << "***** ADD MAIN DIRECTIVES ***** with " << content << std::endl;
@@ -268,7 +264,14 @@ void Config::addDirective(std::string line) {
     }
 
     // Check for duplicate directives and merge if needed, we can use find with the current token extracted
-    std::map<std::string, std::vector<std::string> >::iterator itm = _globalDirectives.find(dir);
+    // std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.find(dir);
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.begin();
+	for (; itm != _globalDirectives.end(); itm++) {
+		if (itm->first == dir)
+			break ;
+	}
+
 
     if (itm != _globalDirectives.end()) {
         // Directive already exists - append new arguments with separator
@@ -277,12 +280,13 @@ void Config::addDirective(std::string line) {
         itm->second.insert(itm->second.end(), args.begin(), args.end());
     } else {
         // New directive
-        _globalDirectives[dir] = args;
+		_globalDirectives.push_back(std::make_pair(dir, args));
+        // _globalDirectives[dir] = args;
     }
 }
 
 void Config::printMap() const {
-	std::map<std::string, std::vector<std::string> >::const_iterator it;
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 	for (it = _globalDirectives.begin(); it != _globalDirectives.end(); ++it) {
 		std::cout << it->first << ": ";
 		

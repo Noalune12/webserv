@@ -100,10 +100,13 @@ Context::Context(std::string name, std::string context): _name(name) {
             // create context and send the remaining of the isstringstream
         }
 
-        //where the } is to integrate
-        if (!content.empty())
-            std::cout << content << std::endl;
         // std::cout << line << std::endl;
+    }
+    //where the } is to integrate into the last pair
+    if (!content.empty()) {
+        // std::cout << content << std::endl;
+        addDirective(content);
+        content.clear();
     }
     // std::cout << "\033[31m" << "#### DIR ####\n" << "\033[0m" << std::endl;
 	// printMap();
@@ -143,7 +146,14 @@ void Context::addDirective(std::string line) {
     }
 
     // Check for duplicate directives and merge if needed, we can use find with the current token extracted
-    std::map<std::string, std::vector<std::string> >::iterator itm = _directives.find(dir);
+    // std::map<std::string, std::vector<std::string> >::iterator itm = _directives.find(dir);
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _directives.begin();
+	for (; itm != _directives.end(); itm++) {
+		if (itm->first == dir)
+			break ;
+	}
+
 
     if (itm != _directives.end()) {
         // Directive already exists - append new arguments with separator
@@ -152,12 +162,13 @@ void Context::addDirective(std::string line) {
         itm->second.insert(itm->second.end(), args.begin(), args.end());
     } else {
         // New directive
-        _directives[dir] = args;
+		_directives.push_back(std::make_pair(dir, args));
+        // _directives[dir] = args;
     }
 }
 
 void Context::printMap() const {
-	std::map<std::string, std::vector<std::string> >::const_iterator it;
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 	for (it = _directives.begin(); it != _directives.end(); ++it) {
 		std::cout << it->first << ": ";
 		
