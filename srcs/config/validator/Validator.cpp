@@ -134,6 +134,8 @@ void	Validator::keyNameCheck(void) const {
 	}
 }
 
+
+// Maybe will had another layer of check depending on the directive name, some rules prevails over the semicolon check
 void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const {
 	std::vector<std::string>::const_iterator itv;
 
