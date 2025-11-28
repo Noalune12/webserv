@@ -64,3 +64,34 @@ bracketCheck idea:
 - _name: la premiere ligne du context. ex: `std::string _name = "server {"` | `std::string _name = "location / {"`
 - vecteur de pair des directives
 - normalement a la fin la bracket fermant dans le premier element de la pair egalement
+
+
+
+### error_page
+
+- Need to check there is at leat on code error (404)
+  - If this is not the case: `invalid number of arguments`
+- Need to check the path of the page exists, is accessible
+  - if no path `invalid number of argument`
+  - ⚠️ the path is relative to the `root` directive as well so I think we should check it later when its required to access the error page, if the path do not exists then we redirect to our how error_page
+- need to check the value of the codes:
+  - nginx: [emerg] value "299" must be between 300 and 599 in /etc/nginx/conf.d/default.conf:2
+  - nginx: [emerg] invalid value "abc" in /etc/nginx/conf.d/default.conf:2
+  - nginx: [emerg] invalid value "499" in /etc/nginx/conf.d/default.conf:2 -> for code we wont handle
+- path has to start with a `/` since its path is related
+
+
+LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)
+- 301 Moved Permanently
+- 302 Found
+- 303 See Other
+- 307 Temporary Redirect
+- 308 Permanent Redirect
+- 400 Bad Request
+- 403 Forbidden
+- 404 Not Found
+- 405 Not Allowed
+- 408 Request Time-out
+- 429 Too Many Requests (maybe)
+- 500 Internal Server Error
+- 505 HTTP Version Not Supported
