@@ -122,15 +122,11 @@ void	Validator::validateGlobalDirective(void) const {
 	}
 }
 
-// void	Validator::validateErrorPage(const std::vector<std::string>& value) const {
-
-// }
-
 void	Validator::directiveCheck(const std::string& directive, const std::vector<std::string>& values) const {
 
 	(void) values;
 	if (directive == ERR_PAGE) {
-		// validateErrorPage() -> parameter check first
+		validateErrorPage(values);
 		// semicolonCheck()
 	} else if (directive ==  ERR_LOG) {
 		// semicolonCheck()
@@ -300,6 +296,62 @@ void	Validator::clientMaxBodySize(void) const {
 				logger(errorMsg);
 				throw std::invalid_argument(errorMsg);
 			}
+		}
+	}
+}
+
+void	Validator::validateErrorPage(const std::vector<std::string>& v) const {
+
+	static const int	error_codes[] = {
+		301, 302, 303, 307, 308,
+		400, 403, 404, 405, 408, 429,
+		500, 505
+	};
+
+	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
+
+	std::vector<std::string>::const_iterator itv;
+
+	// need to check there is at least 2 elements, one error code and one path
+
+	for (itv = v.begin(); itv != v.end(); ++itv) {
+		std::istringstream iss(*itv);
+		int value;
+
+		if (!(iss >> value)) {
+			std::string errorMsg = "invalid value \"" + *itv + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		int	nextChar = iss.peek();
+		if (nextChar != EOF) {
+			std::string errorMsg = "invalid value \"" + *itv + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (!(value >= 300 && value <= 599)) {
+			std::string errorMsg = "value \"" + *itv + "\" must be between 300 and 599";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+
+		bool	validCode = false;
+		for (size_t i = 0; i < validCodeCount; ++i) {
+			if (error_codes[i] == value) {
+				validCode = true;
+				break ;
+			}
+		}
+
+		if (!validCode) {
+			std::ostringstream	oss;
+			oss << value;
+			std::string errorMsg = "invalid value \"" + oss.str() + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
 		}
 	}
 }

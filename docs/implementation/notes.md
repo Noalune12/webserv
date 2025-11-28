@@ -69,7 +69,7 @@ bracketCheck idea:
 
 ### error_page
 
-- Need to check there is at leat on code error (404)
+- Need to check there is at least one code error (404)
   - If this is not the case: `invalid number of arguments`
 - Need to check the path of the page exists, is accessible
   - if no path `invalid number of argument`
@@ -78,7 +78,7 @@ bracketCheck idea:
   - nginx: [emerg] value "299" must be between 300 and 599 in /etc/nginx/conf.d/default.conf:2
   - nginx: [emerg] invalid value "abc" in /etc/nginx/conf.d/default.conf:2
   - nginx: [emerg] invalid value "499" in /etc/nginx/conf.d/default.conf:2 -> for code we wont handle
-- path has to start with a `/` since its path is related
+- ⚠️ path has to start with a `/` since its path is related to `root`
 
 
 LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)

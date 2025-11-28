@@ -41,7 +41,7 @@ class Validator {
 		void	directiveCheck(const std::string& directive, const std::vector<std::string>& values) const;
 
 
-		// void	validateErrorPage(const std::vector<std::string>& values) const;
+		void	validateErrorPage(const std::vector<std::string>& values) const;
 		// void	validateErrorLog(const std::vector<std::string>& values) const;
 		// void	validateClientMaxBodySize(const std::vector<std::string>& values) const; // adapt clientMaxBodySize()
 
