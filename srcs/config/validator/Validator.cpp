@@ -124,9 +124,10 @@ void	Validator::directiveCheck(const std::string& directive, const std::vector<s
 
 	if (directive == ERR_PAGE) {
 		validateErrorPage(values);
-		semicolonCheck(values, directive);
+		// semicolonCheck(values, directive);
 	} else if (directive == CL_MAX_B_SYZE) {
-		// not sure yet
+		validateClientMaxBodySize(values, directive);
+		// semicolonCheck(values, directive);
 	} else {
 		// security but should no be required since we identified it in keyNameCheck()
 		std::string errorMsg = "no validator found for directive \"" + directive + "\"";
@@ -220,6 +221,7 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 		}
 
 		if (firstSemicolon != value.length() - 1) {
+			// std::cout << "in" << std::endl; // there is a logical error here, we get to this condition when we should not
 			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
 			logger(errorMsg);
 			throw std::invalid_argument(errorMsg);
@@ -247,50 +249,74 @@ void	Validator::printMap() const {
 	}
 }
 
-static bool	validateUnity(std::string leftover) {
-	if (leftover.length() > 2)
+static bool	validateUnity(const std::string& leftover) {
+	if (leftover.length() != 1)
 		return (false);
 	return (leftover[0] == 'k' || leftover[0] == 'K' || leftover[0] == 'm' || leftover[0] == 'M' || leftover[0] == 'g' || leftover[0] == 'G');
 }
 
-static bool	isWhitespace(char c) {
-	return (std::isspace(static_cast<unsigned char>(c)));
-}
+void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values, const std::string& directive) const {
 
-// en attendant de changer pour une fonction du tableau de pointeurs sur fonctions: next prototype
-// void	Validator::clientMaxBodySize(const std::vector<std::string>& values) const {
-void	Validator::clientMaxBodySize(void) const {
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
+	std::vector<std::vector<std::string> >::const_iterator	groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
 
-	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
+		const std::vector<std::string>&	group = *groupIt;
 
-		std::vector<std::string>::const_iterator itv = it->second.end() - 1;
+		size_t		argCount = 0;
+		std::string	value;
 
-		std::istringstream	iss(*itv);
-		int					value;
-		std::string			leftover;
-
-		if (!(iss >> value) || value <= 0) {
-			std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
-		} else {
-			char nextChar = iss.peek();
-			if (isWhitespace(nextChar)) {
-				std::string errorMsg = "invalid number of arguments in \"" + it->first + "\" directive";
-				logger(errorMsg);
-				throw std::invalid_argument(errorMsg);
-			} else if (!(iss >> leftover) && leftover.length() > 1) {
-				std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
-				logger(errorMsg);
-				throw std::invalid_argument(errorMsg);
-			} else if (!validateUnity(leftover)) {
-				std::string errorMsg = "invalid value \"" + *itv + "\" in \"" + it->first + "\" directive";
-				logger(errorMsg);
-				throw std::invalid_argument(errorMsg);
+		std::vector<std::string>::const_iterator	it;
+		for (it = group.begin(); it != group.end(); ++it) {
+			if (!it->empty() && (*it)[0] != ';') {
+				++argCount;
+				if (value.empty()) {
+					value = *it;
+				}
 			}
 		}
+
+		if (argCount != 1) {
+			std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		std::string	cleanValue = value;
+		while (!cleanValue.empty() && cleanValue[cleanValue.length() - 1] == ';') {
+			cleanValue = cleanValue.substr(0, cleanValue.length() - 1);
+		}
+
+		std::istringstream	iss(cleanValue);
+		long				number;
+
+		if (!(iss >> number)) {
+			std::string	errorMsg = "\"" + directive + "\" directive invalid value";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (number <= 0) {
+			std::string	errorMsg = "\"" + directive + "\" directive invalid value";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		std::string	unit;
+		iss >> unit;
+
+		if (!validateUnity(unit)) {
+			std::string errorMsg = "\"" + directive + "\" directive invalid value";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"" + directive + "\" directive is duplicate";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
 	}
 }
 
@@ -385,20 +411,20 @@ std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std
 
 void	Validator::validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const {
 
-    size_t validArgsCount = 0;
+	size_t validArgsCount = 0;
 
-    std::vector<std::string>::const_iterator	it;
-    for (it = group.begin(); it != group.end(); ++it) {
-        if (!it->empty() && (*it)[0] != ';') {
-            ++validArgsCount;
-        }
-    }
+	std::vector<std::string>::const_iterator	it;
+	for (it = group.begin(); it != group.end(); ++it) {
+		if (!it->empty() && (*it)[0] != ';') {
+			++validArgsCount;
+		}
+	}
 
-    if (validArgsCount < minArgs) {
-        std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
-        logger(errorMsg);
-        throw std::invalid_argument(errorMsg);
-    }
+	if (validArgsCount < minArgs) {
+		std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
 }
 
 // debug

@@ -22,7 +22,7 @@ class Validator {
 		void	initAllowedContext(void);
 		void	initValidators(void);
 
-		void	clientMaxBodySize(void) const;
+		void	validateClientMaxBodySize(const std::vector<std::string>& values, const std::string& directive) const;
 		void	keyNameCheck(const std::string& context) const;
 		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 
