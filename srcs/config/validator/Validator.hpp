@@ -45,6 +45,12 @@ class Validator {
 		// void	validateErrorLog(const std::vector<std::string>& values) const;
 		// void	validateClientMaxBodySize(const std::vector<std::string>& values) const; // adapt clientMaxBodySize()
 
+		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values) const;
+		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
+
+
+		// tmp - debug
+		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 
 	public:
 

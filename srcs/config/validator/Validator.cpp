@@ -114,7 +114,6 @@ void	Validator::validateGlobalDirective(void) const {
 
 	keyNameCheck(GLOBAL);
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
-
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
 	for (it = directives.begin(); it != directives.end(); ++it) {
@@ -124,10 +123,9 @@ void	Validator::validateGlobalDirective(void) const {
 
 void	Validator::directiveCheck(const std::string& directive, const std::vector<std::string>& values) const {
 
-	(void) values;
 	if (directive == ERR_PAGE) {
 		validateErrorPage(values);
-		// semicolonCheck()
+		semicolonCheck(values, directive);
 	} else if (directive ==  ERR_LOG) {
 		// semicolonCheck()
 		// validateErrorLog()
@@ -300,7 +298,7 @@ void	Validator::clientMaxBodySize(void) const {
 	}
 }
 
-void	Validator::validateErrorPage(const std::vector<std::string>& v) const {
+void	Validator::validateErrorPage(const std::vector<std::string>& values) const {
 
 	static const int	error_codes[] = {
 		301, 302, 303, 307, 308,
@@ -310,49 +308,122 @@ void	Validator::validateErrorPage(const std::vector<std::string>& v) const {
 
 	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
 
-	std::vector<std::string>::const_iterator itv;
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
 
-	// need to check there is at least 2 elements, one error code and one path
+	// debug
+	// printGroups(groups);
 
-	// v.end() - 1 feels wrong but I dont know how to check it otherwise. (it is wrong, will check later)
-	for (itv = v.begin(); itv != v.end() - 1; ++itv) {
-		std::istringstream iss(*itv);
-		int value;
+	std::vector<std::vector<std::string> >::const_iterator groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
 
-		if (!(iss >> value)) {
-			std::string errorMsg = "invalid value \"" + *itv + "\"";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
-		}
+		const std::vector<std::string>&	group = *groupIt;
 
-		int	nextChar = iss.peek();
-		if (nextChar != EOF) {
-			std::string errorMsg = "invalid value \"" + *itv + "\"";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
-		}
+		validateMinimumArgs(group, 2, ERR_PAGE);
 
-		if (!(value >= 300 && value <= 599)) {
-			std::string errorMsg = "value \"" + *itv + "\" must be between 300 and 599";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
-		}
+		for (size_t i = 0; i < group.size() - 1; ++i) {
 
+			std::istringstream	iss(group[i]);
+			int					value;
 
-		bool	validCode = false;
-		for (size_t i = 0; i < validCodeCount; ++i) {
-			if (error_codes[i] == value) {
-				validCode = true;
-				break ;
+			if (!(iss >> value)) {
+				std::string	errorMsg = "invalid value \"" + group[i] + "\"";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			}
+
+			if (iss.peek() != EOF) {
+				std::string	errorMsg = "invalid value \"" + group[i] + "\"";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			}
+
+			if (!(value >= 300 && value <= 599)) {
+				std::ostringstream	oss;
+				oss << value;
+				std::string	errorMsg = "value \"" + oss.str() + "\" must be between 300 and 599";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
+			}
+
+			bool	validCode = false;
+			for (size_t j = 0; j < validCodeCount; ++j) {
+				if (error_codes[j] == value) {
+					validCode = true;
+					break ;
+				}
+			}
+
+			if (!validCode) {
+				std::ostringstream	oss;
+				oss << value;
+				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
+				logger(errorMsg);
+				throw std::invalid_argument(errorMsg);
 			}
 		}
+	}
+}
 
-		if (!validCode) {
-			std::ostringstream	oss;
-			oss << value;
-			std::string errorMsg = "invalid value \"" + oss.str() + "\"";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
+std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std::vector<std::string>& values) const {
+
+	std::vector<std::vector<std::string> >	groups;
+	std::vector<std::string>				current;
+
+	std::vector<std::string>::const_iterator it;
+
+	for (it = values.begin(); it != values.end(); ++it) {
+		if (*it == " ") {
+			if (!current.empty()) {
+				groups.push_back(current);
+				current.clear();
+			}
+		} else {
+			current.push_back(*it);
 		}
+	}
+	if (!current.empty()) {
+		groups.push_back(current);
+	}
+	return (groups);
+}
+
+void	Validator::validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const {
+
+    size_t validArgsCount = 0;
+
+    std::vector<std::string>::const_iterator	it;
+    for (it = group.begin(); it != group.end(); ++it) {
+        if (!it->empty() && (*it)[0] != ';') {
+            ++validArgsCount;
+        }
+    }
+
+    if (validArgsCount < minArgs) {
+        std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+        logger(errorMsg);
+        throw std::invalid_argument(errorMsg);
+    }
+}
+
+// debug
+void	Validator::printGroups(const std::vector<std::vector<std::string> >& groups) const {
+
+	std::cout << "Groups count: " << groups.size() << std::endl;
+
+	std::vector<std::vector<std::string> >::const_iterator	groupIt;
+	size_t													groupIndex = 0;
+
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+
+		std::cout << "  Group[" << groupIndex << "]: ";
+
+		std::vector<std::string>::const_iterator	it;
+		for (it = groupIt->begin(); it != groupIt->end(); ++it) {
+			std::cout << "\"" << *it << "\"";
+			if (it + 1 != groupIt->end())
+				std::cout << ", ";
+		}
+		std::cout << std::endl;
+		++groupIndex;
 	}
 }
