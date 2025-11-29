@@ -110,7 +110,6 @@ void	Validator::validateGlobalDirective(void) const {
 	// check du nom de la directive -> done
 	// check de la syntax des semicolons
 	// check de la validite des parametres de la directives (propre a chaque directives)
-
 	keyNameCheck(GLOBAL);
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
@@ -118,16 +117,18 @@ void	Validator::validateGlobalDirective(void) const {
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		directiveCheck(it->first, it->second);
 	}
+
+	std::cout << BLUE "working properly for global directives" << std::endl;
 }
 
 void	Validator::directiveCheck(const std::string& directive, const std::vector<std::string>& values) const {
 
 	if (directive == ERR_PAGE) {
 		validateErrorPage(values);
-		// semicolonCheck(values, directive);
+		semicolonCheck(values, directive);
 	} else if (directive == CL_MAX_B_SYZE) {
 		validateClientMaxBodySize(values, directive);
-		// semicolonCheck(values, directive);
+		semicolonCheck(values, directive);
 	} else {
 		// security but should no be required since we identified it in keyNameCheck()
 		std::string errorMsg = "no validator found for directive \"" + directive + "\"";
@@ -187,28 +188,31 @@ void	Validator::keyNameCheck(const std::string& context) const {
 	}
 }
 
-
-// Maybe will had another layer of check depending on the directive name, some rules prevails over the semicolon check
 void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const {
 
-	std::vector<std::string>::const_iterator itv;
+	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(v);
+	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 
-	for (itv = v.begin(); itv != v.end(); ++itv) {
-		const std::string&	value = *itv;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
 
-		if (value == " " || value.empty()) {
-			continue ;
+		const std::vector<std::string>&	group = *groupIt;
+		const std::string&				lastValue = group.back();
+		std::string						errorMsg;
+
+		if (lastValue[lastValue.length() - 1] != ';') {
+			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
 		}
 
-		std::size_t	firstSemicolon = value.find(";");
-		std::string	errorMsg;
+		std::size_t firstSemicolon = lastValue.find(';');
 
-		if (firstSemicolon != std::string::npos && firstSemicolon != value.length() - 1) {
+		if (firstSemicolon != lastValue.length() - 1) {
 
-			std::size_t nextNonSemicolon = value.find_first_not_of(";", firstSemicolon);
+			std::size_t	nextNonSemicolon = lastValue.find_first_not_of(";", firstSemicolon);
 
-			if (nextNonSemicolon != std::string::npos && nextNonSemicolon < value.length()) {
-				std::string	unknownPart = value.substr(firstSemicolon + 1);
+			if (nextNonSemicolon != std::string::npos) {
+				std::string	unknownPart = lastValue.substr(firstSemicolon + 1);
 				unknownPart = unknownPart.substr(0, unknownPart.find_first_of(";"));
 				errorMsg = "unknown directive \"" + unknownPart + "\"";
 				logger(errorMsg);
@@ -218,13 +222,6 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 				logger(errorMsg);
 				throw std::invalid_argument(errorMsg);
 			}
-		}
-
-		if (firstSemicolon != value.length() - 1) {
-			// std::cout << "in" << std::endl; // there is a logical error here, we get to this condition when we should not
-			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
-			logger(errorMsg);
-			throw std::invalid_argument(errorMsg);
 		}
 	}
 }
