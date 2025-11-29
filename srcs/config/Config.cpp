@@ -348,17 +348,11 @@ void Config::setUpTest(void) {
 	// error_page.push_back("404");
 	// error_page.push_back("./test-path-/404-test.html;");
 
-	// /* error_log */
-	// std::vector<std::string> error_log;
-
-	// error_log.push_back("./var/logs/error.log;");
-
 
 	// /* globalDirectives temporary tester */
 
 	// _globalDirectives.push_back(std::make_pair("client_max_body_size", cl_max_b_size));
 	// _globalDirectives.push_back(std::make_pair("error_page", error_page));
-	// _globalDirectives.push_back(std::make_pair("error_log", error_log));
 }
 
 void	Config::printContent() const {

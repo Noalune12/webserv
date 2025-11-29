@@ -126,9 +126,6 @@ void	Validator::directiveCheck(const std::string& directive, const std::vector<s
 	if (directive == ERR_PAGE) {
 		validateErrorPage(values);
 		semicolonCheck(values, directive);
-	} else if (directive ==  ERR_LOG) {
-		// semicolonCheck()
-		// validateErrorLog()
 	} else if (directive == CL_MAX_B_SYZE) {
 		// not sure yet
 	} else {

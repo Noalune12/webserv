@@ -42,7 +42,6 @@ Exemple d'un fichier de config Nginx basique:
 # Main context - global directives
 user nginx;
 worker_processes auto;
-error_log /var/log/nginx/error.log;
 
 # Events context
 events {
@@ -126,31 +125,6 @@ http {
 
 ---
 # Séparation avec le dessus, on gere pas ca
-
-
-### error_log
-
-- `error_log`: Spéficie ou et a quel niveau de gravité les messages d'erreurs du webserver sont enregistrés.
-  - `error_log /path/to/logs`: le chemin du fichier ou les logs d'erreurs sont écrits.
-  - niveaux de gravités: `debug`, `info`, `notice`. Seules les erreurs égales ou supérieures seront écritent dans le fichier de logs si un niveau de gravité est définit.
-  - On peut positionner dans différents contexte cette directive, qui sera alors écrasé du/des contexte.s parent.
-
-Exemple:
-
-```nginxconf
-http {
-  error_log /var/log/nginx/error.log warn;
-
-  server {
-    error_log /var/log/nginx/domain.error.log error;
-    ...
-  }
-}
-```
-
-⚠️ **Pour le coup je pense que c'est cool si on l'implemente celle-ci. A voir si j'ai bien compris comment ca fonctionne mais si c'est les retours du client (browser) qui vont dans les logs ca peut etre stylé!**
-
-
 
 ## Server context setup detailed
 

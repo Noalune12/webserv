@@ -18,13 +18,6 @@ Si directives dupliquées:
 *commencer a prendre en compte l'héritage ?*
 
 
-### error_log file
-
-- Lancer un container docker nginx et check chaque message d'erreur avec `nginx -t`
-- creer une fonction globale qui ecrit dans le fichier de log
-  - check des droits du fichier,
-
-
 
 ## ⚠️ TODO
 

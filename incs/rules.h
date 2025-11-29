@@ -4,7 +4,6 @@
 # define GLOBAL "global"
 
 # define ERR_PAGE "error_page"
-# define ERR_LOG "error_log"
 # define CL_MAX_B_SYZE "client_max_body_size"
 # define SERV "server"
 # define SERV_NAME "server_name"

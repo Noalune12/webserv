@@ -42,7 +42,6 @@ class Validator {
 
 
 		void	validateErrorPage(const std::vector<std::string>& values) const;
-		// void	validateErrorLog(const std::vector<std::string>& values) const;
 		// void	validateClientMaxBodySize(const std::vector<std::string>& values) const; // adapt clientMaxBodySize()
 
 		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values) const;

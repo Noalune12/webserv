@@ -38,17 +38,6 @@ error_page 400		/400.html;
 error_page 500 501	/50x.html;
 ```
 
-### error_log:
-```
-Syntax: error_log /path/to/file;
-Default: error_log /path/to/define;
-Context: global
-```
-Defines the file where the logs will be written. A default path will be define. This directive can only be defined in the global context. Example:
-```
-error_log /logs/error.log;
-```
-
 ### client_max_body_size:
 ```
 Syntax:	client_max_body_size size;
