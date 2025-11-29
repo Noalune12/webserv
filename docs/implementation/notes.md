@@ -95,3 +95,13 @@ LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)
     - ensuite je check les nombres jusqu'a `v.end() - 1` pour supprimer le check du path des codes d'erreurs
     - une fois que j'ai ce "sous-vecteur", il faut que je check le nombre de parametres (path compris) et qu'il soit >= 2
     - maintenant je peux check les regles de chaques sous-vecteurs
+
+
+### client_max_body_size
+
+- nginx: [emerg] invalid number of arguments in "client_max_body_size" directive in /etc/nginx/conf.d/default.conf:1 -> client_max_body_size 10 m;
+- nginx: [emerg] "client_max_body_size" directive invalid value in /etc/nginx/conf.d/default.conf:1 client_max_body_size 10AS;
+- nginx: [emerg] "client_max_body_size" directive invalid value in /etc/nginx/conf.d/default.conf:1 -> client_max_body_size S;
+- nginx: [emerg] "client_max_body_size" directive invalid value in /etc/nginx/conf.d/default.conf:1 -> client_max_body_size -10m;
+- nginx: [emerg] invalid number of arguments in "client_max_body_size" directive in /etc/nginx/conf.d/default.conf:1 -> client_max_body_size;
+- nginx: [emerg] "client_max_body_size" directive is duplicate in /etc/nginx/conf.d/default.conf:2 -> if duplicate so if we have "client_max_body_size", "10m;", " ", "20ms;" -> this have the priority over the other rules tho
