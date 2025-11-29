@@ -13,7 +13,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 	try {
 
-		FileReader reader(configFile);
+		FileReader reader(_filePath);
 
 		_fileContent = reader.getFileContent();
 
@@ -133,15 +133,15 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 			}
 			// std::cout << line << "~~~" << std::endl;
 		}
+		if (!content.empty()) {
+			addDirective(content); // temporary oneline-file fix
+		}
 		// std::cout << "\033[31m" << "#### GLOBAL DIR ####\n" << "\033[0m" << std::endl;
 		// printMap();
-		// printContent();
 
 
 		// std::cout << _filePath << std::endl;
 		// std::cout << _fileContent << std::endl;
-
-		setUpTest();
 
 		Validator	validator(*this);
 		validator.validate();
@@ -334,26 +334,26 @@ std::vector<Context>	Config::getVectorContext(void) const {
 
 /* TEMP */
 
-void Config::setUpTest(void) {
+// void Config::setUpTest(void) {
 
-	/* client_max_body_size */
-	// std::vector<std::string> cl_max_b_size;
+// 	/* client_max_body_size */
+// 	// std::vector<std::string> cl_max_b_size;
 
-	// cl_max_b_size.push_back("10m;");
-
-
-	// /* error_page */
-	// std::vector<std::string> error_page;
-
-	// error_page.push_back("404");
-	// error_page.push_back("./test-path-/404-test.html;");
+// 	// cl_max_b_size.push_back("10m;");
 
 
-	// /* globalDirectives temporary tester */
+// 	// /* error_page */
+// 	// std::vector<std::string> error_page;
 
-	// _globalDirectives.push_back(std::make_pair("client_max_body_size", cl_max_b_size));
-	// _globalDirectives.push_back(std::make_pair("error_page", error_page));
-}
+// 	// error_page.push_back("404");
+// 	// error_page.push_back("./test-path-/404-test.html;");
+
+
+// 	// /* globalDirectives temporary tester */
+
+// 	// _globalDirectives.push_back(std::make_pair("client_max_body_size", cl_max_b_size));
+// 	// _globalDirectives.push_back(std::make_pair("error_page", error_page));
+// }
 
 void	Config::printContent() const {
 	std::cout << "MAIN DIR" << std::endl;
