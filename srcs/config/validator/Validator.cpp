@@ -48,7 +48,6 @@ void	Validator::initAllowedContext(void) {
 	_allowedInContext.push_back(std::make_pair(LOCATION, std::vector<std::string>()));
 
 	_allowedInContext[0].second.push_back(ERR_PAGE);
-	_allowedInContext[0].second.push_back(ERR_LOG);
 	_allowedInContext[0].second.push_back(CL_MAX_B_SYZE);
 
 	_allowedInContext[1].second.push_back(LISTEN);
@@ -140,7 +139,7 @@ void	Validator::directiveCheck(const std::string& directive, const std::vector<s
 void	Validator::keyNameCheck(const std::string& context) const {
 
 	static const char	*directives[] = {
-		ERR_PAGE, ERR_LOG, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
+		ERR_PAGE, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
 		LOCATION, ALL_METHODS, AUTOINDEX, UPLOAD_TO, RETURN, ALIAS, CGI_PATH, CGI_EXT
 	};
 
