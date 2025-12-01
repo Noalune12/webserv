@@ -18,10 +18,10 @@ class Context {
 		Context(std::string name, std::string context);
 		~Context();
 
-		bool isOnlyWSpace(std::string line) const;
+		// bool isOnlyWSpace(std::string line) const;
 		void addDirective(std::string line);
-		void printMap() const;
-		void printContent() const;
+		// void printMap() const;
+		void printContext() const;
 
 };
 

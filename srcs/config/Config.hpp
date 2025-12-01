@@ -41,9 +41,8 @@ class Config {
 		// Constructeur: orchestre tout le parsing et stocke la configuration
 		Config(const std::string& configFileContent);
 		~Config();
-		bool isOnlyWSpace(std::string line) const;
 		void addDirective(std::string line);
-		void printMap() const;
+		// void printMap() const;
 		void printContent() const;
 };
 

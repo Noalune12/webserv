@@ -4,38 +4,18 @@
 #include <iostream>
 #include <sstream>
 
-// Context::Context(std::vector<std::string> context) {
-//     _name = context.at(0);
-//     context.erase(context.begin());
-//     std::cout << "CONTEXT NAME = " << _name << std::endl;
-//     std::vector<std::string>::iterator it;
-//     for (it = context.begin(); it != context.end(); it++) {
-
-//         std::size_t	index = it.find('#');
-//         if (index != std::string::npos) {  // ; can also be comments + need more checks with ' or " ???
-//                 line = line.substr(0, index);
-//         }
-//         if (line.empty() || isOnlyWSpace(line)) {
-//             std::cout << "THIS WAS ONLY A COMMENT OR AN EMPTY LINE" << std::endl;
-//             continue;
-//         }
-
-//         std::cout << *it << std::endl;
-//     }
-// }
+#include "Utils.hpp"
 
 Context::Context(std::string name, std::string context): _name(name) {
     std::istringstream f(context);
 	std::string line;
 	std::string content;
 
-    // std::cout << "CONTEXT NAME = " << _name << std::endl;
     while (getline(f, line)) {
 
-        if (line.empty() || isOnlyWSpace(line)) {
-            // std::cout << "HELLO" << std::endl;
+        if (line.empty() || Utils::isOnlyWSpace(line))
             continue;
-        }
+
         std::istringstream iss(line);
         std::string temp;
         line.clear();
@@ -47,39 +27,27 @@ Context::Context(std::string name, std::string context): _name(name) {
             temp.clear();
         }
 
-        // remove comments
-
         std::size_t	index = line.find('#');
-        if (index != std::string::npos) {  // ; can also be comments + need more checks with ' or " ???
+        if (index != std::string::npos) 
                 line = line.substr(0, index);
-        }
-        if (line.empty() || isOnlyWSpace(line)) {
-            // std::cout << "THIS WAS ONLY A COMMENT OR AN EMPTY LINE" << std::endl;
+        if (line.empty() || Utils::isOnlyWSpace(line)) 
             continue;
-        }
-        // check if context
 
         index = line.find('{'); 
 
-
         if (!content.empty() && index != 0) {
-            // add to main directives
-            // std::cout << "***** ADD MAIN DIRECTIVES *****" << std::endl;
             addDirective(content);
             content.clear();
-            // continue;
         }
 
         content.append(line);
 
-
-        // std::cout << "***** ADD NEW CONEXT *****" << std::endl;
         int open;
         if (index != std::string::npos) {
             open = 1;
             std::string name = line;
             std::string contextContent;
-            while (getline(f, line)) { //what if many {} after each other or after ; not counted
+            while (getline(f, line)) {
                 if (line.find('{') != std::string::npos)
                     open++;
                 else if (line.find('}') != std::string::npos)
@@ -92,41 +60,17 @@ Context::Context(std::string name, std::string context): _name(name) {
             Context C(name, contextContent);
             _context.push_back(C);
             content.clear();
-            // if (open == 0)
-            //     std::cout << "CONTEXT IS CLOSED" << std::endl;
-            // else
-            //     std::cout << "CONTEXT IS NOT CLOSED" << std::endl;
-
-            // create context and send the remaining of the isstringstream
         }
-
-        // std::cout << line << std::endl;
     }
-    //where the } is to integrate into the last pair
+
     if (!content.empty()) {
-        // std::cout << content << std::endl;
         addDirective(content);
         content.clear();
     }
-    // std::cout << "\033[31m" << "#### DIR ####\n" << "\033[0m" << std::endl;
-	// printMap();
 }
 
 
 Context::~Context() {}
-
-bool Context::isOnlyWSpace(std::string line) const {
-	size_t count = 0;
-
-	for (size_t i = 0; i < line.length(); ++i) {
-        if (isspace(line[i])) {
-            count++;
-        }
-    }
-	if (line.length() == count)
-		return true;
-	return false;
-}
 
 void Context::addDirective(std::string line) {
 
@@ -167,25 +111,13 @@ void Context::addDirective(std::string line) {
     }
 }
 
-void Context::printMap() const {
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
-	for (it = _directives.begin(); it != _directives.end(); ++it) {
-		std::cout << it->first << ": ";
-		
-		std::vector<std::string>::const_iterator itv;
-		for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-			std::cout << *itv << ", ";
-		}
-		std::cout << std::endl;
-	}
-}
-
-void Context::printContent() const {
-    std::cout << "CONTEXT = " << _name << std::endl;
+void Context::printContext() const {
+    std::cout << "ENTERING CONTEXT = " << _name << std::endl;
     std::cout << "DIR" << std::endl;
-    printMap();
+    Utils::printDirectives(_directives);
     std::vector<Context>::const_iterator it;
 	for (it = _context.begin(); it != _context.end(); it++) {
-		it->printContent();
+		it->printContext();
 	}
+    std::cout << "LEAVING CONTEXT = " << _name << std::endl;
 }

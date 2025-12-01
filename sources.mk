@@ -49,7 +49,8 @@ SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
 override CONFIGSRC	:= \
 	Config \
-	Context
+	Context \
+	Utils
 
 
 SRC += $(addprefix $(READERDIR), $(addsuffix .cpp, $(READERSRC)))
