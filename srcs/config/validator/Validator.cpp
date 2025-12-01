@@ -199,16 +199,9 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 void	Validator::checkContextClosedProperly(const Context& context) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = context.getDirectives();
-
-	if (directives.empty()) {
-		std::string errorMsg = "unexpected end of file, expecting \"}\"";
-		logger(errorMsg);
-		throw std::invalid_argument(errorMsg);
-	}
-
 	const std::string&	lastKey = directives.back().first;
 
-	if (lastKey.find('}') != std::string::npos) {
+	if (directives.back().second.size() != 0 || lastKey != "}" ) {
 		std::string errorMsg = "unexpected end of file, expecting \";\" or \"}\"";
 		logger(errorMsg);
 		throw std::invalid_argument(errorMsg);
