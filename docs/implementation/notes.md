@@ -105,3 +105,13 @@ LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)
 - nginx: [emerg] "client_max_body_size" directive invalid value in /etc/nginx/conf.d/default.conf:1 -> client_max_body_size -10m;
 - nginx: [emerg] invalid number of arguments in "client_max_body_size" directive in /etc/nginx/conf.d/default.conf:1 -> client_max_body_size;
 - nginx: [emerg] "client_max_body_size" directive is duplicate in /etc/nginx/conf.d/default.conf:2 -> if duplicate so if we have "client_max_body_size", "10m;", " ", "20ms;" -> this have the priority over the other rules tho
+
+
+
+### server
+
+- Not a lot of error possible
+- invalid number of argument if something between server and {
+- unknow directive if something after {
+  - or nginx: [emerg] unexpected "{" in /etc/nginx/conf.d/default.conf:1
+  - or nginx: [emerg] unexpected ";" in /etc/nginx/conf.d/default.conf:1
