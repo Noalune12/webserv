@@ -59,7 +59,7 @@ Context::Context(std::string name, std::string context): _name(name) {
         }
         // check if context
 
-        index = line.find('{'); 
+        index = line.find('{');
 
 
         if (!content.empty() && index != 0) {
@@ -171,7 +171,7 @@ void Context::printMap() const {
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 	for (it = _directives.begin(); it != _directives.end(); ++it) {
 		std::cout << it->first << ": ";
-		
+
 		std::vector<std::string>::const_iterator itv;
 		for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
 			std::cout << *itv << ", ";
@@ -189,3 +189,17 @@ void Context::printContent() const {
 		it->printContent();
 	}
 }
+
+
+std::string Context::getName(void) const {
+    return (this->_name);
+}
+
+std::vector<Context>    Context::getContext(void) const {
+    return (this->_context);
+}
+
+std::vector<std::pair<std::string, std::vector<std::string> > > Context::getDirectives(void) const {
+    return (this->_directives);
+}
+

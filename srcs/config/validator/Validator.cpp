@@ -36,6 +36,7 @@ void	Validator::validate(void) {
 	// puis meme chose que pour les globales directives mais a l'interieur du context.
 
 	validateGlobalDirective();
+	validateServerContexts();
 	// printMap();
 	// keyNameCheck();
 	// clientMaxBodySize();
@@ -122,6 +123,23 @@ void	Validator::validateGlobalDirective(void) const {
 
 	/* temp, debug */
 	std::cout << BLUE "working properly for global directives" << RESET << std::endl;
+}
+
+
+void	Validator::validateServerContexts(void) const {
+
+	const std::vector<Context>&	contexts = _config.getVectorContext();
+	std::vector<Context>::const_iterator	it;
+
+	for (it = contexts.begin(); it != contexts.end(); ++it) {
+		const std::string& contextName = it->getName();
+		std::cout << contextName << std::endl;
+	}
+}
+
+void	Validator::contextNameCheck(const std::string& name) const {
+
+	(void) name;
 }
 
 void	Validator::keyNameCheck(const std::string& context) const {

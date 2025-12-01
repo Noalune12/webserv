@@ -115,3 +115,11 @@ LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)
 - unknow directive if something after {
   - or nginx: [emerg] unexpected "{" in /etc/nginx/conf.d/default.conf:1
   - or nginx: [emerg] unexpected ";" in /etc/nginx/conf.d/default.conf:1
+
+
+
+
+### CONTEXT:
+
+- Mettre les fonctions de validation dans la classe Validator.
+- Normalement je dois juste itérer sur _directives, avec un check en amont de _name

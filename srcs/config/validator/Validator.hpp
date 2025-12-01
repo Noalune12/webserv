@@ -40,14 +40,18 @@ class Validator {
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
-		// validateServerContexts()
+		void	validateServerContexts() const;
 		// validateLocationContexts()
 
 
-		/* TODO (or to delete)*/
+		/* member functions table pointer */
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
 		std::map<std::string, DirectiveValidator> _directiveValidators;
 
+
+
+		/* context parsing start */
+		void	contextNameCheck(const std::string& name) const;
 
 	public:
 

@@ -135,9 +135,10 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		}
 		if (!content.empty()) {
 			addDirective(content); // temporary oneline-file fix
+			content.clear();
 		}
 		// std::cout << "\033[31m" << "#### GLOBAL DIR ####\n" << "\033[0m" << std::endl;
-		// printMap();
+		// printContent();
 
 
 		// std::cout << _filePath << std::endl;
