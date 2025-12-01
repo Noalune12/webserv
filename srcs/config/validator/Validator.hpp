@@ -19,46 +19,49 @@ class Validator {
 		Config&	_config;
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
+		/* utils global methods */
+		void	logger(const std::string& error) const;
+		void	keyNameCheck(const std::string& context) const;
+		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
+		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
+
+		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values) const;
+
+
+		/* initialisation methods*/
 		void	initAllowedContext(void);
 		void	initValidators(void);
 
+
+		/* specific directives checks*/
 		void	validateClientMaxBodySize(const std::vector<std::string>& values, const std::string& directive) const;
-		void	keyNameCheck(const std::string& context) const;
-		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
-
-		void	logger(const std::string& error) const;
+		void	validateErrorPage(const std::vector<std::string>& values) const;
 
 
+		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
 		// validateServerContexts()
 		// validateLocationContexts()
 
-		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
-
-		std::map<std::string, DirectiveValidator> _directiveValidators;
-
-
 		void	directiveCheck(const std::string& directive, const std::vector<std::string>& values) const;
 
 
-		void	validateErrorPage(const std::vector<std::string>& values) const;
-		// void	validateClientMaxBodySize(const std::vector<std::string>& values) const; // adapt clientMaxBodySize()
+		/* TODO (or to delete)*/
+		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
+		std::map<std::string, DirectiveValidator> _directiveValidators;
 
-		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values) const;
-		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
-
-
-		// tmp - debug
-		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 
 	public:
 
 		Validator(Config& config);
 		~Validator();
 
-		void	printMap() const;
+		/* debug methods */
+		void	printMap() const; /* name has to be changed for printPairs or something */
+		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 
-		// main function, calls every subverification
+
+		// main method, calls every subverification
 		void	validate(void);
 
 };
