@@ -40,6 +40,7 @@ class Validator {
 
 		void	validateServer(const std::vector<std::string>& values) const;
 
+
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
 		void	validateServerContexts() const;
@@ -49,7 +50,6 @@ class Validator {
 		/* member functions table pointer */
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
 		std::map<std::string, DirectiveValidator> _directiveValidators;
-
 
 
 		/* context parsing start */
