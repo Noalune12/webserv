@@ -24,6 +24,7 @@ class Validator {
 		void	keyNameCheck(const std::string& context) const;
 		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
+		void	validateStrictArgsNb(const std::vector<std::string>& group, size_t exactNb, const std::string& directive) const;
 
 		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values) const;
 
@@ -37,6 +38,7 @@ class Validator {
 		void	validateClientMaxBodySize(const std::vector<std::string>& values) const;
 		void	validateErrorPage(const std::vector<std::string>& values) const;
 
+		void	validateServer(const std::vector<std::string>& values) const;
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
@@ -61,11 +63,12 @@ class Validator {
 		/* debug methods */
 		void	printMap() const; /* name has to be changed for printPairs or something */
 		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
+		void	printVector(const std::vector<std::string>& v) const;
+		std::vector<std::string>	createVectorFromString(const std::string& str) const;
 
 
 		// main method, calls every subverification
 		void	validate(void);
-
 };
 
 #endif

@@ -132,6 +132,7 @@ void	Validator::validateServerContexts(void) const {
 	std::vector<Context>::const_iterator	it;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
+		contextNameCheck(it->getName());
 		const std::string& contextName = it->getName();
 		std::cout << contextName << std::endl;
 	}
@@ -139,7 +140,59 @@ void	Validator::validateServerContexts(void) const {
 
 void	Validator::contextNameCheck(const std::string& name) const {
 
-	(void) name;
+	std::vector<std::string>				group = createVectorFromString(name);
+
+	std::istringstream	ss(name);
+	std::string			value;
+
+	ss >> value;
+	std::cout << value << std::endl;
+	if (value == SERV) {
+		validateStrictArgsNb(group, 2, SERV);
+		std::cout << "1" << std::endl;
+		validateServer(group);
+	} else if (value == LOCATION){
+		validateStrictArgsNb(group, 3, LOCATION); // 3 je crois ici
+		std::cout << "2" << std::endl;
+	} else {
+		std::string errorMsg = "unknown directive \"" + value + "\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+	std::cout << "last" << std::endl;
+}
+
+void	Validator::validateServer(const std::vector<std::string>& group) const {
+
+	if (group.size() != 2) {
+		std::string errorMsg = "invalid number of arguments in \"server\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	const std::string& bracketPart = group[1];
+
+	if (bracketPart.empty() || bracketPart[0] != '{') {
+		std::string errorMsg = "invalid number of arguments in \"server\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	if (bracketPart.length() > 1) {
+		char afterBracket = bracketPart[1];
+		if (afterBracket == ';' || afterBracket == '{' || afterBracket == '}') {
+			std::string	errorMsg = "unexpected \"";
+			errorMsg += afterBracket; // WTFFFFF
+			errorMsg += "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		} else {
+			std::string	unknownPart = bracketPart.substr(1);
+			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
 }
 
 void	Validator::keyNameCheck(const std::string& context) const {
@@ -180,7 +233,7 @@ void	Validator::keyNameCheck(const std::string& context) const {
 		if (!found) {
 			for (size_t i = 0; i < directivesCount; ++i) {
 				if (key == directives[i]) {
-					std::string errorMsg = "\"" + key + "\" directive is not allowed here in ";
+					std::string errorMsg = "\"" + key + "\" directive is not allowed here";
 					logger(errorMsg);
 					throw std::invalid_argument(errorMsg);
 				}
@@ -427,6 +480,23 @@ void	Validator::validateMinimumArgs(const std::vector<std::string>& group, size_
 	}
 }
 
+void	Validator::validateStrictArgsNb(const std::vector<std::string>& group, size_t exactNb, const std::string& directive) const {
+
+	size_t argCount = 0;
+
+	std::vector<std::string>::const_iterator	it;
+	for (it = group.begin(); it != group.end(); ++it) {
+		if (!it->empty())
+			++argCount;
+	}
+
+	if (argCount != exactNb) {
+		std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
 // debug
 void	Validator::printGroups(const std::vector<std::vector<std::string> >& groups) const {
 
@@ -447,5 +517,27 @@ void	Validator::printGroups(const std::vector<std::vector<std::string> >& groups
 		}
 		std::cout << std::endl;
 		++groupIndex;
+	}
+}
+
+std::vector<std::string>	Validator::createVectorFromString(const std::string& str) const {
+
+	std::vector<std::string>	res;
+	std::istringstream			ss(str);
+	std::string					value;
+
+	while (ss >> value) {
+		res.push_back(value);
+	}
+
+	return (res);
+}
+
+
+void	Validator::printVector(const std::vector<std::string>& v) const {
+	std::vector<std::string>::const_iterator	it;
+
+	for (it = v.begin(); it != v.end(); ++it) {
+		std::cout << *it << std::endl;
 	}
 }
