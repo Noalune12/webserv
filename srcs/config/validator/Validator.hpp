@@ -38,7 +38,7 @@ class Validator {
 		void	validateClientMaxBodySize(const std::vector<std::string>& values) const;
 		void	validateErrorPage(const std::vector<std::string>& values) const;
 
-		void	validateServer(const std::vector<std::string>& values) const;
+		void	validateServer(const std::vector<std::string>& group, const Context& context) const;
 
 
 		/* subdivision of directives checks */
@@ -53,7 +53,8 @@ class Validator {
 
 
 		/* context parsing start */
-		void	contextNameCheck(const std::string& name) const;
+		void	contextNameCheck(const Context& context) const;
+		void	checkContextClosedProperly(const Context& context) const;
 
 	public:
 

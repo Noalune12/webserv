@@ -98,6 +98,8 @@ void	Validator::logger(const std::string& error) const {
 	static const char	*outputFile = LOG_FILE;
 	std::ofstream		file;
 
+
+	// Wondering if there is a real need of protecting that... There will always be an error thrown and a message on the cerr anyway
 	file.open(outputFile, std::ios::out | std::ios::app);
 
 	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl; // will NOT add line of the misconfiguration
@@ -128,19 +130,20 @@ void	Validator::validateGlobalDirective(void) const {
 
 void	Validator::validateServerContexts(void) const {
 
-	const std::vector<Context>&	contexts = _config.getVectorContext();
+	const std::vector<Context>&				contexts = _config.getVectorContext();
 	std::vector<Context>::const_iterator	it;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
-		contextNameCheck(it->getName());
+		contextNameCheck(*it);
 		const std::string& contextName = it->getName();
 		std::cout << contextName << std::endl;
 	}
 }
 
-void	Validator::contextNameCheck(const std::string& name) const {
+void	Validator::contextNameCheck(const Context& context) const {
 
-	std::vector<std::string>				group = createVectorFromString(name);
+	const std::string&			name = context.getName();
+	std::vector<std::string>	group = createVectorFromString(name);
 
 	std::istringstream	ss(name);
 	std::string			value;
@@ -149,20 +152,17 @@ void	Validator::contextNameCheck(const std::string& name) const {
 	std::cout << value << std::endl;
 	if (value == SERV) {
 		validateStrictArgsNb(group, 2, SERV);
-		std::cout << "1" << std::endl;
-		validateServer(group);
-	} else if (value == LOCATION){
-		validateStrictArgsNb(group, 3, LOCATION); // 3 je crois ici
-		std::cout << "2" << std::endl;
+		validateServer(group, context);
+	} else if (value == LOCATION) {
+		validateStrictArgsNb(group, 3, LOCATION);
 	} else {
 		std::string errorMsg = "unknown directive \"" + value + "\"";
 		logger(errorMsg);
 		throw std::invalid_argument(errorMsg);
 	}
-	std::cout << "last" << std::endl;
 }
 
-void	Validator::validateServer(const std::vector<std::string>& group) const {
+void	Validator::validateServer(const std::vector<std::string>& group, const Context& context) const {
 
 	if (group.size() != 2) {
 		std::string errorMsg = "invalid number of arguments in \"server\" directive";
@@ -193,7 +193,28 @@ void	Validator::validateServer(const std::vector<std::string>& group) const {
 			throw std::invalid_argument(errorMsg);
 		}
 	}
+	checkContextClosedProperly(context);
 }
+
+void	Validator::checkContextClosedProperly(const Context& context) const {
+
+	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = context.getDirectives();
+
+	if (directives.empty()) {
+		std::string errorMsg = "unexpected end of file, expecting \"}\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	const std::string&	lastKey = directives.back().first;
+
+	if (lastKey.find('}') != std::string::npos) {
+		std::string errorMsg = "unexpected end of file, expecting \";\" or \"}\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
 
 void	Validator::keyNameCheck(const std::string& context) const {
 
