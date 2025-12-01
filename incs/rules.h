@@ -38,4 +38,10 @@
 # define DEFAULT_INDEX "index.html"
 # define DEFAULT_AUTOINDEX "off"
 
+enum {
+	GLOBAL_VALUE,
+	SERV_VALUE,
+	LOCATION_VALUE,
+};
+
 #endif

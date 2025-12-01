@@ -15,6 +15,8 @@
 # define CONF_FILE "configuration file "
 # define TEST_FAILED "test failed\n"
 
+# define LOG_FILE "var/log/error.log"
+
 Validator::Validator(Config& config) : _config(config), _allowedInContext() {
 	initAllowedContext();
 	initValidators();
@@ -40,38 +42,37 @@ void	Validator::validate(void) {
 	// logger("test");
 }
 
-
 void	Validator::initAllowedContext(void) {
 
 	_allowedInContext.push_back(std::make_pair(GLOBAL, std::vector<std::string>()));
 	_allowedInContext.push_back(std::make_pair(SERV, std::vector<std::string>()));
 	_allowedInContext.push_back(std::make_pair(LOCATION, std::vector<std::string>()));
 
-	_allowedInContext[0].second.push_back(ERR_PAGE);
-	_allowedInContext[0].second.push_back(CL_MAX_B_SYZE);
+	_allowedInContext[GLOBAL_VALUE].second.push_back(ERR_PAGE);
+	_allowedInContext[GLOBAL_VALUE].second.push_back(CL_MAX_B_SYZE);
 
-	_allowedInContext[1].second.push_back(LISTEN);
-	_allowedInContext[1].second.push_back(SERV_NAME);
-	_allowedInContext[1].second.push_back(ROOT);
-	_allowedInContext[1].second.push_back(ERR_PAGE);
-	_allowedInContext[1].second.push_back(CL_MAX_B_SYZE);
-	_allowedInContext[1].second.push_back(INDEX);
-	_allowedInContext[1].second.push_back(ALL_METHODS);
-	_allowedInContext[1].second.push_back(AUTOINDEX);
-	_allowedInContext[1].second.push_back(UPLOAD_TO);
-	_allowedInContext[1].second.push_back(RETURN);
+	_allowedInContext[SERV_VALUE].second.push_back(LISTEN);
+	_allowedInContext[SERV_VALUE].second.push_back(SERV_NAME);
+	_allowedInContext[SERV_VALUE].second.push_back(ROOT);
+	_allowedInContext[SERV_VALUE].second.push_back(ERR_PAGE);
+	_allowedInContext[SERV_VALUE].second.push_back(CL_MAX_B_SYZE);
+	_allowedInContext[SERV_VALUE].second.push_back(INDEX);
+	_allowedInContext[SERV_VALUE].second.push_back(ALL_METHODS);
+	_allowedInContext[SERV_VALUE].second.push_back(AUTOINDEX);
+	_allowedInContext[SERV_VALUE].second.push_back(UPLOAD_TO);
+	_allowedInContext[SERV_VALUE].second.push_back(RETURN);
 
-	_allowedInContext[2].second.push_back(ERR_PAGE);
-	_allowedInContext[2].second.push_back(CL_MAX_B_SYZE);
-	_allowedInContext[2].second.push_back(ROOT);
-	_allowedInContext[2].second.push_back(INDEX);
-	_allowedInContext[2].second.push_back(ALL_METHODS);
-	_allowedInContext[2].second.push_back(AUTOINDEX);
-	_allowedInContext[2].second.push_back(UPLOAD_TO);
-	_allowedInContext[2].second.push_back(RETURN);
-	_allowedInContext[2].second.push_back(ALIAS);
-	_allowedInContext[2].second.push_back(CGI_PATH);
-	_allowedInContext[2].second.push_back(CGI_EXT);
+	_allowedInContext[LOCATION_VALUE].second.push_back(ERR_PAGE);
+	_allowedInContext[LOCATION_VALUE].second.push_back(CL_MAX_B_SYZE);
+	_allowedInContext[LOCATION_VALUE].second.push_back(ROOT);
+	_allowedInContext[LOCATION_VALUE].second.push_back(INDEX);
+	_allowedInContext[LOCATION_VALUE].second.push_back(ALL_METHODS);
+	_allowedInContext[LOCATION_VALUE].second.push_back(AUTOINDEX);
+	_allowedInContext[LOCATION_VALUE].second.push_back(UPLOAD_TO);
+	_allowedInContext[LOCATION_VALUE].second.push_back(RETURN);
+	_allowedInContext[LOCATION_VALUE].second.push_back(ALIAS);
+	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_PATH);
+	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_EXT);
 
 	// for (size_t i = 0; i < _allowedInContext.size(); ++i) {
 	// 	std::cout << _allowedInContext[i].first << ": ";
@@ -92,25 +93,22 @@ void	Validator::initValidators(void) {
 
 void	Validator::logger(const std::string& error) const {
 
-	static const char *outputFile = "var/log/error.log";
-	std::ofstream	file;
+	static const char	*outputFile = LOG_FILE;
+	std::ofstream		file;
 
 	file.open(outputFile, std::ios::out | std::ios::app);
 
-	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl; // will add line of the misconfiguration once we switch from map to pair, will need another paramater with will be the line
+	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl; // will NOT add line of the misconfiguration
 	file << WEBSERV_PREFIX << "configuration file " << _config.getFilePath() << " test failed" << std::endl;
 
 	file.close();
 }
 
 
-/* does the whole validation of global directives */
 void	Validator::validateGlobalDirective(void) const {
 
-	// check du nom de la directive -> done
-	// check de la syntax des semicolons
-	// check de la validite des parametres de la directives (propre a chaque directives)
 	keyNameCheck(GLOBAL);
+
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
@@ -118,6 +116,7 @@ void	Validator::validateGlobalDirective(void) const {
 		directiveCheck(it->first, it->second);
 	}
 
+	/* temp, debug (seems to work just fine)*/
 	std::cout << BLUE "working properly for global directives" << std::endl;
 }
 
@@ -127,16 +126,10 @@ void	Validator::directiveCheck(const std::string& directive, const std::vector<s
 		validateErrorPage(values);
 		semicolonCheck(values, directive);
 	} else if (directive == CL_MAX_B_SYZE) {
-		validateClientMaxBodySize(values, directive);
+		validateClientMaxBodySize(values);
 		semicolonCheck(values, directive);
-	} else {
-		// security but should no be required since we identified it in keyNameCheck()
-		std::string errorMsg = "no validator found for directive \"" + directive + "\"";
-		logger(errorMsg);
-		throw std::runtime_error(errorMsg);
 	}
 }
-
 
 void	Validator::keyNameCheck(const std::string& context) const {
 
@@ -169,21 +162,21 @@ void	Validator::keyNameCheck(const std::string& context) const {
 		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
 			if (key == *allowedIt) {
 				found = true;
-				// semicolonCheck(it->second, key); // not good maybe move elsewhere
 				break ;
 			}
 		}
+
 		if (!found) {
 			for (size_t i = 0; i < directivesCount; ++i) {
-			if (key == directives[i]) {
-				std::string errorMsg = "\"" + key + "\" directive is not allowed here in ";
-				logger(errorMsg);
-				throw std::invalid_argument(errorMsg);
+				if (key == directives[i]) {
+					std::string errorMsg = "\"" + key + "\" directive is not allowed here in ";
+					logger(errorMsg);
+					throw std::invalid_argument(errorMsg);
+				}
 			}
-		}
-		std::string errorMsg = "unknown directive \"" + key + "\"";
-		logger(errorMsg);
-		throw std::invalid_argument(errorMsg);
+			std::string errorMsg = "unknown directive \"" + key + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
 		}
 	}
 }
@@ -252,7 +245,7 @@ static bool	validateUnity(const std::string& leftover) {
 	return (leftover[0] == 'k' || leftover[0] == 'K' || leftover[0] == 'm' || leftover[0] == 'M' || leftover[0] == 'g' || leftover[0] == 'G');
 }
 
-void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values, const std::string& directive) const {
+void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values) const {
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
 
@@ -275,7 +268,7 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 		}
 
 		if (argCount != 1) {
-			std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+			std::string	errorMsg = "invalid number of arguments in \"client_max_body_size\" directive";
 			logger(errorMsg);
 			throw std::invalid_argument(errorMsg);
 		}
@@ -289,13 +282,13 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 		long				number;
 
 		if (!(iss >> number)) {
-			std::string	errorMsg = "\"" + directive + "\" directive invalid value";
+			std::string	errorMsg = "\"client_max_body_size\" directive invalid value";
 			logger(errorMsg);
 			throw std::invalid_argument(errorMsg);
 		}
 
 		if (number <= 0) {
-			std::string	errorMsg = "\"" + directive + "\" directive invalid value";
+			std::string	errorMsg = "\"client_max_body_size\" directive invalid value";
 			logger(errorMsg);
 			throw std::invalid_argument(errorMsg);
 		}
@@ -304,14 +297,14 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 		iss >> unit;
 
 		if (!validateUnity(unit)) {
-			std::string errorMsg = "\"" + directive + "\" directive invalid value";
+			std::string errorMsg = "\"client_max_body_size\" directive invalid value";
 			logger(errorMsg);
 			throw std::invalid_argument(errorMsg);
 		}
 	}
 
 	if (groups.size() > 1) {
-		std::string errorMsg = "\"" + directive + "\" directive is duplicate";
+		std::string errorMsg = "\"client_max_body_size\" directive is duplicate";
 		logger(errorMsg);
 		throw std::invalid_argument(errorMsg);
 	}
@@ -328,9 +321,6 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
-
-	// debug
-	// printGroups(groups);
 
 	std::vector<std::vector<std::string> >::const_iterator groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
