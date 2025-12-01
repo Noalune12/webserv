@@ -88,7 +88,8 @@ void	Validator::initAllowedContext(void) {
 
 void	Validator::initValidators(void) {
 
-	// _directiveValidators[CL_MAX_B_SYZE] = &Validator::clientMaxBodySize;
+	_directiveValidators[CL_MAX_B_SYZE] = &Validator::validateClientMaxBodySize;
+	_directiveValidators[ERR_PAGE] = &Validator::validateErrorPage;
 }
 
 void	Validator::logger(const std::string& error) const {
@@ -113,22 +114,14 @@ void	Validator::validateGlobalDirective(void) const {
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
 	for (it = directives.begin(); it != directives.end(); ++it) {
-		directiveCheck(it->first, it->second);
+		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
+		if (validatorIt != _directiveValidators.end()) {
+			(this->*(validatorIt->second))(it->second);
+		}
 	}
 
-	/* temp, debug (seems to work just fine)*/
-	std::cout << BLUE "working properly for global directives" << std::endl;
-}
-
-void	Validator::directiveCheck(const std::string& directive, const std::vector<std::string>& values) const {
-
-	if (directive == ERR_PAGE) {
-		validateErrorPage(values);
-		semicolonCheck(values, directive);
-	} else if (directive == CL_MAX_B_SYZE) {
-		validateClientMaxBodySize(values);
-		semicolonCheck(values, directive);
-	}
+	/* temp, debug */
+	std::cout << BLUE "working properly for global directives" << RESET << std::endl;
 }
 
 void	Validator::keyNameCheck(const std::string& context) const {
@@ -308,6 +301,7 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 		logger(errorMsg);
 		throw std::invalid_argument(errorMsg);
 	}
+	semicolonCheck(values, CL_MAX_B_SYZE);
 }
 
 void	Validator::validateErrorPage(const std::vector<std::string>& values) const {
@@ -371,6 +365,7 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 			}
 		}
 	}
+	semicolonCheck(values, ERR_PAGE);
 }
 
 std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std::vector<std::string>& values) const {

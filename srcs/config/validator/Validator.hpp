@@ -43,8 +43,6 @@ class Validator {
 		// validateServerContexts()
 		// validateLocationContexts()
 
-		void	directiveCheck(const std::string& directive, const std::vector<std::string>& values) const;
-
 
 		/* TODO (or to delete)*/
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
