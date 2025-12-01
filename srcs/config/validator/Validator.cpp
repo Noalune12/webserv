@@ -127,7 +127,6 @@ void	Validator::validateGlobalDirective(void) const {
 	std::cout << BLUE "working properly for global directives" << RESET << std::endl;
 }
 
-
 void	Validator::validateServerContexts(void) const {
 
 	const std::vector<Context>&				contexts = _config.getVectorContext();
@@ -155,11 +154,59 @@ void	Validator::contextNameCheck(const Context& context) const {
 		validateServer(group, context);
 	} else if (value == LOCATION) {
 		validateStrictArgsNb(group, 3, LOCATION);
+		validateLocation(group, context);
 	} else {
 		std::string errorMsg = "unknown directive \"" + value + "\"";
 		logger(errorMsg);
 		throw std::invalid_argument(errorMsg);
 	}
+}
+
+// Working for now but I'm not sure I'm done with this function, need to test in depth
+void	Validator::validateLocation(const std::vector<std::string>& group, const Context& context) const {
+
+	if (group.size() != 3) {
+		std::string errorMsg = "invalid number of arguments in \"location\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	const std::string& middlePart = group[1];
+
+	if (middlePart.find(";") != std::string::npos) {
+		std::string errorMsg = "directive \"location\" has no opening \"{\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	} else if (middlePart.find("{") != std::string::npos) {
+		std::string errorMsg = "invalid number of arguments in \"location\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	const std::string& bracketPart = group[2];
+
+	if (bracketPart.empty() || bracketPart[0] != '{') {
+		std::string errorMsg = "invalid number of arguments in \"location\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	if (bracketPart.length() > 1) {
+		char afterBracket = bracketPart[1];
+		if (afterBracket == ';' || afterBracket == '{' || afterBracket == '}') {
+			std::string	errorMsg = "unexpected \"";
+			errorMsg += afterBracket; // WTFFFFF
+			errorMsg += "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		} else {
+			std::string	unknownPart = bracketPart.substr(1);
+			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+	checkContextClosedProperly(context);
 }
 
 void	Validator::validateServer(const std::vector<std::string>& group, const Context& context) const {

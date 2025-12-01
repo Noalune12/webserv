@@ -39,7 +39,7 @@ class Validator {
 		void	validateErrorPage(const std::vector<std::string>& values) const;
 
 		void	validateServer(const std::vector<std::string>& group, const Context& context) const;
-
+		void	validateLocation(const std::vector<std::string>& group, const Context& context) const;
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
