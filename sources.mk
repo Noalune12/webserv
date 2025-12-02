@@ -60,4 +60,5 @@ override READERSRC	:= \
 SRC += $(addprefix $(LEXERDIR), $(addsuffix .cpp, $(LEXERSRC)))
 
 override LEXERSRC	:= \
-	Context
+	Context \
+	Tokenizer
