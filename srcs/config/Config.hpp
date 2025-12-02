@@ -30,7 +30,6 @@ class Config {
 		// Donnees de configuration parsées et validées (au fur et a mesure)
 		// std::vector<ServerBlock> _servers;
 
-		// std::map<std::string, std::vector<std::string> >	_globalDirectives;
 		std::vector<Context>								_context;
 		std::vector<std::pair<std::string, std::vector<std::string> > >	_globalDirectives;
 
@@ -42,7 +41,6 @@ class Config {
 		Config(const std::string& configFileContent);
 		~Config();
 		void addDirective(std::string line);
-		// void printMap() const;
 		void printContent() const;
 };
 
