@@ -21,7 +21,7 @@ class Validator {
 
 		/* utils global methods */
 		void	logger(const std::string& error) const;
-		void	keyNameCheck(const std::string& context) const;
+		void	keyNameCheck(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives, int contextType) const;
 		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
 		void	validateStrictArgsNb(const std::vector<std::string>& group, size_t exactNb, const std::string& directive) const;
@@ -48,7 +48,7 @@ class Validator {
 		void	validateGlobalDirective(void) const;
 		void	validateServerContexts() const;
 		// validateLocationContexts()
-
+		void	validateContextDirectives(const Context& context, int contextType) const;
 
 		/* member functions table pointer */
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
@@ -58,6 +58,10 @@ class Validator {
 		/* context parsing start */
 		void	contextNameCheck(const Context& context) const;
 		void	checkContextClosedProperly(const Context& context) const;
+
+
+		/* utilitary functions to move out*/
+		std::string	extractContextType(const std::string& contextName) const;
 
 	public:
 

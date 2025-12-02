@@ -112,7 +112,7 @@ void	Validator::logger(const std::string& error) const {
 
 void	Validator::validateGlobalDirective(void) const {
 
-	keyNameCheck(GLOBAL);
+	keyNameCheck(_config.getGlobalDirective(), GLOBAL_VALUE);
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
@@ -141,11 +141,31 @@ void	Validator::validateServerContexts(void) const {
 		std::cout << ++a << std::endl;
 		// const std::string& contextName = it->getName();
 		// std::cout << contextName << std::endl;
+		validateContextDirectives(*it, SERV_VALUE);
 	}
 
 	/* temp, debug */
 	std::cout << GREEN "working properly for server/location directives" << RESET << std::endl;
 
+}
+
+void	Validator::validateContextDirectives(const Context& context, int contextType) const {
+
+	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+
+	keyNameCheck(directives, contextType);
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	for (it = directives.begin(); it != directives.end(); ++it) {
+		if (it->first == "}")
+			continue ;
+		std::cout << "here: " << it->first << std::endl;
+		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
+		if (validatorIt != _directiveValidators.end()) {
+			(this->*(validatorIt->second))(it->second);
+		}
+		// TODO: ajouter les validateurs pour les autres directives (listen, server_name, etc.)
+	}
 }
 
 void	Validator::contextNameCheck(const Context& context) const {
@@ -265,32 +285,25 @@ void	Validator::checkContextClosedProperly(const Context& context) const {
 }
 
 
-void	Validator::keyNameCheck(const std::string& context) const {
+void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives, int contextType) const {
 
-	static const char	*directives[] = {
+	static const char	*allDirectives[] = {
 		ERR_PAGE, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
 		LOCATION, ALL_METHODS, AUTOINDEX, UPLOAD_TO, RETURN, ALIAS, CGI_PATH, CGI_EXT
 	};
 
-	const size_t	directivesCount = sizeof(directives) / sizeof(directives[0]);
+	const size_t	directivesCount = sizeof(allDirectives) / sizeof(allDirectives[0]);
+
+	const std::vector<std::string>&	allowedDirectives = _allowedInContext[contextType].second;
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
-
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator contextIt;
-
-	for (contextIt = _allowedInContext.begin(); contextIt != _allowedInContext.end(); ++contextIt) {
-		if (contextIt->first == context) {
-			break ;
-		}
-	}
-
-	const std::vector<std::string>&	allowedDirectives = contextIt->second;
-
-	const std::vector<std::pair<std::string, std::vector<std::string> > >& directivesToCheck = _config.getGlobalDirective();
-
-	for (it = directivesToCheck.begin(); it != directivesToCheck.end(); ++it) {
+	for (it = directives.begin(); it != directives.end(); ++it) {
 		const std::string&	key = it->first;
 		bool				found = false;
+
+		/* temp, j'ai peur que ca casse tout du coup mais je reflechirai a ca plus tard*/
+		if (key == "}")
+			continue ;
 
 		std::vector<std::string>::const_iterator	allowedIt;
 		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
@@ -302,7 +315,7 @@ void	Validator::keyNameCheck(const std::string& context) const {
 
 		if (!found) {
 			for (size_t i = 0; i < directivesCount; ++i) {
-				if (key == directives[i]) {
+				if (key == allDirectives[i]) {
 					std::string errorMsg = "\"" + key + "\" directive is not allowed here";
 					logger(errorMsg);
 					throw std::invalid_argument(errorMsg);
@@ -612,6 +625,16 @@ void	Validator::printVector(const std::vector<std::string>& v) const {
 	}
 }
 
+/* utilitary function that will move to the Utils namespace later*/
+std::string	Validator::extractContextType(const std::string& contextName) const {
+
+	std::istringstream	iss(contextName);
+	std::string			type;
+
+	iss >> type;
+
+	return (type);
+}
 
 
 // LISTEN
