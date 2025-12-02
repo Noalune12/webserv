@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include "Context.hpp"
 
 namespace Utils {
@@ -15,6 +16,7 @@ namespace Utils {
 
     std::string handleWSpaceComments(std::string& line);
 
+    Context handleContext(std::istringstream& f, std::string content);
 }
 
 #endif

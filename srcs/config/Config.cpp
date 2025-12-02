@@ -23,9 +23,6 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 		while (getline(f, line)) {
 
-			if (line.empty() || Utils::isOnlyWSpace(line))
-				continue;
-
 			line = Utils::handleWSpaceComments(line);
 
 			if (line.empty() || Utils::isOnlyWSpace(line))
@@ -39,23 +36,8 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 			content.append(line);
 
-			int open;
 			if (index != std::string::npos) {
-				std::string name = content;
-				open = 1;
-				std::string contextContent;
-				while (getline(f, line)) {
-					if (line.find('{') != std::string::npos)
-						open++;
-					else if (line.find('}') != std::string::npos)
-						open--;
-					contextContent.append(line);
-					contextContent.push_back('\n');
-					if (open == 0)
-						break;
-				}
-				Context C(name, contextContent);
-				_context.push_back(C);
+				_context.push_back(Utils::handleContext(f, content));
 				content.clear();
 			}
 		}

@@ -30,6 +30,8 @@ void Utils::printDirectives(const std::vector<std::pair<std::string,
 }
 
 std::string Utils::handleWSpaceComments(std::string& line) {
+    if (line.empty() || Utils::isOnlyWSpace(line))
+		return (line);
     std::istringstream iss(line);
     std::string temp;
     line.clear();
@@ -46,4 +48,24 @@ std::string Utils::handleWSpaceComments(std::string& line) {
     if (index != std::string::npos)
             line = line.substr(0, index);
     return (line);
+}
+
+Context Utils::handleContext(std::istringstream& f, std::string content) {
+    int open;
+    std::string line;
+    std::string name = content;
+    open = 1;
+    std::string contextContent;
+    while (getline(f, line)) {
+        if (line.find('{') != std::string::npos)
+            open++;
+        else if (line.find('}') != std::string::npos)
+            open--;
+        contextContent.append(line);
+        contextContent.push_back('\n');
+        if (open == 0)
+            break;
+    }
+    Context C(name, contextContent);
+    return (C);
 }
