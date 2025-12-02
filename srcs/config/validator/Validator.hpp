@@ -41,6 +41,9 @@ class Validator {
 		void	validateServer(const std::vector<std::string>& group, const Context& context) const;
 		void	validateLocation(const std::vector<std::string>& group, const Context& context) const;
 
+
+		void	validateListen(const std::vector<std::string>& values) const;
+
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
 		void	validateServerContexts() const;

@@ -91,6 +91,7 @@ void	Validator::initValidators(void) {
 
 	_directiveValidators[CL_MAX_B_SYZE] = &Validator::validateClientMaxBodySize;
 	_directiveValidators[ERR_PAGE] = &Validator::validateErrorPage;
+	_directiveValidators[LISTEN] = &Validator::validateListen;
 }
 
 void	Validator::logger(const std::string& error) const {
@@ -127,6 +128,8 @@ void	Validator::validateGlobalDirective(void) const {
 	std::cout << BLUE "working properly for global directives" << RESET << std::endl;
 }
 
+
+/* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */
 void	Validator::validateServerContexts(void) const {
 
 	const std::vector<Context>&				contexts = _config.getVectorContext();
@@ -134,9 +137,15 @@ void	Validator::validateServerContexts(void) const {
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
 		contextNameCheck(*it);
-		const std::string& contextName = it->getName();
-		std::cout << contextName << std::endl;
+		static int a = 0;
+		std::cout << ++a << std::endl;
+		// const std::string& contextName = it->getName();
+		// std::cout << contextName << std::endl;
 	}
+
+	/* temp, debug */
+	std::cout << GREEN "working properly for server/location directives" << RESET << std::endl;
+
 }
 
 void	Validator::contextNameCheck(const Context& context) const {
@@ -148,7 +157,7 @@ void	Validator::contextNameCheck(const Context& context) const {
 	std::string			value;
 
 	ss >> value;
-	std::cout << value << std::endl;
+	// std::cout << value << std::endl;
 	if (value == SERV) {
 		validateStrictArgsNb(group, 2, SERV);
 		validateServer(group, context);
@@ -602,3 +611,22 @@ void	Validator::printVector(const std::vector<std::string>& v) const {
 		std::cout << *it << std::endl;
 	}
 }
+
+
+
+// LISTEN
+
+void	Validator::validateListen(const std::vector<std::string>& values) const {
+	(void) values;
+
+}
+
+
+
+    // listen       80;
+    // listen 127.0.0.1:8000;
+    // listen 127.0.0.1;
+    // listen 8000;
+    // listen *:8081;
+    // listen localhost:8083;
+    // server_name  localhost
