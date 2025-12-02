@@ -13,27 +13,12 @@ Context::Context(std::string name, std::string context): _name(name) {
 
     while (getline(f, line)) {
 
+        line = Utils::handleWSpaceComments(line);
+
         if (line.empty() || Utils::isOnlyWSpace(line))
             continue;
 
-        std::istringstream iss(line);
-        std::string temp;
-        line.clear();
-
-        while (iss) {
-            iss >> temp;
-            line.append(temp);
-            line.push_back(' ');
-            temp.clear();
-        }
-
-        std::size_t	index = line.find('#');
-        if (index != std::string::npos) 
-                line = line.substr(0, index);
-        if (line.empty() || Utils::isOnlyWSpace(line)) 
-            continue;
-
-        index = line.find('{'); 
+        std::size_t index = line.find('{'); 
 
         if (!content.empty() && index != 0) {
             addDirective(content);
@@ -42,23 +27,8 @@ Context::Context(std::string name, std::string context): _name(name) {
 
         content.append(line);
 
-        int open;
         if (index != std::string::npos) {
-            open = 1;
-            std::string name = line;
-            std::string contextContent;
-            while (getline(f, line)) {
-                if (line.find('{') != std::string::npos)
-                    open++;
-                else if (line.find('}') != std::string::npos)
-                    open--;
-                contextContent.append(line);
-                contextContent.push_back('\n');
-                if (open == 0)
-                    break;
-            }
-            Context C(name, contextContent);
-            _context.push_back(C);
+            _context.push_back(Utils::handleContext(f, content));
             content.clear();
         }
     }
