@@ -17,7 +17,7 @@
 
 # define LOG_FILE "var/log/error.log"
 
-Validator::Validator(Config& config) : _config(config), _allowedInContext() {
+Validator::Validator(Config& config) :  _bindingsInfo(), _config(config), _allowedInContext() {
 	initAllowedContext();
 	initValidators();
 }
@@ -640,6 +640,14 @@ std::vector<std::string>	Validator::createVectorFromString(const std::string& st
 void	Validator::validateListen(const std::vector<std::string>& values) const {
 	(void) values;
 	std::cout << "INSIDE VALIDATELISTEN" << std::endl;
+
+	// fill _bindingsInfos with address:port and serverName later.
+	// I think I can fill serverName in validateServerName as I am in the same instance of Context, this should not cause any issue as both directives are related
+
+	// dont forget to fill the string in the pair with either 0.0.0.0 or 127.0.0.1 (if localhost) if there is no address in the directive
+	//
+
+	// MAYBE MOVE the Binding struct to Context ? too tired to decide
 }
 
 

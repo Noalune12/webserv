@@ -16,6 +16,14 @@
 class Validator {
 
 	private:
+
+		/* en prevision de la validation de listen et server_name */
+		struct Bindings {
+			std::vector<std::pair<std::string, int> >	listenPairs;  // address:port
+			std::vector<std::string>					serverNames;
+		};
+		std::vector<Bindings>	_bindingsInfo;
+
 		Config&	_config;
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
