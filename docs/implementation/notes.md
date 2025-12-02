@@ -123,3 +123,28 @@ LIST OF ERROR_CODE HANDLED BY US: (won't handle all of them)
 
 - Mettre les fonctions de validation dans la classe Validator.
 - Normalement je dois juste itérer sur _directives, avec un check en amont de _name
+
+
+
+
+### listen, server_name et virtual hosting
+
+- Dans l'objectif de gerer le virtual hosting (avec plusieurs block server qui ecoute sur le meme port (meme directive listen, avec un server_name different) il nous faudra des verifications de listen au parsing mais aussi au runtime (lorsqu'on utilisera `bind`))
+
+Exemple
+```nginxconf
+
+server {
+  listen 80;
+  server_name premier;
+  root /a;
+}
+
+server {
+  listen 80;
+  server_name second;
+  root /b;
+}
+```
+> Cette conf devrait fonctionner, on a deux blocks servers qui `listen` sur le meme port mais n'ont pas le meme `server_name` donc creeent une instance de virtual hosting.
+> On pourrait avoir le meme `root` par contre, avec des index different ou d'autres sous directives qui change le comportement du server.
