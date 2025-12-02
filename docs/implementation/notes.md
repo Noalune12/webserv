@@ -148,3 +148,42 @@ server {
 ```
 > Cette conf devrait fonctionner, on a deux blocks servers qui `listen` sur le meme port mais n'ont pas le meme `server_name` donc creeent une instance de virtual hosting.
 > On pourrait avoir le meme `root` par contre, avec des index different ou d'autres sous directives qui change le comportement du server.
+
+
+##### Listen
+
+- Quite large potential here, the directive doens't have to exists I believe, this is why it has a default value
+All of those cases have to be managed:
+```
+listen 127.0.0.1:8000;
+listen 127.0.0.1;
+listen 8000;
+listen *:8000;
+listen localhost:8000;
+```
+
+Meaning:
+- the checks has to be separated:
+  - a first syntax check
+    - if there a `:` to separate address and port
+      - if yes: parse address then port
+        - ADDRESS:
+          -
+      - if no: check if the value is in the range 1-65xxx
+    -
+
+- nginx: [emerg] host not found in "0.0.2.0.1" of the "listen" directive in /etc/nginx/conf.d/default.conf:4
+- nginx: [emerg] host not found in "0.0.2" of the "listen" directive in /etc/nginx/conf.d/default.conf:4
+
+
+Refuses:
+- 0.0.0 -> if not 4 numbers not good
+- if not separated by "." not good
+- 0.0.02.0 -> cannot start by 0 if not 0!
+- everything has to be in range 0-255 (check for leftover aswell)
+
+
+TODO:
+- chemin jusqu'a l'appel de validateLocation
+- finir de structurer validateLocation
+- coder validateLocation!
