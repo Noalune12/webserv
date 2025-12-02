@@ -72,6 +72,8 @@ class Validator {
 		void	printMap() const; /* name has to be changed for printPairs or something */
 		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 		void	printVector(const std::vector<std::string>& v) const;
+
+		/* maybe move this one to Utils namespace ? */
 		std::vector<std::string>	createVectorFromString(const std::string& str) const;
 
 

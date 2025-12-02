@@ -112,11 +112,11 @@ void	Validator::logger(const std::string& error) const {
 
 void	Validator::validateGlobalDirective(void) const {
 
-	keyNameCheck(_config.getGlobalDirective(), GLOBAL_VALUE);
-
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
+	keyNameCheck(directives, GLOBAL_VALUE);
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 		if (validatorIt != _directiveValidators.end()) {
@@ -137,10 +137,6 @@ void	Validator::validateServerContexts(void) const {
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
 		contextNameCheck(*it);
-		static int a = 0;
-		std::cout << ++a << std::endl;
-		// const std::string& contextName = it->getName();
-		// std::cout << contextName << std::endl;
 		validateContextDirectives(*it, SERV_VALUE);
 	}
 
@@ -159,7 +155,6 @@ void	Validator::validateContextDirectives(const Context& context, int contextTyp
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		if (it->first == "}")
 			continue ;
-		std::cout << "here: " << it->first << std::endl;
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 		if (validatorIt != _directiveValidators.end()) {
 			(this->*(validatorIt->second))(it->second);
@@ -181,7 +176,7 @@ void	Validator::contextNameCheck(const Context& context) const {
 	if (value == SERV) {
 		validateStrictArgsNb(group, 2, SERV);
 		validateServer(group, context);
-	} else if (value == LOCATION) {
+	} else if (value == LOCATION) { // this will be moved somewhere else OR validateLocaiton has to change to identify if we are in a location or not, because RN we accept a
 		validateStrictArgsNb(group, 3, LOCATION);
 		validateLocation(group, context);
 	} else {
@@ -193,6 +188,8 @@ void	Validator::contextNameCheck(const Context& context) const {
 
 // Working for now but I'm not sure I'm done with this function, need to test in depth
 void	Validator::validateLocation(const std::vector<std::string>& group, const Context& context) const {
+
+	// std::cout << GREEN << context.getName() << RESET << std::endl;
 
 	if (group.size() != 3) {
 		std::string errorMsg = "invalid number of arguments in \"location\" directive";
@@ -580,7 +577,7 @@ void	Validator::validateStrictArgsNb(const std::vector<std::string>& group, size
 	}
 }
 
-// debug
+/* DEBUG FUNCTIONS */
 void	Validator::printGroups(const std::vector<std::vector<std::string> >& groups) const {
 
 	std::cout << "Groups count: " << groups.size() << std::endl;
@@ -603,6 +600,26 @@ void	Validator::printGroups(const std::vector<std::vector<std::string> >& groups
 	}
 }
 
+void	Validator::printVector(const std::vector<std::string>& v) const {
+	std::vector<std::string>::const_iterator	it;
+
+	for (it = v.begin(); it != v.end(); ++it) {
+		std::cout << *it << std::endl;
+	}
+}
+/* END OF DEBUG FUNCTIONS */
+
+/* utilitary functions that will move to the Utils namespace later*/
+std::string	Validator::extractContextType(const std::string& contextName) const {
+
+	std::istringstream	iss(contextName);
+	std::string			type;
+
+	iss >> type;
+
+	return (type);
+}
+
 std::vector<std::string>	Validator::createVectorFromString(const std::string& str) const {
 
 	std::vector<std::string>	res;
@@ -615,33 +632,14 @@ std::vector<std::string>	Validator::createVectorFromString(const std::string& st
 
 	return (res);
 }
+/* end of utilitary functions */
 
 
-void	Validator::printVector(const std::vector<std::string>& v) const {
-	std::vector<std::string>::const_iterator	it;
 
-	for (it = v.begin(); it != v.end(); ++it) {
-		std::cout << *it << std::endl;
-	}
-}
-
-/* utilitary function that will move to the Utils namespace later*/
-std::string	Validator::extractContextType(const std::string& contextName) const {
-
-	std::istringstream	iss(contextName);
-	std::string			type;
-
-	iss >> type;
-
-	return (type);
-}
-
-
-// LISTEN
-
+// LISTEN (function already in table pointer functions)
 void	Validator::validateListen(const std::vector<std::string>& values) const {
 	(void) values;
-
+	std::cout << "INSIDE VALIDATELISTEN" << std::endl;
 }
 
 
