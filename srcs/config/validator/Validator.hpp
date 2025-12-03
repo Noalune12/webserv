@@ -3,8 +3,8 @@
 
 # include <map>
 
+# include "BindingsInfo.hpp"
 # include "Config.hpp"
-
 /*
  * Validation de la configuration
  *
@@ -18,15 +18,8 @@
 class Validator {
 
 	private:
-
-		/* en prevision de la validation de listen et server_name */
-		struct Bindings {
-			std::vector<std::pair<std::string, int> >	listenPairs;  // address:port
-			std::vector<std::string>					serverNames;
-		};
-		std::vector<Bindings>	_bindingsInfo;
-
-		Config&	_config;
+		std::vector<BindingsInfo>	_bindingsInfo;
+		Config&						_config;
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
 		/* utils global methods */
@@ -72,6 +65,13 @@ class Validator {
 
 		/* utilitary functions to move out*/
 		std::string	extractContextType(const std::string& contextName) const;
+
+
+		/* listen utils */
+		bool	isValidPort(const std::string& portStr, int& outPort) const;
+		bool	isValidAddress(const std::string& address) const;
+
+		void	subdivideListen(const std::string& listenValue) const;
 
 	public:
 

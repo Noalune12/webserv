@@ -329,12 +329,18 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 
 	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(v);
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
+	std::string						errorMsg;
+
+	if (groups.empty()) {
+		errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
 
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
 
 		const std::vector<std::string>&	group = *groupIt;
 		const std::string&				lastValue = group.back();
-		std::string						errorMsg;
 
 		if (lastValue[lastValue.length() - 1] != ';') {
 			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
@@ -603,9 +609,16 @@ void	Validator::printGroups(const std::vector<std::vector<std::string> >& groups
 void	Validator::printVector(const std::vector<std::string>& v) const {
 	std::vector<std::string>::const_iterator	it;
 
+	std::cout << "PRINT_VECTOR: " << std::endl;
+
 	for (it = v.begin(); it != v.end(); ++it) {
-		std::cout << *it << std::endl;
+		if (*it == " ") {
+			std::cout << std::endl;
+			continue ;
+		}
+		std::cout << "[" << *it << "] ";
 	}
+	std::cout << std::endl;
 }
 /* END OF DEBUG FUNCTIONS */
 
@@ -636,26 +649,150 @@ std::vector<std::string>	Validator::createVectorFromString(const std::string& st
 
 
 
-// LISTEN (function already in table pointer functions)
+/* start of utilitary functions for listen */
+bool	Validator::isValidPort(const std::string& portStr, int& outPort) const {
+
+	if (portStr.empty())
+		return (false);
+
+	std::istringstream	iss(portStr);
+
+	if (!(iss >> outPort))
+		return (false);
+
+	if (iss.peek() != EOF)
+		return (false);
+
+	if (outPort < 1 || outPort > 65535) {
+		std::string errorMsg = "invalid port in \"" + portStr + "\" of the \"listen\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	return (true);
+}
+
+bool	Validator::isValidAddress(const std::string& address) const {
+
+	if (address == "*" || address == "localhost")
+		return (true);
+
+	std::istringstream	iss(address);
+	std::string			octet;
+	int					octetCount = 0;
+
+	while (std::getline(iss, octet, '.')) {
+		octetCount++;
+
+		if (octet.empty())
+			return (false);
+
+		if (octet.length() > 1 && octet[0] == '0')
+			return (false);
+
+		std::istringstream	octetStream(octet);
+		int					value;
+
+		if (!(octetStream >> value))
+			return (false);
+
+		if (octetStream.peek() != EOF)
+			return (false);
+
+		if (value < 0 || value > 255) {
+			std::string errorMsg = "host not found in \"" + address + "\" of the \"listen\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	return (octetCount == 4);
+}
+
+void	Validator::subdivideListen(const std::string& listenValue) const {
+
+	std::string	cleanValue = listenValue;
+
+	while (!cleanValue.empty() && cleanValue[cleanValue.length() - 1] == ';')
+		cleanValue = cleanValue.substr(0, cleanValue.length() - 1);
+
+	if (cleanValue.empty()) {
+		std::string errorMsg = "invalid number of arguments in \"listen\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::size_t	colonPos = cleanValue.find(':');
+	std::string	address;
+	int			port;
+
+	// address:port
+	if (colonPos != std::string::npos) {
+		address = cleanValue.substr(0, colonPos);
+		std::string	portStr = cleanValue.substr(colonPos + 1);
+
+		if (address.empty() || portStr.empty()) {
+			std::string errorMsg = "invalid parameter \"" + cleanValue + "\" in \"listen\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (!isValidAddress(address)) {
+			std::string errorMsg = "host not found in \"" + address + "\" of the \"listen\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (!isValidPort(portStr, port)) {
+			std::string errorMsg = "invalid port in \"" + cleanValue + "\" of the \"listen\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	} else {
+		if (isValidPort(cleanValue, port)) {
+			address = "0.0.0.0";
+		} else if (isValidAddress(cleanValue)) {
+			address = cleanValue;
+			port = 80;
+		} else {
+			std::string errorMsg = "invalid parameter \"" + cleanValue + "\" in \"listen\" directive";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	// TODO: Stocker address et port dans _bindingsInfo
+	// debug
+	std::cout << "Parsed listen: " << address << ":" << port << std::endl;
+}
+/* end of utilitary functions for listen */
+
 void	Validator::validateListen(const std::vector<std::string>& values) const {
-	(void) values;
-	std::cout << "INSIDE VALIDATELISTEN" << std::endl;
+
+	std::cout << RED "entered validateListen" RESET << std::endl;
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
+
+	std::vector<std::vector<std::string> >::const_iterator groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+
+		const std::vector<std::string>&	group = *groupIt;
+
+		validateStrictArgsNb(group, 1, LISTEN);
+
+		subdivideListen(group[0]);
+	}
+
+	semicolonCheck(values, LISTEN);
+	printVector(values);
+
+
 
 	// fill _bindingsInfos with address:port and serverName later.
 	// I think I can fill serverName in validateServerName as I am in the same instance of Context, this should not cause any issue as both directives are related
+	// fillBindings();
 
 	// dont forget to fill the string in the pair with either 0.0.0.0 or 127.0.0.1 (if localhost) if there is no address in the directive
 	//
 
 	// MAYBE MOVE the Binding struct to Context ? too tired to decide
 }
-
-
-
-    // listen       80;
-    // listen 127.0.0.1:8000;
-    // listen 127.0.0.1;
-    // listen 8000;
-    // listen *:8081;
-    // listen localhost:8083;
-    // server_name  localhost
