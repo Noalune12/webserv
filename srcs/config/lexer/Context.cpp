@@ -1,12 +1,15 @@
-#include "Tokenizer.hpp"
+#include "Context.hpp"
+
+#include <string>
+#include <iostream>
+#include <sstream>
+
 #include "Utils.hpp"
 
-Tokenizer::Tokenizer() {}
-
-Tokenizer::Tokenizer(const std::string& fileContent) {
-    std::istringstream f(fileContent);
-    std::string line;
-    std::string content;
+Context::Context(std::string name, std::string context): _name(name) {
+    std::istringstream f(context);
+	std::string line;
+	std::string content;
 
     while (getline(f, line)) {
 
@@ -15,7 +18,8 @@ Tokenizer::Tokenizer(const std::string& fileContent) {
         if (line.empty() || Utils::isOnlyWSpace(line))
             continue;
 
-        std::size_t index = line.find('{');
+        std::size_t index = line.find('{'); 
+
         if (!content.empty() && index != 0) {
             addDirective(content);
             content.clear();
@@ -28,15 +32,17 @@ Tokenizer::Tokenizer(const std::string& fileContent) {
             content.clear();
         }
     }
+
     if (!content.empty()) {
         addDirective(content);
         content.clear();
     }
 }
 
-Tokenizer::~Tokenizer() {}
 
-void Tokenizer::addDirective(std::string line) {
+Context::~Context() {}
+
+void Context::addDirective(std::string line) {
 
     std::istringstream iss(line);
     std::string dir;
@@ -51,31 +57,37 @@ void Tokenizer::addDirective(std::string line) {
     std::string arg;
     while (iss >> arg) {
         args.push_back(arg);
-	}
-    // Check for duplicate directives and merge if needed, we can use find with the current token extracted
-    // std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.find(dir);
+    }
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.begin();
-	for (; itm != _globalDirectives.end(); itm++) {
+    // Check for duplicate directives and merge if needed, we can use find with the current token extracted
+    // std::map<std::string, std::vector<std::string> >::iterator itm = _directives.find(dir);
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _directives.begin();
+	for (; itm != _directives.end(); itm++) {
 		if (itm->first == dir)
 			break ;
 	}
 
-    if (itm != _globalDirectives.end()) {
+
+    if (itm != _directives.end()) {
         // Directive already exists - append new arguments with separator
         // I use second here to interact directly in the string vector instead of declaring new memory
         itm->second.push_back(" "); // Keeping the separation, might not be needed anympre
         itm->second.insert(itm->second.end(), args.begin(), args.end());
-    } else
-		_globalDirectives.push_back(std::make_pair(dir, args));
+    } else {
+        // New directive
+		_directives.push_back(std::make_pair(dir, args));
+        // _directives[dir] = args;
+    }
 }
 
-void Tokenizer::printContent() const {
-	std::cout << "MAIN DIR" << std::endl;
-	Utils::printDirectives(_globalDirectives);
-	std::cout << std::endl;
-	std::vector<Context>::const_iterator it;
+void Context::printContext() const {
+    std::cout << "ENTERING CONTEXT = " << _name << std::endl;
+    std::cout << "DIR" << std::endl;
+    Utils::printDirectives(_directives);
+    std::vector<Context>::const_iterator it;
 	for (it = _context.begin(); it != _context.end(); it++) {
 		it->printContext();
 	}
+    std::cout << "LEAVING CONTEXT = " << _name << std::endl;
 }

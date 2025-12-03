@@ -49,7 +49,7 @@ SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
 override CONFIGSRC	:= \
 	Config \
-	Context
+	Utils
 
 
 SRC += $(addprefix $(READERDIR), $(addsuffix .cpp, $(READERSRC)))
@@ -61,3 +61,9 @@ SRC += $(addprefix $(VALIDATORDIR), $(addsuffix .cpp, $(VALIDATORSRC)))
 
 override VALIDATORSRC	:= \
 	Validator
+
+SRC += $(addprefix $(LEXERDIR), $(addsuffix .cpp, $(LEXERSRC)))
+
+override LEXERSRC	:= \
+	Context \
+	Tokenizer
