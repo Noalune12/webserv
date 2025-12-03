@@ -3,7 +3,6 @@
 
 # include <map>
 
-# include "BindingsInfo.hpp"
 # include "Config.hpp"
 /*
  * Validation de la configuration

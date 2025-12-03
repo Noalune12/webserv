@@ -4,8 +4,6 @@
 # include <vector>
 # include <string>
 
-# include "BindingsInfo.hpp"
-
 struct Bindings {
 	std::vector<std::pair<std::string, int> >	listenPairs;
 	std::vector<std::string>					serverNames;
