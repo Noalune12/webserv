@@ -112,7 +112,7 @@ void	Validator::logger(const std::string& error) const {
 
 void	Validator::validateGlobalDirective(void) const {
 
-	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getGlobalDirective();
+	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
 
 	keyNameCheck(directives, GLOBAL_VALUE);
 
@@ -132,7 +132,7 @@ void	Validator::validateGlobalDirective(void) const {
 /* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */
 void	Validator::validateServerContexts(void) const {
 
-	const std::vector<Context>&				contexts = _config.getVectorContext();
+	const std::vector<Context>&				contexts = _config.getTokenizer().getVectorContext();
 	std::vector<Context>::const_iterator	it;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
@@ -370,7 +370,7 @@ void	Validator::printMap() const {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 
-	for (it = _config.getGlobalDirective().begin(); it != _config.getGlobalDirective().end(); ++it) {
+	for (it = _config.getTokenizer().getGlobalDirective().begin(); it != _config.getTokenizer().getGlobalDirective().end(); ++it) {
 		std::cout << it->first << ": ";
 
 		std::vector<std::string>::const_iterator itv;

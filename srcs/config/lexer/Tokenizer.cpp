@@ -41,19 +41,15 @@ void Tokenizer::addDirective(std::string line) {
     std::istringstream iss(line);
     std::string dir;
 
-    // Extract directive name (skips whitespace, the >> operator does it by itself)
     if (!(iss >> dir)) {
-        return ; // Return here because you already removed the comments in the while (getline) so if its empty then its an empty line
+        return ;
     }
 
-    // Extract all arguments, again skipping whitespace automaticaly
     std::vector<std::string> args;
     std::string arg;
     while (iss >> arg) {
         args.push_back(arg);
 	}
-    // Check for duplicate directives and merge if needed, we can use find with the current token extracted
-    // std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.find(dir);
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.begin();
 	for (; itm != _globalDirectives.end(); itm++) {
@@ -62,9 +58,7 @@ void Tokenizer::addDirective(std::string line) {
 	}
 
     if (itm != _globalDirectives.end()) {
-        // Directive already exists - append new arguments with separator
-        // I use second here to interact directly in the string vector instead of declaring new memory
-        itm->second.push_back(" "); // Keeping the separation, might not be needed anympre
+        itm->second.push_back(" ");
         itm->second.insert(itm->second.end(), args.begin(), args.end());
     } else
 		_globalDirectives.push_back(std::make_pair(dir, args));
@@ -78,4 +72,12 @@ void Tokenizer::printContent() const {
 	for (it = _context.begin(); it != _context.end(); it++) {
 		it->printContext();
 	}
+}
+
+const std::vector<std::pair<std::string, std::vector<std::string> > >&	Tokenizer::getGlobalDirective(void) const {
+	return (this->_globalDirectives);
+}
+
+const std::vector<Context>& Tokenizer::getVectorContext(void) const {
+	return (this->_context);
 }

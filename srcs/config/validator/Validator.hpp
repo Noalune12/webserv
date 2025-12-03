@@ -1,6 +1,8 @@
 #ifndef VALIDATOR_HPP
 # define VALIDATOR_HPP
 
+# include <map>
+
 # include "Config.hpp"
 
 /*

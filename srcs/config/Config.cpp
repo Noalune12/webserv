@@ -21,6 +21,9 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		_tokens = temp;
     	_tokens.printContent();
 
+		Validator validator(*this);
+		validator.validate();
+
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		throw;
@@ -28,3 +31,17 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 }
 
 Config::~Config() {}
+
+/* getters */
+
+const Tokenizer&	Config::getTokenizer(void) const {
+	return (this->_tokens);
+}
+
+const std::string&	Config::getFilePath(void) const {
+	return (this->_filePath);
+}
+
+const std::string&	Config::getFileContent(void) const {
+	return (this->_fileContent);
+}

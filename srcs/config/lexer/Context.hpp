@@ -19,9 +19,9 @@ class Context {
 		void printContext() const;
 
 		// getters returns values will probably need to change for references once we'll modify the data type as well
-		std::string														getName(void) const;
-		std::vector<Context>											getContext(void) const;
-		std::vector<std::pair<std::string, std::vector<std::string> > >	getDirectives(void) const;
+		const std::string&														getName(void) const;
+		const std::vector<Context>&												getContext(void) const;
+		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getDirectives(void) const;
 
 };
 
