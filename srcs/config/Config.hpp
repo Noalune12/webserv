@@ -36,7 +36,7 @@ class Config {
 		// void addDirective(std::string line);
 		// void printContent() const;
 
-		const Tokenizer&	getTokenizer(void) const;
+		Tokenizer&	getTokenizer(void);
 		const std::string&	getFilePath(void) const;
 		const std::string&	getFileContent(void) const;
 };

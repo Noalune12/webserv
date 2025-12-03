@@ -34,7 +34,7 @@ Config::~Config() {}
 
 /* getters */
 
-const Tokenizer&	Config::getTokenizer(void) const {
+Tokenizer&	Config::getTokenizer(void) {
 	return (this->_tokens);
 }
 
