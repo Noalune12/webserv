@@ -6,7 +6,7 @@
 
 #include "Utils.hpp"
 
-Context::Context(std::string name, std::string context): _name(name) {
+Context::Context(std::string name, std::string context): _name(name), _bindingsInfo() {
     std::istringstream f(context);
 	std::string line;
 	std::string content;
@@ -83,11 +83,10 @@ void Context::printContext() const {
     std::cout << "LEAVING CONTEXT = " << _name << std::endl;
 }
 
-
+/* getters */
 const std::string&  Context::getName(void) const {
 	return (this->_name);
 }
-
 
 const std::vector<std::pair<std::string, std::vector<std::string> > >&  Context::getDirectives(void) const {
 	return (this->_directives);
@@ -95,4 +94,38 @@ const std::vector<std::pair<std::string, std::vector<std::string> > >&  Context:
 
 const std::vector<Context>& Context::getContext(void) const {
 	return (this->_context);
+}
+
+
+/* setter */
+void    Context::setBindingsInfo(const std::string& addr, const int& port) {
+
+    Bindings tmp;
+
+    tmp.listenPairs.push_back(std::make_pair(addr, port));
+    _bindingsInfo.push_back(tmp);
+
+
+}
+
+/* utils */
+void    Context::printBinding(void) {
+
+    static int a = 1;
+    std::cout << ++a << std::endl;
+    std::vector<Bindings>::iterator it;
+
+    for (it = _bindingsInfo.begin(); it != _bindingsInfo.end(); ++it) {
+        std::vector<std::pair<std::string, int> >::iterator itp;
+        std::vector<std::string>::iterator  itv;
+
+        for (itp = it->listenPairs.begin(); itp != it->listenPairs.end(); ++itp) {
+            std::cout << "address: " << itp->first << std::endl;
+            std::cout << "port: " << itp->second << std::endl;
+        }
+        
+        for (itv = it->serverNames.begin(); itv != it->serverNames.end(); ++itv) {
+            std::cout << "server_names: " << *itv << std::endl;
+        }
+    }
 }

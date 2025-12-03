@@ -17,7 +17,7 @@
 
 # define LOG_FILE "var/log/error.log"
 
-Validator::Validator(Config& config) :  _bindingsInfo(), _config(config), _allowedInContext() {
+Validator::Validator(Config& config) : _config(config), _allowedInContext() {
 	initAllowedContext();
 	initValidators();
 }
@@ -650,7 +650,7 @@ std::vector<std::string>	Validator::createVectorFromString(const std::string& st
 
 
 /* start of utilitary functions for listen */
-bool	Validator::isValidPort(const std::string& portStr, int& outPort) const {
+bool	Validator::isValidPort(std::string& portStr, int& outPort) const {
 
 	if (portStr.empty())
 		return (false);
@@ -672,10 +672,16 @@ bool	Validator::isValidPort(const std::string& portStr, int& outPort) const {
 	return (true);
 }
 
-bool	Validator::isValidAddress(const std::string& address) const {
+bool	Validator::isValidAddress(std::string& address) const {
 
-	if (address == "*" || address == "localhost")
+	if (address == "*") {
+		address = "0.0.0.0";
 		return (true);
+	}
+	if (address == "localhost") {
+		address = "127.0.0.1";
+		return (true);
+	}
 
 	std::istringstream	iss(address);
 	std::string			octet;
@@ -707,6 +713,18 @@ bool	Validator::isValidAddress(const std::string& address) const {
 	}
 
 	return (octetCount == 4);
+}
+
+void	Validator::fillBindingWithoutServerName(const std::string& v, const int& p) const {
+
+	std::vector<Context>& ctx = _config.getTokenizer().getVectorContext();
+
+	Context& current = ctx.back();
+
+	current.setBindingsInfo(v, p);
+
+	current.printBinding();
+
 }
 
 void	Validator::subdivideListen(const std::string& listenValue) const {
@@ -761,9 +779,10 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 		}
 	}
 
-	// TODO: Stocker address et port dans _bindingsInfo
 	// debug
-	std::cout << "Parsed listen: " << address << ":" << port << std::endl;
+	// std::cout << "Parsed listen: " << address << ":" << port << std::endl;
+	fillBindingWithoutServerName(address, port);
+	// verify duplicates
 }
 /* end of utilitary functions for listen */
 
@@ -783,7 +802,7 @@ void	Validator::validateListen(const std::vector<std::string>& values) const {
 	}
 
 	semicolonCheck(values, LISTEN);
-	printVector(values);
+	// printVector(values);
 
 
 

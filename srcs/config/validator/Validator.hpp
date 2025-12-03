@@ -18,7 +18,6 @@
 class Validator {
 
 	private:
-		std::vector<BindingsInfo>	_bindingsInfo;
 		Config&						_config;
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
@@ -68,8 +67,8 @@ class Validator {
 
 
 		/* listen utils */
-		bool	isValidPort(const std::string& portStr, int& outPort) const;
-		bool	isValidAddress(const std::string& address) const;
+		bool	isValidPort(std::string& portStr, int& outPort) const;
+		bool	isValidAddress(std::string& address) const;
 
 		void	subdivideListen(const std::string& listenValue) const;
 
@@ -86,6 +85,8 @@ class Validator {
 		/* maybe move this one to Utils namespace ? */
 		std::vector<std::string>	createVectorFromString(const std::string& str) const;
 
+
+		void	fillBindingWithoutServerName(const std::string& v, const int& p) const;
 
 		// main method, calls every subverification
 		void	validate(void);

@@ -78,6 +78,6 @@ const std::vector<std::pair<std::string, std::vector<std::string> > >&	Tokenizer
 	return (this->_globalDirectives);
 }
 
-const std::vector<Context>& Tokenizer::getVectorContext(void) const {
+std::vector<Context>& Tokenizer::getVectorContext(void) {
 	return (this->_context);
 }

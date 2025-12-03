@@ -37,7 +37,7 @@ class Tokenizer {
 		void printContent() const;
 
 		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getGlobalDirective(void) const;
-		const std::vector<Context>&	getVectorContext(void) const;
+		std::vector<Context>&	getVectorContext(void) ;
 };
 
 #endif
