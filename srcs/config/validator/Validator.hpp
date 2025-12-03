@@ -36,7 +36,7 @@ class Validator {
 		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
 		void	validateStrictArgsNb(const std::vector<std::string>& group, size_t exactNb, const std::string& directive) const;
 
-		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values) const;
+		std::vector<std::vector<std::string> >	splitDirectiveGroups(const std::vector<std::string>& values, const std::string& directive) const;
 
 
 		/* initialisation methods*/
@@ -53,6 +53,8 @@ class Validator {
 
 
 		void	validateListen(const std::vector<std::string>& values) const;
+
+		void	validateRoot(const std::vector<std::string>& values) const;
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
