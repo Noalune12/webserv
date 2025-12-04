@@ -149,13 +149,13 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 		if (it->first == LISTEN) {
 			validateListen(it->second);
 		} else if (it->first == SERV_NAME) {
-			// validateServer(it-?second);
+			validateServerName(it->second);
 		} else {
 			std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 			if (validatorIt != _directiveValidators.end()) {
 				(this->*(validatorIt->second))(it->second);
 			}
-			// TODO: ajouter les validateurs pour les autres directives (listen, server_name, etc.)
+			// TODO: ajouter les validateurs pour les autres directives
 		}
 	}
 }
@@ -788,15 +788,29 @@ void	Validator::validateListen(const std::vector<std::string>& values) {
 
 	semicolonCheck(values, LISTEN);
 	// printVector(values);
+}
 
+void	Validator::validateServerName(const std::vector<std::string>& values) {
 
+	std::vector<std::vector<std::string> > groups = splitDirectiveGroups(values);
 
-	// fill _bindingsInfos with address:port and serverName later.
-	// I think I can fill serverName in validateServerName as I am in the same instance of Context, this should not cause any issue as both directives are related
-	// fillBindings();
+	std::vector<std::vector<std::string> >::const_iterator groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+		const std::vector<std::string>& group = *groupIt;
 
-	// dont forget to fill the string in the pair with either 0.0.0.0 or 127.0.0.1 (if localhost) if there is no address in the directive
-	//
+		for (size_t i = 0; i < group.size(); ++i) {
+			std::string name = group[i];
 
-	// MAYBE MOVE the Binding struct to Context ? too tired to decide
+			while (!name.empty() && name[name.length() - 1] == ';')
+				name = name.substr(0, name.length() - 1);
+
+			if (!name.empty()) {
+				if (name.find_first_of("*") != std::string::npos) // not sure how to handle that for now, need to discuss it with you
+					continue ;
+				// server_name a b s; ; ; ; -> this is an issue rn
+				_currentContext->addServerName(name, _config.getFilePath());
+			}
+		}
+	}
+	semicolonCheck(values, SERV_NAME);
 }

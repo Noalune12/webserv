@@ -119,7 +119,7 @@ void	Context::addListenPair(const std::string& addr, const int& port, const std:
 }
 
 void	Context::addServerName(const std::string& name, const std::string& filePath) {
-
+	(void) filePath;
 	if (_bindingsInfo.checkDuplicateServerName(name)) {
 		return ;
 		// nginx: [warn] conflicting server name "localhost" on 0.0.0.0:80, ignored

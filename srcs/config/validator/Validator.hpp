@@ -44,6 +44,7 @@ class Validator {
 
 
 		void	validateListen(const std::vector<std::string>& values);
+		void	validateServerName(const std::vector<std::string>& values);
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
