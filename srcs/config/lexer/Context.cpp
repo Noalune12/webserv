@@ -108,20 +108,22 @@ Bindings&	Context::getBinding(void) {
 /* setter */
 void	Context::addListenPair(const std::string& addr, const int& port, const std::string& filePath) {
 
-	if (!_bindingsInfo.checkDuplicateListenPair(addr, port)) {
-		_bindingsInfo.listenPairs.push_back(std::make_pair(addr, port));
-	} else {
-		Utils::logger("temp", filePath);
+	if (_bindingsInfo.checkDuplicateListenPair(addr, port)) {
+		std::ostringstream oss;
+		oss << port;
+		std::string errorMsg = "duplicate listen \"" + addr + ":" + oss.str() + "\"";
+		Utils::logger(errorMsg, filePath);
+		throw std::invalid_argument(errorMsg);
 	}
+	_bindingsInfo.listenPairs.push_back(std::make_pair(addr, port));
 }
 
 void	Context::addServerName(const std::string& name, const std::string& filePath) {
 
-	if (!_bindingsInfo.checkDuplicateServerName(name)) {
-        _bindingsInfo.serverNames.push_back(name);
-    } else {
-		Utils::logger("temp", filePath);
+	if (_bindingsInfo.checkDuplicateServerName(name)) {
+		return ;
 	}
+	_bindingsInfo.serverNames.push_back(name);
 }
 
 /* utils */
