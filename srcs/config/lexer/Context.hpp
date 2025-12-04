@@ -49,8 +49,8 @@ class Context {
 		const Bindings&	getBinding(void) const;
 		Bindings&		getBinding(void);
 
-		void	addListenPair(const std::string& addr, const int& port);
-		void	addServerName(const std::string& name);
+		void	addListenPair(const std::string& addr, const int& port, const std::string& filePath);
+		void	addServerName(const std::string& name, const std::string& filePath);
 
 		void	printBinding(void) const;
 };

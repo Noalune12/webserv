@@ -106,18 +106,22 @@ Bindings&	Context::getBinding(void) {
 }
 
 /* setter */
-void	Context::addListenPair(const std::string& addr, const int& port) {
+void	Context::addListenPair(const std::string& addr, const int& port, const std::string& filePath) {
 
 	if (!_bindingsInfo.checkDuplicateListenPair(addr, port)) {
 		_bindingsInfo.listenPairs.push_back(std::make_pair(addr, port));
+	} else {
+		Utils::logger("temp", filePath);
 	}
 }
 
-void	Context::addServerName(const std::string& name) {
+void	Context::addServerName(const std::string& name, const std::string& filePath) {
 
 	if (!_bindingsInfo.checkDuplicateServerName(name)) {
         _bindingsInfo.serverNames.push_back(name);
-    }
+    } else {
+		Utils::logger("temp", filePath);
+	}
 }
 
 /* utils */
