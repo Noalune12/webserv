@@ -111,7 +111,7 @@ void	Context::addListenPair(const std::string& addr, const int& port, const std:
 	if (_bindingsInfo.checkDuplicateListenPair(addr, port)) {
 		std::ostringstream oss;
 		oss << port;
-		std::string errorMsg = "duplicate listen \"" + addr + ":" + oss.str() + "\"";
+		std::string errorMsg = "a duplicate listen \"" + addr + ":" + oss.str() + "\"";
 		Utils::logger(errorMsg, filePath);
 		throw std::invalid_argument(errorMsg);
 	}
