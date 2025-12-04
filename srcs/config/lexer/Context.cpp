@@ -122,6 +122,8 @@ void	Context::addServerName(const std::string& name, const std::string& filePath
 
 	if (_bindingsInfo.checkDuplicateServerName(name)) {
 		return ;
+		// nginx: [warn] conflicting server name "localhost" on 0.0.0.0:80, ignored
+		// error if duplicate server_name and listen directive
 	}
 	_bindingsInfo.serverNames.push_back(name);
 }
