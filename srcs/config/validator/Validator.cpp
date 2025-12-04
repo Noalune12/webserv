@@ -100,7 +100,6 @@ void	Validator::initValidators(void) {
 
 	_directiveValidators[CL_MAX_B_SYZE] = &Validator::validateClientMaxBodySize;
 	_directiveValidators[ERR_PAGE] = &Validator::validateErrorPage;
-	_directiveValidators[LISTEN] = &Validator::validateListen;
 }
 
 void	Validator::logger(const std::string& error) const {
@@ -139,10 +138,10 @@ void	Validator::validateGlobalDirective(void) const {
 
 
 /* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */
-void	Validator::validateServerContexts(void) const {
+void	Validator::validateServerContexts(void) {
 
-	const std::vector<Context>&				contexts = _config.getTokenizer().getVectorContext();
-	std::vector<Context>::const_iterator	it;
+	std::vector<Context>&				contexts = _config.getTokenizer().getVectorContext();
+	std::vector<Context>::iterator	it;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
 		contextNameCheck(*it);
@@ -154,7 +153,7 @@ void	Validator::validateServerContexts(void) const {
 
 }
 
-void	Validator::validateContextDirectives(const Context& context, int contextType) const {
+void	Validator::validateContextDirectives(Context& context, int contextType) {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
 
@@ -164,11 +163,18 @@ void	Validator::validateContextDirectives(const Context& context, int contextTyp
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		if (it->first == "}")
 			continue ;
-		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
-		if (validatorIt != _directiveValidators.end()) {
-			(this->*(validatorIt->second))(it->second);
+
+		if (it->first == LISTEN) {
+			validateListen(it->second);
+		} else if (it->first == SERV_NAME) {
+			// validateServer(it-?second);
+		} else {
+			std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
+			if (validatorIt != _directiveValidators.end()) {
+				(this->*(validatorIt->second))(it->second);
+			}
+			// TODO: ajouter les validateurs pour les autres directives (listen, server_name, etc.)
 		}
-		// TODO: ajouter les validateurs pour les autres directives (listen, server_name, etc.)
 	}
 }
 
@@ -796,7 +802,7 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 }
 /* end of utilitary functions for listen */
 
-void	Validator::validateListen(const std::vector<std::string>& values) const {
+void	Validator::validateListen(const std::vector<std::string>& values) {
 
 	std::cout << RED "entered validateListen" RESET << std::endl;
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);

@@ -43,13 +43,13 @@ class Validator {
 		void	validateLocation(const std::vector<std::string>& group, const Context& context) const;
 
 
-		void	validateListen(const std::vector<std::string>& values) const;
+		void	validateListen(const std::vector<std::string>& values);
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
-		void	validateServerContexts() const;
+		void	validateServerContexts(void);
 		// validateLocationContexts()
-		void	validateContextDirectives(const Context& context, int contextType) const;
+		void	validateContextDirectives(Context& context, int contextType);
 
 		/* member functions table pointer */
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
