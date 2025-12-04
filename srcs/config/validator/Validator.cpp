@@ -37,10 +37,19 @@ void	Validator::validate(void) {
 
 	validateGlobalDirective();
 	validateServerContexts();
-	// printMap();
-	// keyNameCheck();
-	// clientMaxBodySize();
-	// logger("test");
+
+	// we have to check listen and server_name between Contexts to avoid:
+	// nginx: [warn] conflicting server name "localhost" on 0.0.0.0:80, ignored
+
+	// server {
+	// 	listen 80;
+	// 	server_name localhost;
+	// }
+
+	// server {
+	// 	listen 80;
+	// 	server_name localhost;
+	// }
 }
 
 void	Validator::initAllowedContext(void) {
