@@ -17,11 +17,11 @@
 class Validator {
 
 	private:
-		Config&						_config;
+		Config&		_config;
+		Context*	_currentContext; // pointeur vers le Context actuel, pour faire les modifs de listen/server_name
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
 		/* utils global methods */
-		void	logger(const std::string& error) const;
 		void	keyNameCheck(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives, int contextType) const;
 		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
@@ -83,9 +83,6 @@ class Validator {
 
 		/* maybe move this one to Utils namespace ? */
 		std::vector<std::string>	createVectorFromString(const std::string& str) const;
-
-
-		void	fillBindingWithoutServerName(const std::string& v, const int& p) const;
 
 		// main method, calls every subverification
 		void	validate(void);

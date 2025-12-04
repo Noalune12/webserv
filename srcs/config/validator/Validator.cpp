@@ -6,18 +6,9 @@
 #include "colors.h"
 #include "rules.h"
 #include "Validator.hpp"
+#include "Utils.hpp"
 
-// a mettre ailleurs ?
-# define WEBSERV_PREFIX "webserv: "
-# define EMERG "[emerg] "
-# define UNKNOWN_DIR "unknown directive "
-# define UNEXPECTED "unexpected "
-# define CONF_FILE "configuration file "
-# define TEST_FAILED "test failed\n"
-
-# define LOG_FILE "var/log/error.log"
-
-Validator::Validator(Config& config) : _config(config), _allowedInContext() {
+Validator::Validator(Config& config) : _config(config), _currentContext(NULL), _allowedInContext() {
 	initAllowedContext();
 	initValidators();
 }
@@ -102,20 +93,6 @@ void	Validator::initValidators(void) {
 	_directiveValidators[ERR_PAGE] = &Validator::validateErrorPage;
 }
 
-void	Validator::logger(const std::string& error) const {
-
-	static const char	*outputFile = LOG_FILE;
-	std::ofstream		file;
-
-
-	// Wondering if there is a real need of protecting that... There will always be an error thrown and a message on the cerr anyway
-	file.open(outputFile, std::ios::out | std::ios::app);
-
-	file << WEBSERV_PREFIX << EMERG << error << " in " << _config.getFilePath() << std::endl; // will NOT add line of the misconfiguration
-	file << WEBSERV_PREFIX << "configuration file " << _config.getFilePath() << " test failed" << std::endl;
-
-	file.close();
-}
 
 
 void	Validator::validateGlobalDirective(void) const {
@@ -140,12 +117,17 @@ void	Validator::validateGlobalDirective(void) const {
 /* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */
 void	Validator::validateServerContexts(void) {
 
-	std::vector<Context>&				contexts = _config.getTokenizer().getVectorContext();
+	std::vector<Context>&			contexts = _config.getTokenizer().getVectorContext();
 	std::vector<Context>::iterator	it;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
 		contextNameCheck(*it);
+
+		_currentContext = &(*it);
 		validateContextDirectives(*it, SERV_VALUE);
+		_currentContext = NULL;
+
+		it->printBinding();
 	}
 
 	/* temp, debug */
@@ -196,7 +178,7 @@ void	Validator::contextNameCheck(const Context& context) const {
 		validateLocation(group, context);
 	} else {
 		std::string errorMsg = "unknown directive \"" + value + "\"";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 }
@@ -208,7 +190,7 @@ void	Validator::validateLocation(const std::vector<std::string>& group, const Co
 
 	if (group.size() != 3) {
 		std::string errorMsg = "invalid number of arguments in \"location\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -216,11 +198,11 @@ void	Validator::validateLocation(const std::vector<std::string>& group, const Co
 
 	if (middlePart.find(";") != std::string::npos) {
 		std::string errorMsg = "directive \"location\" has no opening \"{\"";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	} else if (middlePart.find("{") != std::string::npos) {
 		std::string errorMsg = "invalid number of arguments in \"location\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -228,7 +210,7 @@ void	Validator::validateLocation(const std::vector<std::string>& group, const Co
 
 	if (bracketPart.empty() || bracketPart[0] != '{') {
 		std::string errorMsg = "invalid number of arguments in \"location\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -238,12 +220,12 @@ void	Validator::validateLocation(const std::vector<std::string>& group, const Co
 			std::string	errorMsg = "unexpected \"";
 			errorMsg += afterBracket; // WTFFFFF
 			errorMsg += "\"";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		} else {
 			std::string	unknownPart = bracketPart.substr(1);
 			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	}
@@ -254,7 +236,7 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 
 	if (group.size() != 2) {
 		std::string errorMsg = "invalid number of arguments in \"server\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -262,7 +244,7 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 
 	if (bracketPart.empty() || bracketPart[0] != '{') {
 		std::string errorMsg = "invalid number of arguments in \"server\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -272,12 +254,12 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 			std::string	errorMsg = "unexpected \"";
 			errorMsg += afterBracket; // WTFFFFF
 			errorMsg += "\"";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		} else {
 			std::string	unknownPart = bracketPart.substr(1);
 			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	}
@@ -291,7 +273,7 @@ void	Validator::checkContextClosedProperly(const Context& context) const {
 
 	if (directives.back().second.size() != 0 || lastKey != "}" ) {
 		std::string errorMsg = "unexpected end of file, expecting \";\" or \"}\"";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 }
@@ -329,12 +311,12 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 			for (size_t i = 0; i < directivesCount; ++i) {
 				if (key == allDirectives[i]) {
 					std::string errorMsg = "\"" + key + "\" directive is not allowed here";
-					logger(errorMsg);
+					Utils::logger(errorMsg, _config.getFilePath());
 					throw std::invalid_argument(errorMsg);
 				}
 			}
 			std::string errorMsg = "unknown directive \"" + key + "\"";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	}
@@ -348,7 +330,7 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 
 	if (groups.empty()) {
 		errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -359,7 +341,7 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 
 		if (lastValue[lastValue.length() - 1] != ';') {
 			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
@@ -373,11 +355,11 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 				std::string	unknownPart = lastValue.substr(firstSemicolon + 1);
 				unknownPart = unknownPart.substr(0, unknownPart.find_first_of(";"));
 				errorMsg = "unknown directive \"" + unknownPart + "\"";
-				logger(errorMsg);
+				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			} else {
 				errorMsg = "unexpected \";\"";
-				logger(errorMsg);
+				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 		}
@@ -434,7 +416,7 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 
 		if (argCount != 1) {
 			std::string	errorMsg = "invalid number of arguments in \"client_max_body_size\" directive";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
@@ -448,13 +430,13 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 
 		if (!(iss >> number)) {
 			std::string	errorMsg = "\"client_max_body_size\" directive invalid value";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
 		if (number <= 0) {
 			std::string	errorMsg = "\"client_max_body_size\" directive invalid value";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
@@ -463,14 +445,14 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 
 		if (!validateUnity(unit)) {
 			std::string errorMsg = "\"client_max_body_size\" directive invalid value";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	}
 
 	if (groups.size() > 1) {
 		std::string errorMsg = "\"client_max_body_size\" directive is duplicate";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 	semicolonCheck(values, CL_MAX_B_SYZE);
@@ -502,13 +484,13 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 
 			if (!(iss >> value)) {
 				std::string	errorMsg = "invalid value \"" + group[i] + "\"";
-				logger(errorMsg);
+				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 
 			if (iss.peek() != EOF) {
 				std::string	errorMsg = "invalid value \"" + group[i] + "\"";
-				logger(errorMsg);
+				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 
@@ -516,7 +498,7 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 				std::ostringstream	oss;
 				oss << value;
 				std::string	errorMsg = "value \"" + oss.str() + "\" must be between 300 and 599";
-				logger(errorMsg);
+				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 
@@ -532,7 +514,7 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 				std::ostringstream	oss;
 				oss << value;
 				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
-				logger(errorMsg);
+				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 		}
@@ -576,7 +558,7 @@ void	Validator::validateMinimumArgs(const std::vector<std::string>& group, size_
 
 	if (validArgsCount < minArgs) {
 		std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 }
@@ -593,7 +575,7 @@ void	Validator::validateStrictArgsNb(const std::vector<std::string>& group, size
 
 	if (argCount != exactNb) {
 		std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 }
@@ -680,7 +662,7 @@ bool	Validator::isValidPort(std::string& portStr, int& outPort) const {
 
 	if (outPort < 1 || outPort > 65535) {
 		std::string errorMsg = "invalid port in \"" + portStr + "\" of the \"listen\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -722,25 +704,12 @@ bool	Validator::isValidAddress(std::string& address) const {
 
 		if (value < 0 || value > 255) {
 			std::string errorMsg = "host not found in \"" + address + "\" of the \"listen\" directive";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	}
 
 	return (octetCount == 4);
-}
-
-// might want to add a 3rd parameter for server_names
-void	Validator::fillBindingWithoutServerName(const std::string& v, const int& p) const {
-
-	std::vector<Context>& ctx = _config.getTokenizer().getVectorContext();
-
-	Context& current = ctx.back();
-
-	current.addListenPair(v, p);
-
-	current.printBinding();
-
 }
 
 void	Validator::subdivideListen(const std::string& listenValue) const {
@@ -752,7 +721,7 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 
 	if (cleanValue.empty()) {
 		std::string errorMsg = "invalid number of arguments in \"listen\" directive";
-		logger(errorMsg);
+		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
 
@@ -767,19 +736,19 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 
 		if (address.empty() || portStr.empty()) {
 			std::string errorMsg = "invalid parameter \"" + cleanValue + "\" in \"listen\" directive";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
 		if (!isValidAddress(address)) {
 			std::string errorMsg = "host not found in \"" + address + "\" of the \"listen\" directive";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
 		if (!isValidPort(portStr, port)) {
 			std::string errorMsg = "invalid port in \"" + cleanValue + "\" of the \"listen\" directive";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	} else {
@@ -790,14 +759,14 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 			port = 80;
 		} else {
 			std::string errorMsg = "invalid parameter \"" + cleanValue + "\" in \"listen\" directive";
-			logger(errorMsg);
+			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 	}
 
 	// debug
 	// std::cout << "Parsed listen: " << address << ":" << port << std::endl;
-	fillBindingWithoutServerName(address, port);
+	_currentContext->addListenPair(address, port, _config.getFilePath());
 	// verify duplicates
 }
 /* end of utilitary functions for listen */

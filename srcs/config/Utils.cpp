@@ -1,6 +1,16 @@
 #include "Utils.hpp"
 
 #include <sstream>
+#include <iostream>
+#include <fstream>
+
+# define LOG_FILE "var/log/error.log"
+# define WEBSERV_PREFIX "webserv: "
+# define EMERG "[emerg] "
+# define UNKNOWN_DIR "unknown directive "
+# define UNEXPECTED "unexpected "
+# define CONF_FILE "configuration file "
+# define TEST_FAILED "test failed\n"
 
 
 bool Utils::isOnlyWSpace(const std::string& line) {
@@ -20,7 +30,7 @@ void Utils::printDirectives(const std::vector<std::pair<std::string,
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		std::cout << it->first << ": ";
-		
+
 		std::vector<std::string>::const_iterator itv;
 		for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
 			std::cout << *itv << ", ";
@@ -39,7 +49,7 @@ std::string Utils::handleWSpaceComments(std::string& line) {
 
     while (iss) {
         iss >> temp;
-        if (temp.empty()) 
+        if (temp.empty())
             break;
         line.append(temp);
         line.push_back(' ');
@@ -69,4 +79,19 @@ Context Utils::handleContext(std::istringstream& f, std::string content) {
     }
     Context C(content, contextContent);
     return (C);
+}
+
+void	Utils::logger(const std::string& error, const std::string& filePath) {
+
+	static const char	*outputFile = LOG_FILE;
+	std::ofstream		file;
+
+
+	// Wondering if there is a real need of protecting that... There will always be an error thrown and a message on the cerr anyway
+	file.open(outputFile, std::ios::out | std::ios::app);
+
+	file << WEBSERV_PREFIX << EMERG << error << " in " << filePath << std::endl; // will NOT add line of the misconfiguration
+	file << WEBSERV_PREFIX << "configuration file " << filePath << " test failed" << std::endl;
+
+	file.close();
 }
