@@ -7,6 +7,24 @@
 struct Bindings {
 	std::vector<std::pair<std::string, int> >	listenPairs;
 	std::vector<std::string>					serverNames;
+
+	Bindings() {}
+
+	bool	checkDuplicateListenPair(const std::string& addr, int port) const {
+		for (size_t i = 0; i < listenPairs.size(); ++i) {
+			if (listenPairs[i].first == addr && listenPairs[i].second == port)
+				return (true);
+		}
+		return (false);
+	}
+
+	bool	checkDuplicateServerName(const std::string& name) const {
+		for (size_t i = 0; i < serverNames.size(); ++i) {
+			if (serverNames[i] == name)
+				return (true);
+		}
+		return (false);
+	}
 };
 
 class Context {
@@ -15,10 +33,9 @@ class Context {
 		std::vector<std::pair<std::string, std::vector<std::string> > >	_directives;
 		std::vector<Context>	_context;
 		std::string				_name;
-
+		Bindings				_bindingsInfo;
 
 	public:
-		std::vector<Bindings>	_bindingsInfo;
 		Context(std::string name, std::string context);
 		~Context();
 
@@ -29,9 +46,13 @@ class Context {
 		const std::vector<Context>&												getContext(void) const;
 		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getDirectives(void) const;
 
-		void	setBindingsInfo(const std::string& addr, const int& port);
+		const Bindings&	getBinding(void) const;
+		Bindings&		getBinding(void);
 
-		void	printBinding(void);
+		void	addListenPair(const std::string& addr, const int& port);
+		void	addServerName(const std::string& name);
+
+		void	printBinding(void) const;
 };
 
 #endif

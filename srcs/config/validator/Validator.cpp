@@ -715,13 +715,14 @@ bool	Validator::isValidAddress(std::string& address) const {
 	return (octetCount == 4);
 }
 
+// might want to add a 3rd parameter for server_names
 void	Validator::fillBindingWithoutServerName(const std::string& v, const int& p) const {
 
 	std::vector<Context>& ctx = _config.getTokenizer().getVectorContext();
 
 	Context& current = ctx.back();
 
-	current.setBindingsInfo(v, p);
+	current.addListenPair(v, p);
 
 	current.printBinding();
 
