@@ -64,7 +64,7 @@ class Validator {
 
 		/* utilitary functions to move out*/
 		std::string	extractContextType(const std::string& contextName) const;
-
+		bool		isOnlySemicolons(const std::string& str) const;
 
 		/* listen utils */
 		bool	isValidPort(std::string& portStr, int& outPort) const;

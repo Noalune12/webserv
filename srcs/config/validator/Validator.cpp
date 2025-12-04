@@ -767,7 +767,6 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 	// debug
 	// std::cout << "Parsed listen: " << address << ":" << port << std::endl;
 	_currentContext->addListenPair(address, port, _config.getFilePath());
-	// verify duplicates
 }
 /* end of utilitary functions for listen */
 
@@ -790,13 +789,49 @@ void	Validator::validateListen(const std::vector<std::string>& values) {
 	// printVector(values);
 }
 
+bool	Validator::isOnlySemicolons(const std::string& str) const {
+	if (str.empty())
+		return (false);
+	for (size_t i = 0; i < str.length(); ++i) {
+		if (str[i] != ';')
+			return (false);
+	}
+	return (true);
+}
+
 void	Validator::validateServerName(const std::vector<std::string>& values) {
 
-	std::vector<std::vector<std::string> > groups = splitDirectiveGroups(values);
+	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(values);
+	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 
-	std::vector<std::vector<std::string> >::const_iterator groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+
 		const std::vector<std::string>& group = *groupIt;
+
+		validateMinimumArgs(group, 1, SERV_NAME);
+
+		for (size_t i = 0; i + 1 < group.size(); ++i) {
+
+			const std::string& token = group[i];
+
+			if (!token.empty() && token[token.length() - 1] == ';') {
+
+				std::string nextToken = group[i + 1];
+
+				while (!nextToken.empty() && nextToken[nextToken.length() - 1] == ';')
+					nextToken = nextToken.substr(0, nextToken.length() - 1);
+
+				std::string	errorMsg;
+
+				if (nextToken.empty()) {
+					errorMsg = "unexpected \";\"";
+				} else {
+					errorMsg = "unknown directive \"" + nextToken + "\"";
+				}
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+		}
 
 		for (size_t i = 0; i < group.size(); ++i) {
 			std::string name = group[i];
@@ -804,12 +839,15 @@ void	Validator::validateServerName(const std::vector<std::string>& values) {
 			while (!name.empty() && name[name.length() - 1] == ';')
 				name = name.substr(0, name.length() - 1);
 
-			if (!name.empty()) {
-				if (name.find_first_of("*") != std::string::npos) // not sure how to handle that for now, need to discuss it with you
-					continue ;
-				// server_name a b s; ; ; ; -> this is an issue rn
-				_currentContext->addServerName(name, _config.getFilePath());
+			if (name.empty())
+				continue ;
+
+			if (name.find_first_of("*") != std::string::npos) {
+				std::string errorMsg = "wildcards rejected in \"" + name + "\"";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
 			}
+			_currentContext->addServerName(name, _config.getFilePath());
 		}
 	}
 	semicolonCheck(values, SERV_NAME);
