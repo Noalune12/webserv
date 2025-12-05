@@ -16,7 +16,7 @@ namespace Utils {
 
     std::string handleWSpaceComments(std::string& line);
 
-    Context handleContext(std::istringstream& f, std::string content);
+    Context handleContext(std::istringstream& f, std::string& content);
 }
 
 #endif
