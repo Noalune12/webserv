@@ -42,7 +42,8 @@ Context::Context(std::string name, std::string context): _name(name) {
 
         if (index != std::string::npos) {
             _context.push_back(Utils::handleContext(f, content));
-            content.clear();
+            // std::cout << "CONTENT AFTER END CONTEXT : " << content << std::endl;
+            // content.clear();
         }
     }
 
