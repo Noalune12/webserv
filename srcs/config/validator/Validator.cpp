@@ -847,6 +847,14 @@ void	Validator::validateServerName(const std::vector<std::string>& values) {
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
+
+			std::string	delimiters = "!\"#$%&'()+,/:;<=>?@[\\]^`{|}~\t\n\r";
+			if (name.find_first_of(delimiters) != std::string::npos) {
+				std::string errorMsg = "invalid characters identified in \"" + name + "\"";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+
 			_currentContext->addServerName(name, _config.getFilePath());
 		}
 	}
