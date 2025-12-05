@@ -127,10 +127,11 @@ void	Validator::validateServerContexts(void) {
 		validateContextDirectives(*it, SERV_VALUE);
 		_currentContext = NULL;
 
-		it->printBinding();
+		// it->printBinding();
 	}
 
 	/* temp, debug */
+	validateVirtualHostConflicts();
 	std::cout << GREEN "working properly for server/location directives" << RESET << std::endl;
 
 }
@@ -859,4 +860,53 @@ void	Validator::validateServerName(const std::vector<std::string>& values) {
 		}
 	}
 	semicolonCheck(values, SERV_NAME);
+}
+
+void	Validator::validateVirtualHostConflicts(void) const {
+
+	std::vector<Context>&		servers = _config.getTokenizer().getVectorContext();
+
+	std::map<std::string, size_t>	bindingMap;
+
+	for (size_t i = 0; i < servers.size(); ++i) {
+
+		Bindings&	binding = servers[i].getBinding();
+
+		if (binding.listenPairs.empty()) {
+			binding.listenPairs.push_back(std::make_pair("0.0.0.0", 80));
+		}
+
+		std::vector<std::string>&	names = binding.serverNames;
+		if (names.empty()) {
+			names.push_back("");
+		}
+
+		// debug
+		// servers[i].printBinding();
+
+		for (size_t j = 0; j < binding.listenPairs.size(); ++j) {
+
+			const std::string&	addr = binding.listenPairs[j].first;
+			int					port = binding.listenPairs[j].second;
+
+			std::ostringstream	addrPortKey;
+			addrPortKey << addr << ":" << port;
+			std::string	addrPortStr = addrPortKey.str();
+
+			for (size_t k = 0; k < names.size(); ++k) {
+
+				std::string	key = addrPortStr + ":" + names[k];
+
+				std::map<std::string, size_t>::const_iterator existing = bindingMap.find(key);
+				if (existing != bindingMap.end()) {
+					std::ostringstream	oss;
+					std::cerr << "webserv: [warn] conflicting server name \"" << names[k] << "\" on " << addr << ":" << port << " , ignored " << std::endl;
+
+					// need to add a boolean in current Context to tell the exec to ignore this serverblock.
+
+				}
+				bindingMap[key] = i;
+			}
+		}
+	}
 }

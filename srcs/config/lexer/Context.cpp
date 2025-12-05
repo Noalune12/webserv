@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "colors.h"
 #include "Utils.hpp"
 
 Context::Context(std::string name, std::string context): _name(name), _bindingsInfo() {
@@ -122,8 +123,6 @@ void	Context::addServerName(const std::string& name, const std::string& filePath
 	(void) filePath;
 	if (_bindingsInfo.checkDuplicateServerName(name)) {
 		return ;
-		// nginx: [warn] conflicting server name "localhost" on 0.0.0.0:80, ignored
-		// error if duplicate server_name and listen directive
 	}
 	_bindingsInfo.serverNames.push_back(name);
 }
@@ -141,7 +140,7 @@ void    Context::printBinding(void) const {
         std::cout << "  (none yet)" << std::endl;
     } else {
         for (size_t i = 0; i < _bindingsInfo.serverNames.size(); ++i) {
-            std::cout << "  " << _bindingsInfo.serverNames[i] << std::endl;
+            std::cout << "  \"" << _bindingsInfo.serverNames[i] << "\"" << std::endl;
         }
     }
 }

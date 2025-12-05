@@ -43,6 +43,7 @@ class Validator {
 		void	validateLocation(const std::vector<std::string>& group, const Context& context) const;
 
 
+		/* cannot be const method as they are modifying _currentContext */
 		void	validateListen(const std::vector<std::string>& values);
 		void	validateServerName(const std::vector<std::string>& values);
 
@@ -71,6 +72,8 @@ class Validator {
 		bool	isValidAddress(std::string& address) const;
 
 		void	subdivideListen(const std::string& listenValue) const;
+
+		void	validateVirtualHostConflicts(void) const;
 
 	public:
 
