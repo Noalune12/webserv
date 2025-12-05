@@ -55,6 +55,7 @@ class Validator {
 		void	validateListen(const std::vector<std::string>& values) const;
 
 		void	validateRoot(const std::vector<std::string>& values) const;
+		void	validateIndex(const std::vector<std::string>& values) const;
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;

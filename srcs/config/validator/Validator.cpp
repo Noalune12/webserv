@@ -95,6 +95,7 @@ void	Validator::initValidators(void) {
 
 	// add lbuisson
 	_directiveValidators[ROOT] = &Validator::validateRoot;
+	_directiveValidators[INDEX] = &Validator::validateIndex;
 }
 
 void	Validator::logger(const std::string& error) const {
@@ -184,8 +185,34 @@ void	Validator::validateRoot(const std::vector<std::string>& values) const {
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ROOT);
 	validateStrictArgsNb(groups[0], 1, ROOT);
 	semicolonCheck(groups[0], ROOT);
+	printGroups(groups);
 	if (groups.size() > 1) {
 		std::string errorMsg = "\"root\" directive is duplicate";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+void	Validator::validateIndex(const std::vector<std::string>& values) const {
+	std::cout << "entering validate index\n" << std::endl; // remove
+
+	std::vector<std::string>::const_iterator it = values.begin();
+	if (*it == ";") { 
+		std::string errorMsg = "invalid number of arguments in \"index\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, INDEX);
+	// validateStrictArgsNb(groups[0], 1, INDEX);
+	printGroups(groups);
+	semicolonCheck(values, INDEX);
+	// for (std::size_t i = 0; i < groups.size(); i++) {
+	// 	// validateStrictArgsNb(groups[i], 1, INDEX);
+	// 	semicolonCheck(groups[i], INDEX);
+	// }
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"index\" directive is duplicate";
 		logger(errorMsg);
 		throw std::invalid_argument(errorMsg);
 	}
