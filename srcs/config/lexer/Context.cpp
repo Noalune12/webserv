@@ -21,8 +21,21 @@ Context::Context(std::string name, std::string context): _name(name) {
         std::size_t index = line.find('{');
 
         if (!content.empty() && index != 0) {
-            addDirective(content);
-            content.clear();
+            while (!content.empty()) {
+                // std::cout << "content : " << content << std::endl;
+                std::size_t semiCol = content.find(';');
+                if (semiCol == std::string::npos) {
+                    addDirective(content);
+                    content.clear();
+                } else {
+                    while (content[semiCol] == ';' || content[semiCol] == ' ')
+                        semiCol++;
+                    std::string dir = content.substr(0, semiCol);
+                    content = content.substr(semiCol);
+                    std::cout << "extracted dir : " << dir << "       content : " << content << std::endl;
+                    addDirective(dir);
+                }
+            }
         }
 
         content.append(line);
@@ -34,8 +47,19 @@ Context::Context(std::string name, std::string context): _name(name) {
     }
 
     if (!content.empty()) {
-        addDirective(content);
-        content.clear();
+        while (!content.empty()) {
+            std::size_t semiCol = content.find(';');
+            if (semiCol == std::string::npos) {
+                addDirective(content);
+                content.clear();
+            } else {
+                while (content[semiCol] == ';' || content[semiCol] == ' ')
+                    semiCol++;
+                std::string dir = content.substr(0, semiCol);
+                content = content.substr(semiCol);
+                addDirective(dir);
+            }
+        }
     }
 }
 
@@ -54,7 +78,7 @@ void Context::addDirective(std::string line) {
     std::vector<std::string> args;
     std::string arg;
     while (iss >> arg) {
-        if (arg == ";")
+        if (arg == ";" && !args.empty())
             args.back().append(arg);
         else
             args.push_back(arg);

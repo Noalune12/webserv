@@ -17,8 +17,19 @@ Tokenizer::Tokenizer(const std::string& fileContent) {
 
         std::size_t index = line.find('{');
         if (!content.empty() && index != 0) {
-            addDirective(content);
-            content.clear();
+            while (!content.empty()) {
+                std::size_t semiCol = content.find(';');
+                if (semiCol == std::string::npos) {
+                    addDirective(content);
+                    content.clear();
+                } else {
+                    while (content[semiCol] == ';' || content[semiCol] == ' ')
+                        semiCol++;
+                    std::string dir = content.substr(0, semiCol);
+                    content = content.substr(semiCol);
+                    addDirective(dir);
+                }
+            }
         }
 
         content.append(line);
@@ -29,8 +40,19 @@ Tokenizer::Tokenizer(const std::string& fileContent) {
         }
     }
     if (!content.empty()) {
-        addDirective(content);
-        content.clear();
+        while (!content.empty()) {
+            std::size_t semiCol = content.find(';');
+            if (semiCol == std::string::npos) {
+                addDirective(content);
+                content.clear();
+            } else {
+                while (content[semiCol] == ';' || content[semiCol] == ' ')
+                    semiCol++;
+                std::string dir = content.substr(0, semiCol);
+                content = content.substr(semiCol);
+                addDirective(dir);
+            }
+        }
     }
 }
 
