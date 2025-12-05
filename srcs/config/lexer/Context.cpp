@@ -54,7 +54,10 @@ void Context::addDirective(std::string line) {
     std::vector<std::string> args;
     std::string arg;
     while (iss >> arg) {
-        args.push_back(arg);
+        if (arg == ";")
+            args.back().append(arg);
+        else
+            args.push_back(arg);
     }
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _directives.begin();
