@@ -181,14 +181,14 @@ void	Validator::validateRoot(const std::vector<std::string>& values) const {
 		throw std::invalid_argument(errorMsg);
 	}
 
-	// std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
-	// semicolonCheck(values, ROOT);
-	// validateStrictArgsNb(groups[0], 1, ROOT);
-	// if (groups.size() > 1) {
-	// 	std::string errorMsg = "\"root\" directive is duplicate";
-	// 	logger(errorMsg);
-	// 	throw std::invalid_argument(errorMsg);
-	// }
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ROOT);
+	validateStrictArgsNb(groups[0], 1, ROOT);
+	semicolonCheck(groups[0], ROOT);
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"root\" directive is duplicate";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
 }
 
 void	Validator::contextNameCheck(const Context& context) const {
