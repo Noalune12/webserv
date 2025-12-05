@@ -91,6 +91,10 @@ void	Validator::initValidators(void) {
 
 	_directiveValidators[CL_MAX_B_SYZE] = &Validator::validateClientMaxBodySize;
 	_directiveValidators[ERR_PAGE] = &Validator::validateErrorPage;
+
+	// add lbuisson
+	_directiveValidators[ROOT] = &Validator::validateRoot;
+	_directiveValidators[INDEX] = &Validator::validateIndex;
 }
 
 
@@ -120,7 +124,10 @@ void	Validator::validateServerContexts(void) {
 	std::vector<Context>&			contexts = _config.getTokenizer().getVectorContext();
 	std::vector<Context>::iterator	it;
 
+	std::cout << "ENTERING VALIDATE SERVER CONTEXT" << std::endl;
+
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
+		std::cout << it->getName() << " " << SERV_VALUE << std::endl; // remove
 		contextNameCheck(*it);
 
 		_currentContext = &(*it);
@@ -144,6 +151,7 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
+		std::cout << "directive = " << it->first << std::endl;
 		if (it->first == "}")
 			continue ;
 
@@ -156,8 +164,53 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 			if (validatorIt != _directiveValidators.end()) {
 				(this->*(validatorIt->second))(it->second);
 			}
-			// TODO: ajouter les validateurs pour les autres directives
 		}
+	}
+}
+
+void	Validator::validateRoot(const std::vector<std::string>& values) const {
+	std::cout << "entering validate root\n" << std::endl; // remove
+
+	std::vector<std::string>::const_iterator it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"root\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ROOT);
+	validateStrictArgsNb(groups[0], 1, ROOT);
+	semicolonCheck(groups[0], ROOT);
+	printGroups(groups);
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"root\" directive is duplicate";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+void	Validator::validateIndex(const std::vector<std::string>& values) const {
+	std::cout << "entering validate index\n" << std::endl; // remove
+
+	std::vector<std::string>::const_iterator it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"index\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, INDEX);
+	// validateStrictArgsNb(groups[0], 1, INDEX);
+	printGroups(groups);
+	semicolonCheck(values, INDEX);
+	// for (std::size_t i = 0; i < groups.size(); i++) {
+	// 	// validateStrictArgsNb(groups[i], 1, INDEX);
+	// 	semicolonCheck(groups[i], INDEX);
+	// }
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"index\" directive is duplicate";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
 	}
 }
 
@@ -325,7 +378,7 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 
 void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const {
 
-	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(v);
+	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(v, directive);
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 	std::string						errorMsg;
 
@@ -395,7 +448,7 @@ static bool	validateUnity(const std::string& leftover) {
 
 void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values) const {
 
-	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, CL_MAX_B_SYZE);
 
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
@@ -469,7 +522,7 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 
 	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
 
-	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ERR_PAGE);
 
 	std::vector<std::vector<std::string> >::const_iterator groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
@@ -523,13 +576,19 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 	semicolonCheck(values, ERR_PAGE);
 }
 
-std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std::vector<std::string>& values) const {
+std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std::vector<std::string>& values, const std::string& directive) const {
 
 	std::vector<std::vector<std::string> >	groups;
 	std::vector<std::string>				current;
 
 	std::vector<std::string>::const_iterator it;
+	std::string						errorMsg;
 
+	if (values.back() == " ") {
+		errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
 	for (it = values.begin(); it != values.end(); ++it) {
 		if (*it == " ") {
 			if (!current.empty()) {
@@ -774,7 +833,7 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 void	Validator::validateListen(const std::vector<std::string>& values) {
 
 	std::cout << RED "entered validateListen" RESET << std::endl;
-	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values);
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, LISTEN);
 
 	std::vector<std::vector<std::string> >::const_iterator groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
@@ -802,7 +861,7 @@ bool	Validator::isOnlySemicolons(const std::string& str) const {
 
 void	Validator::validateServerName(const std::vector<std::string>& values) {
 
-	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(values);
+	std::vector<std::vector<std::string> >					groups = splitDirectiveGroups(values, SERV_NAME);
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {

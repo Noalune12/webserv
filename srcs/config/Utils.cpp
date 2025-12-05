@@ -61,23 +61,32 @@ std::string Utils::handleWSpaceComments(std::string& line) {
     return (line);
 }
 
-Context Utils::handleContext(std::istringstream& f, std::string content) {
+Context Utils::handleContext(std::istringstream& f, std::string& content) {
     int open;
     std::string line;
     std::string contextContent;
-
+    std::size_t index;
     open = 1;
     while (getline(f, line)) {
         if (line.find('{') != std::string::npos)
             open++;
-        else if (line.find('}') != std::string::npos)
+        else if ((index = line.find('}')) != std::string::npos)
             open--;
-        contextContent.append(line);
-        contextContent.push_back('\n');
-        if (open == 0)
+        if (open == 0) {
+            contextContent.append(line.substr(0, index+1));
+            contextContent.push_back('\n');    
             break;
+        }
+        contextContent.append(line);
+        contextContent.push_back('\n');    
     }
     Context C(content, contextContent);
+    if (open == 0) {
+        // std::cout << "Content at the end of context handler : " << content << std::endl;
+        content = line.substr(index + 1);
+        // std::cout << "Content after context handler : " << content << std::endl;
+
+    }
     return (C);
 }
 
