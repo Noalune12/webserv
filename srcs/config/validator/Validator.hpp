@@ -53,7 +53,8 @@ class Validator {
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;
 		void	validateServerContexts(void);
-		// validateLocationContexts()
+		void	validateLocationContexts(Context& serverContext);
+
 		void	validateContextDirectives(Context& context, int contextType);
 
 		/* member functions table pointer */
@@ -62,7 +63,7 @@ class Validator {
 
 
 		/* context parsing start */
-		void	contextNameCheck(const Context& context) const;
+		void	contextNameCheck(const Context& context, int expectedType) const;
 		void	checkContextClosedProperly(const Context& context) const;
 
 

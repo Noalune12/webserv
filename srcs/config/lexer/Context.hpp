@@ -44,6 +44,7 @@ class Context {
 
 		const std::string&														getName(void) const;
 		const std::vector<Context>&												getContext(void) const;
+		std::vector<Context>&													getContext(void);
 		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getDirectives(void) const;
 
 		const Bindings&	getBinding(void) const;

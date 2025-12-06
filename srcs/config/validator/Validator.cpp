@@ -118,6 +118,25 @@ void	Validator::validateGlobalDirective(void) const {
 }
 
 
+void	Validator::validateLocationContexts(Context& serverContext) {
+
+	std::vector<Context>&			locations = serverContext.getContext();
+	std::vector<Context>::iterator	it;
+
+	for (it = locations.begin(); it != locations.end(); ++it) {
+
+		contextNameCheck(*it, LOCATION_VALUE);
+
+		validateContextDirectives(*it, LOCATION_VALUE);
+
+		if (!it->getContext().empty()) {
+			std::string errorMsg = "nested location blocks are not allowed";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+}
+
 /* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */
 void	Validator::validateServerContexts(void) {
 
@@ -127,11 +146,12 @@ void	Validator::validateServerContexts(void) {
 	std::cout << "ENTERING VALIDATE SERVER CONTEXT" << std::endl;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
-		std::cout << it->getName() << " " << SERV_VALUE << std::endl; // remove
-		contextNameCheck(*it);
+		// std::cout << it->getName() << " " << SERV_VALUE << std::endl; // remove
+		contextNameCheck(*it, SERV_VALUE);
 
 		_currentContext = &(*it);
 		validateContextDirectives(*it, SERV_VALUE);
+		validateLocationContexts(*it);
 		_currentContext = NULL;
 
 		// it->printBinding();
@@ -151,7 +171,7 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
-		std::cout << "directive = " << it->first << std::endl;
+		// std::cout << "directive = " << it->first << std::endl;
 		if (it->first == "}")
 			continue ;
 
@@ -214,7 +234,7 @@ void	Validator::validateIndex(const std::vector<std::string>& values) const {
 	}
 }
 
-void	Validator::contextNameCheck(const Context& context) const {
+void	Validator::contextNameCheck(const Context& context, int expectedType) const {
 
 	const std::string&			name = context.getName();
 	std::vector<std::string>	group = createVectorFromString(name);
@@ -224,10 +244,20 @@ void	Validator::contextNameCheck(const Context& context) const {
 
 	ss >> value;
 	// std::cout << value << std::endl;
-	if (value == SERV) {
+	if (expectedType == SERV_VALUE) {
+		if (value != SERV) {
+			std::string errorMsg = "\"" + value + "\" directive is not allowed here";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
 		validateStrictArgsNb(group, 2, SERV);
 		validateServer(group, context);
-	} else if (value == LOCATION) { // this will be moved somewhere else OR validateLocaiton has to change to identify if we are in a location or not, because RN we accept a
+	} else if (expectedType == LOCATION_VALUE) {
+		if (value != LOCATION) {
+			std::string errorMsg = "\"" + value + "\" directive is not allowed here";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
 		validateStrictArgsNb(group, 3, LOCATION);
 		validateLocation(group, context);
 	} else {

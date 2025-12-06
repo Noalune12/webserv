@@ -33,7 +33,7 @@ Context::Context(std::string name, std::string context): _name(name), _bindingsI
                         semiCol++;
                     std::string dir = content.substr(0, semiCol);
                     content = content.substr(semiCol);
-                    std::cout << "extracted dir : " << dir << "       content : " << content << std::endl;
+                    // std::cout << "extracted dir : " << dir << "       content : " << content << std::endl;
                     addDirective(dir);
                 }
             }
@@ -122,6 +122,10 @@ const	std::vector<std::pair<std::string, std::vector<std::string> > >&  Context:
 }
 
 const	std::vector<Context>& Context::getContext(void) const {
+	return (this->_context);
+}
+
+std::vector<Context>& Context::getContext(void) {
 	return (this->_context);
 }
 
