@@ -87,6 +87,9 @@ class Validator {
 
 		void	validateVirtualHostConflicts(void) const;
 
+
+		void	rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const;
+
 	public:
 
 		Validator(Config& config);

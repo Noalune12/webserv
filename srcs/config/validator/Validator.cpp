@@ -90,10 +90,25 @@ void	Validator::initValidators(void) {
 
 
 
+// alone "} that are not in context are now rejected
+void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const {
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	checkIt;
+	for (checkIt = directives.begin(); checkIt != directives.end(); ++checkIt) {
+		if (checkIt->first == "}" || (!checkIt->first.empty() && checkIt->first[0] == '}')) {
+			std::string errorMsg = "unexpected \"}\"";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+}
+
+
 void	Validator::validateGlobalDirective(void) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
 
+	rejectSoleBrackets(directives);
 	keyNameCheck(directives, GLOBAL_VALUE);
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
