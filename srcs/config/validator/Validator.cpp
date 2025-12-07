@@ -32,15 +32,9 @@ void	Validator::validate(void) {
 	// we have to check listen and server_name between Contexts to avoid:
 	// nginx: [warn] conflicting server name "localhost" on 0.0.0.0:80, ignored
 
-	// server {
-	// 	listen 80;
-	// 	server_name localhost;
-	// }
+	// checkMissingDirectives(); ??
+	// fillDefaultDirective(); ?? probablement a l'heritage
 
-	// server {
-	// 	listen 80;
-	// 	server_name localhost;
-	// }
 }
 
 void	Validator::initAllowedContext(void) {
@@ -95,8 +89,15 @@ void	Validator::initValidators(void) {
 	// add lbuisson
 	_directiveValidators[ROOT] = &Validator::validateRoot;
 	_directiveValidators[INDEX] = &Validator::validateIndex;
+
+
+
 	_directiveValidators[AUTOINDEX] = &Validator::validateAutoIndex;
 	_directiveValidators[ALL_METHODS] = &Validator::validateAllowedMethods;
+
+
+	_directiveValidators[CGI_PATH] = &Validator::validateCGIPath;
+	_directiveValidators[CGI_EXT] = &Validator::validateCGIExt;
 }
 
 
@@ -130,6 +131,8 @@ void	Validator::validateLocationContexts(Context& serverContext) {
 		contextNameCheck(*it, LOCATION_VALUE);
 
 		validateContextDirectives(*it, LOCATION_VALUE);
+
+		validateCGIPairing(*it);
 
 		if (!it->getContext().empty()) {
 			std::string errorMsg = "nested location blocks are not allowed";
@@ -453,8 +456,14 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
-		const std::string&	key = it->first;
-		bool				found = false;
+		std::string	key = it->first;
+		bool		found = false;
+
+
+		// soucis ici,
+		// while (!key.empty() && key[key.length() - 1] == ';') {
+		// 	key = key.substr(0, key.length() - 1);
+		// }
 
 		/* temp, j'ai peur que ca casse tout du coup mais je reflechirai a ca plus tard*/
 		/* UPDATE: ca casse des truc...*/
@@ -477,6 +486,7 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 					throw std::invalid_argument(errorMsg);
 				}
 			}
+			std::cout << BLUE + key + RESET << std::endl;
 			std::string errorMsg = "unknown directive \"" + key + "\"";
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
@@ -1075,5 +1085,137 @@ void	Validator::validateVirtualHostConflicts(void) const {
 				bindingMap[key] = i;
 			}
 		}
+	}
+}
+
+
+/* CGI */
+void	Validator::validateCGIPath(const std::vector<std::string>& values) const {
+
+	std::cout << GREEN "in validate cgi_path" RESET << std::endl;
+
+	std::vector<std::string>::const_iterator	it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"cgi_path\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, CGI_PATH);
+	// printGroups(groups);
+
+	std::vector<std::vector<std::string> >::const_iterator	groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+
+		const std::vector<std::string>&	group = *groupIt;
+
+		validateStrictArgsNb(group, 1, CGI_PATH);
+
+		std::string	pathValue = group[0];
+		while (!pathValue.empty() && pathValue[pathValue.length() - 1] == ';')
+			pathValue = pathValue.substr(0, pathValue.length() - 1);
+
+		if (pathValue.empty()) {
+			std::string	errorMsg = "invalid value in \"cgi_path\" directive";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (pathValue[0] != '/') {
+			std::string	errorMsg = "\"cgi_path\" directive requires an absolute path, got \"" + pathValue + "\"";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	/* not sure we can limit to only one type of script, leaving it like that right now */
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"cgi_path\" directive is duplicate";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	semicolonCheck(values, CGI_PATH);
+}
+
+void	Validator::validateCGIExt(const std::vector<std::string>& values) const {
+
+	std::cout << GREEN "in validate cgi_ext" RESET << std::endl;
+
+	std::vector<std::string>::const_iterator it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"cgi_ext\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, CGI_EXT);
+	// printGroups(groups);
+
+	std::vector<std::vector<std::string> >::const_iterator	groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+
+		const std::vector<std::string>&	group = *groupIt;
+
+		validateStrictArgsNb(group, 1, CGI_EXT);
+
+		std::string	extValue = group[0];
+		while (!extValue.empty() && extValue[extValue.length() - 1] == ';')
+			extValue = extValue.substr(0, extValue.length() - 1);
+
+		if (extValue.empty()) {
+			std::string	errorMsg = "invalid value in \"cgi_ext\" directive";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (extValue[0] != '.') {
+			std::string	errorMsg = "\"cgi_ext\" directive requires extension starting with '.', got \"" + extValue + "\"";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+
+		if (extValue.length() < 2) {
+			std::string	errorMsg = "invalid extension \"" + extValue + "\" in \"cgi_ext\" directive";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	/* same as validateCGIPath here */
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"cgi_ext\" directive is duplicate";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	semicolonCheck(values, CGI_EXT);
+}
+
+void	Validator::validateCGIPairing(const Context& context) const {
+
+	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+
+	bool	hasCGIPath = false;
+	bool	hasCGIExt = false;
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	for (it = directives.begin(); it != directives.end(); ++it) {
+		if (it->first == CGI_PATH)
+			hasCGIPath = true;
+		if (it->first == CGI_EXT)
+			hasCGIExt = true;
+	}
+
+	if (hasCGIExt && !hasCGIPath) {
+		std::string	errorMsg = "\"cgi_ext\" directive requires \"cgi_path\" directive in the same location";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	if (hasCGIPath && !hasCGIExt) {
+		std::string errorMsg = "\"cgi_path\" directive requires \"cgi_ext\" directive in the same location";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
 	}
 }
