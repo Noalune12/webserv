@@ -17,20 +17,8 @@ Validator::~Validator() {}
 
 void	Validator::validate(void) {
 
-	// validation par contexte -> creer des regles de validation en fonction du contexte.
-
-	// loop sur globalDirectives -> je sais que ce sont des directives dont je peux faire:
-	// keyNameCheck -> semiColonCheck -> parameterCheck en fonctions de la directive. (tableaux de pointeurs sur fonctions ?)
-	// validateGlobalDirective();
-	// loop sur le vecteur de Context
-	// keyNameCheck -> bracketCheck pour la directive context -> parameterCheck
-	// puis meme chose que pour les globales directives mais a l'interieur du context.
-
 	validateGlobalDirective();
 	validateServerContexts();
-
-	// we have to check listen and server_name between Contexts to avoid:
-	// nginx: [warn] conflicting server name "localhost" on 0.0.0.0:80, ignored
 
 	// checkMissingDirectives(); ??
 	// fillDefaultDirective(); ?? probablement a l'heritage
@@ -66,8 +54,8 @@ void	Validator::initAllowedContext(void) {
 	_allowedInContext[LOCATION_VALUE].second.push_back(UPLOAD_TO);
 	_allowedInContext[LOCATION_VALUE].second.push_back(RETURN);
 	_allowedInContext[LOCATION_VALUE].second.push_back(ALIAS);
-	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_PATH);
-	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_EXT);
+	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_PATH); // started, not finished
+	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_EXT); // started, not finished
 
 	// for (size_t i = 0; i < _allowedInContext.size(); ++i) {
 	// 	std::cout << _allowedInContext[i].first << ": ";
@@ -110,6 +98,13 @@ void	Validator::validateGlobalDirective(void) const {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
+
+		if ((it->second.empty() && it->first != "}")) {
+			std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 		if (validatorIt != _directiveValidators.end()) {
 			(this->*(validatorIt->second))(it->second);
@@ -148,7 +143,7 @@ void	Validator::validateServerContexts(void) {
 	std::vector<Context>&			contexts = _config.getTokenizer().getVectorContext();
 	std::vector<Context>::iterator	it;
 
-	std::cout << "ENTERING VALIDATE SERVER CONTEXT" << std::endl;
+	std::cout << YELLOW "ENTERING VALIDATE SERVER CONTEXT" RESET << std::endl;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
 		// std::cout << it->getName() << " " << SERV_VALUE << std::endl; // remove
@@ -179,6 +174,13 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 		// std::cout << "directive = " << it->first << std::endl;
 		if (it->first == "}")
 			continue ;
+
+
+		if (it->second.empty() && it->first != "}") {
+			std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
 
 		if (it->first == LISTEN) {
 			validateListen(it->second);
@@ -459,11 +461,11 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 		std::string	key = it->first;
 		bool		found = false;
 
-
+		std::cout << RED << "key:" + key << RESET << std::endl;
 		// soucis ici,
-		// while (!key.empty() && key[key.length() - 1] == ';') {
-		// 	key = key.substr(0, key.length() - 1);
-		// }
+		while (!key.empty() && key[key.length() - 1] == ';') {
+			key = key.substr(0, key.length() - 1);
+		}
 
 		/* temp, j'ai peur que ca casse tout du coup mais je reflechirai a ca plus tard*/
 		/* UPDATE: ca casse des truc...*/
@@ -797,7 +799,7 @@ void	Validator::printVector(const std::vector<std::string>& v) const {
 }
 /* END OF DEBUG FUNCTIONS */
 
-/* utilitary functions that will move to the Utils namespace later*/
+/* utilitary functions that will move to the Utils namespace later, not used anymore */
 std::string	Validator::extractContextType(const std::string& contextName) const {
 
 	std::istringstream	iss(contextName);
