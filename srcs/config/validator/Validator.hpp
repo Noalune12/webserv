@@ -49,6 +49,9 @@ class Validator {
 
 		void	validateRoot(const std::vector<std::string>& values) const;
 		void	validateIndex(const std::vector<std::string>& values) const;
+		void	validateAutoIndex(const std::vector<std::string>& values) const;
+		void	validateAllowedMethods(const std::vector<std::string>& values) const;
+
 
 		/* subdivision of directives checks */
 		void	validateGlobalDirective(void) const;

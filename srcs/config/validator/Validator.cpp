@@ -95,6 +95,8 @@ void	Validator::initValidators(void) {
 	// add lbuisson
 	_directiveValidators[ROOT] = &Validator::validateRoot;
 	_directiveValidators[INDEX] = &Validator::validateIndex;
+	_directiveValidators[AUTOINDEX] = &Validator::validateAutoIndex;
+	_directiveValidators[ALL_METHODS] = &Validator::validateAllowedMethods;
 }
 
 
@@ -185,6 +187,81 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 				(this->*(validatorIt->second))(it->second);
 			}
 		}
+	}
+}
+
+void	Validator::validateAutoIndex(const std::vector<std::string>& values) const {
+
+	std::cout << GREEN "in validate autoindex" RESET << std::endl;
+	// printVector(values);
+	std::vector<std::string>::const_iterator	it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"autoindex\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, AUTOINDEX);
+	printGroups(groups);
+	validateStrictArgsNb(groups[0], 1, AUTOINDEX);
+
+	std::string	value = groups[0][0];
+	while (!value.empty() && value[value.length() - 1] == ';')
+		value = value.substr(0, value.length() - 1);
+
+	if (value != "on" && value != "off") {
+		std::string errorMsg = "invalid value \"" + value + "\" in \"autoindex\" directive, it must be \"on\" or \"off\"";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	semicolonCheck(groups[0], AUTOINDEX);
+
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"autoindex\" directive is duplicate";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+
+void	Validator::validateAllowedMethods(const std::vector<std::string>& values) const {
+
+	std::cout << GREEN "in validate allow_methods" RESET << std::endl;
+	// printVector(values);
+	std::vector<std::string>::const_iterator	it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"autoindex\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ALL_METHODS);
+	printGroups(groups);
+	validateMinimumArgs(groups[0], 1, ALL_METHODS);
+
+	for (size_t i = 0; i < groups[0].size(); ++i) {
+		std::string value = groups[0][i];
+
+		while (!value.empty() && value[value.length() - 1] == ';')
+			value = value.substr(0, value.length() - 1);
+
+		if (value.empty())
+			continue;
+
+		if (value != "GET" && value != "POST" && value != "DELETE") {
+			std::string errorMsg = "invalid method \"" + value + "\" in \"allow_methods\" directive, it must be \"GET\", \"POST\" or \"DELETE\"";
+			Utils::logger(errorMsg, _config.getFilePath());
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	semicolonCheck(groups[0], ALL_METHODS);
+
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"allow_methods\" directive is duplicate";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
 	}
 }
 
@@ -380,6 +457,7 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 		bool				found = false;
 
 		/* temp, j'ai peur que ca casse tout du coup mais je reflechirai a ca plus tard*/
+		/* UPDATE: ca casse des truc...*/
 		if (key == "}")
 			continue ;
 
