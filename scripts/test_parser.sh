@@ -178,24 +178,6 @@ echo -e "${BLUE}  Configuration Parser Test Suite${RESET}"
 echo -e "${BLUE}======================================${RESET}"
 echo ""
 
-# Test valid configurations
-echo -e "${BLUE}Testing valid configurations...${RESET}"
-echo ""
-
-if [ -d "$VALID_CONFIGS_DIR" ]; then
-    # Find all .conf files recursively
-    while IFS= read -r -d '' config; do
-        run_test "$config" 1 || true  # Continue even if test fails
-    done < <(find "$VALID_CONFIGS_DIR" -type f -name "*.conf" -print0 2>/dev/null | sort -z)
-
-    if [ $? -ne 0 ] || [ $(find "$VALID_CONFIGS_DIR" -type f -name "*.conf" 2>/dev/null | wc -l) -eq 0 ]; then
-        echo -e "${YELLOW}No valid config files found in $VALID_CONFIGS_DIR${RESET}"
-    fi
-else
-    echo -e "${YELLOW}Valid configs directory not found: $VALID_CONFIGS_DIR${RESET}"
-fi
-
-echo ""
 
 # Test invalid configurations
 echo -e "${BLUE}Testing invalid configurations...${RESET}"
@@ -218,6 +200,27 @@ fi
 if [ $USE_VALGRIND -eq 1 ] && [ -f "$VALGRIND_LOG" ]; then
     rm -f "$VALGRIND_LOG"
 fi
+
+echo ""
+
+
+# Test valid configurations
+echo -e "${BLUE}Testing valid configurations...${RESET}"
+echo ""
+
+if [ -d "$VALID_CONFIGS_DIR" ]; then
+    # Find all .conf files recursively
+    while IFS= read -r -d '' config; do
+        run_test "$config" 1 || true  # Continue even if test fails
+    done < <(find "$VALID_CONFIGS_DIR" -type f -name "*.conf" -print0 2>/dev/null | sort -z)
+
+    if [ $? -ne 0 ] || [ $(find "$VALID_CONFIGS_DIR" -type f -name "*.conf" 2>/dev/null | wc -l) -eq 0 ]; then
+        echo -e "${YELLOW}No valid config files found in $VALID_CONFIGS_DIR${RESET}"
+    fi
+else
+    echo -e "${YELLOW}Valid configs directory not found: $VALID_CONFIGS_DIR${RESET}"
+fi
+
 
 # Print summary
 echo ""
