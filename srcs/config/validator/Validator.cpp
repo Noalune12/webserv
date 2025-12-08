@@ -84,6 +84,8 @@ void	Validator::initValidators(void) {
 	_directiveValidators[ALL_METHODS] = &Validator::validateAllowedMethods;
 
 
+	_directiveValidators[RETURN] = &Validator::validateReturn;
+
 	_directiveValidators[CGI_PATH] = &Validator::validateCGIPath;
 	_directiveValidators[CGI_EXT] = &Validator::validateCGIExt;
 }
@@ -1234,5 +1236,74 @@ void	Validator::validateCGIPairing(const Context& context) const {
 		std::string errorMsg = "\"cgi_path\" directive requires \"cgi_ext\" directive in the same location";
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
+	}
+}
+
+
+void	Validator::validateReturn(const std::vector<std::string>& values) const {
+
+	std::cout << GREEN "in validate return" RESET << std::endl;
+
+	// meant to be updated while building the server
+	static const int	error_codes[] = {
+		301, 302, 303, 307, 308,
+		400, 403, 404, 405, 408, 429,
+		500, 505
+	};
+
+	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
+
+	std::vector<std::string>::const_iterator	it = values.begin();
+
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"return\" directive";
+		Utils::logger(errorMsg, _config.getFilePath());
+		throw std::invalid_argument(errorMsg);
+	}
+
+	semicolonCheck(values, RETURN);
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, RETURN);
+
+
+	std::vector<std::vector<std::string> >::const_iterator groupIt;
+	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+
+		const std::vector<std::string>&	group = *groupIt;
+
+		validateStrictArgsNb(group, 2, RETURN);
+
+		for (size_t i = 0; i < group.size() - 1; ++i) {
+
+			std::istringstream	iss(group[i]);
+			int					value;
+
+			if (!(iss >> value)) {
+				std::string	errorMsg = "invalid return code \"" + group[i] + "\"";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+
+			if (iss.peek() != EOF) {
+				std::string	errorMsg = "invalid return code \"" + group[i] + "\"";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+
+			bool	validCode = false;
+			for (size_t j = 0; j < validCodeCount; ++j) {
+				if (error_codes[j] == value) {
+					validCode = true;
+					break ;
+				}
+			}
+
+			if (!validCode) {
+				std::ostringstream	oss;
+				oss << value;
+				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+		}
 	}
 }

@@ -52,6 +52,9 @@ class Validator {
 		void	validateAutoIndex(const std::vector<std::string>& values) const;
 		void	validateAllowedMethods(const std::vector<std::string>& values) const;
 
+
+		void	validateReturn(const std::vector<std::string>& values) const;
+
 		/* CGI validation */
 		void	validateCGIPath(const std::vector<std::string>& values) const;
 		void	validateCGIExt(const std::vector<std::string>& values) const;
