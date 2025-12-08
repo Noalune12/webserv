@@ -97,7 +97,7 @@ void	Validator::initValidators(void) {
 	_directiveValidators[ROOT] = &Validator::validateRoot;
 	_directiveValidators[INDEX] = &Validator::validateIndex;
 	_directiveValidators[UPLOAD_TO] = &Validator::validateUploadTo;
-
+	_directiveValidators[ALIAS] = &Validator::validateAlias;
 	_directiveValidators[ALL_METHODS] = &Validator::validateAllowedMethods;
 }
 
@@ -198,8 +198,6 @@ void	Validator::validateContextDirectives(const Context& context, int contextTyp
 }
 
 void	Validator::validateRoot(const std::vector<std::string>& values) const {
-	std::cout << "entering validate root\n" << std::endl; // remove
-
 	std::vector<std::string>::const_iterator it = values.begin();
 	if (*it == ";") { 
 		std::string errorMsg = "invalid number of arguments in \"root\" directive";
@@ -218,9 +216,27 @@ void	Validator::validateRoot(const std::vector<std::string>& values) const {
 	}
 }
 
-void	Validator::validateIndex(const std::vector<std::string>& values) const {
-	std::cout << "entering validate index\n" << std::endl; // remove
+void	Validator::validateAlias(const std::vector<std::string>& values) const {
+	std::vector<std::string>::const_iterator it = values.begin();
+	if (*it == ";") { 
+		std::string errorMsg = "invalid number of arguments in \"alias\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
 
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ALIAS);
+	validateStrictArgsNb(groups[0], 1, ALIAS);
+	semicolonCheck(groups[0], ALIAS);
+	printGroups(groups);
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"alias\" directive is duplicate";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+
+void	Validator::validateIndex(const std::vector<std::string>& values) const {
 	std::vector<std::string>::const_iterator it = values.begin();
 	if (*it == ";") { 
 		std::string errorMsg = "invalid number of arguments in \"index\" directive";
@@ -240,8 +256,6 @@ void	Validator::validateIndex(const std::vector<std::string>& values) const {
 }
 
 void	Validator::validateUploadTo(const std::vector<std::string>& values) const {
-	std::cout << "entering validate upload to\n" << std::endl; // remove
-
 	std::vector<std::string>::const_iterator it = values.begin();
 	if (*it == ";") { 
 		std::string errorMsg = "invalid number of arguments in \"upload_to\" directive";

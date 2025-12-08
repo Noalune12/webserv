@@ -58,6 +58,7 @@ class Validator {
 		void	validateIndex(const std::vector<std::string>& values) const;
 		void	validateUploadTo(const std::vector<std::string>& values) const;
 		void	validateAllowedMethods(const std::vector<std::string>& values) const;
+		void	validateAlias(const std::vector<std::string>& values) const;
 
 		void	validatePostUploadToPairing(const Context& context) const;
 
