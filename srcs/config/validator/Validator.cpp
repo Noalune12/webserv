@@ -96,6 +96,9 @@ void	Validator::initValidators(void) {
 	// add lbuisson
 	_directiveValidators[ROOT] = &Validator::validateRoot;
 	_directiveValidators[INDEX] = &Validator::validateIndex;
+	_directiveValidators[UPLOAD_TO] = &Validator::validateUploadTo;
+
+	_directiveValidators[ALL_METHODS] = &Validator::validateAllowedMethods;
 }
 
 void	Validator::logger(const std::string& error) const {
@@ -160,6 +163,7 @@ void	Validator::validateServerContexts(void) const {
 		std::cout << it->getName() << " " << SERV_VALUE << std::endl; // remove
 		contextNameCheck(*it);
 		validateContextDirectives(*it, SERV_VALUE);
+		validatePostUploadToPairing(*it);
 	}
 
 	/* temp, debug */
@@ -234,6 +238,76 @@ void	Validator::validateIndex(const std::vector<std::string>& values) const {
 		throw std::invalid_argument(errorMsg);
 	}
 }
+
+void	Validator::validateUploadTo(const std::vector<std::string>& values) const {
+	std::cout << "entering validate upload to\n" << std::endl; // remove
+
+	std::vector<std::string>::const_iterator it = values.begin();
+	if (*it == ";") { 
+		std::string errorMsg = "invalid number of arguments in \"upload_to\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, UPLOAD_TO);
+	validateStrictArgsNb(groups[0], 1, UPLOAD_TO);
+	semicolonCheck(groups[0], UPLOAD_TO);
+	printGroups(groups);
+	const std::vector<std::string>&	group = groups[0];
+	std::string	pathValue = group[0];
+	if (pathValue[0] != '/') {
+		std::string	errorMsg = "\"upload_to\" directive requires an absolute path, got \"" + pathValue + "\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"upload_to\" directive is duplicate";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+
+void	Validator::validateAllowedMethods(const std::vector<std::string>& values) const {
+
+	std::cout << GREEN "in validate allow_methods" RESET << std::endl;
+	// printVector(values);
+	std::vector<std::string>::const_iterator	it = values.begin();
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"autoindex\" directive";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ALL_METHODS);
+	printGroups(groups);
+	validateMinimumArgs(groups[0], 1, ALL_METHODS);
+
+	for (size_t i = 0; i < groups[0].size(); ++i) {
+		std::string value = groups[0][i];
+
+		while (!value.empty() && value[value.length() - 1] == ';')
+			value = value.substr(0, value.length() - 1);
+
+		if (value.empty())
+			continue;
+
+		if (value != "GET" && value != "POST" && value != "DELETE") {
+			std::string errorMsg = "invalid method \"" + value + "\" in \"allow_methods\" directive, it must be \"GET\", \"POST\" or \"DELETE\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
+
+	semicolonCheck(groups[0], ALL_METHODS);
+
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"allow_methods\" directive is duplicate";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
 
 void	Validator::contextNameCheck(const Context& context) const {
 
@@ -749,3 +823,34 @@ void	Validator::validateListen(const std::vector<std::string>& values) const {
     // listen *:8081;
     // listen localhost:8083;
     // server_name  localhost
+
+#include <algorithm>
+
+	void	Validator::validatePostUploadToPairing(const Context& context) const {
+
+	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+
+	bool	hasPostMethod = false;
+	bool	hasUploadto = false;
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	for (it = directives.begin(); it != directives.end(); ++it) {
+		const std::vector<std::string> arg = it->second;
+		std::vector<std::string>::const_iterator ita = arg.begin();
+		std::cout << "what is in ita" << std::endl;
+		for (; ita != arg.end(); ita++) {
+			std::cout << *ita << " ";
+		}
+		std::cout << std::endl;
+		if (it->first == ALL_METHODS && (std::find(arg.begin(), arg.end(), "POST") != arg.end() || std::find(arg.begin(), arg.end(), "POST;") != arg.end()))
+			hasPostMethod = true;
+		if (it->first == UPLOAD_TO)
+			hasUploadto = true;
+	}
+
+	if (hasUploadto && !hasPostMethod) {
+		std::string errorMsg = "\"upload_to\" directive requires \"allow_methods\" directive with POST argument in the same location";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+}
