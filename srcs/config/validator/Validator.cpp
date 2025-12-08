@@ -117,10 +117,25 @@ void	Validator::logger(const std::string& error) const {
 void	Validator::validateGlobalDirective(void) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it = directives.begin();
+	std::cout << "entering global directives validation" << std::endl;
+	// /!\ if no global dir -> seg fault
+	if (it == directives.end())
+		return;
+	// /!\ if only ;
 
+	if (it->first[0] == ';') {
+		std::string errorMsg = "unexpected \";\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
+	if ((it->second.empty() && it->first != "}")) {
+		std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
+		logger(errorMsg);
+		throw std::invalid_argument(errorMsg);
+	}
 	keyNameCheck(directives, GLOBAL_VALUE);
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 		if (validatorIt != _directiveValidators.end()) {
@@ -161,6 +176,12 @@ void	Validator::validateContextDirectives(const Context& context, int contextTyp
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		std::cout << "directive = " << it->first << std::endl;
+
+		if ((it->second.empty() && it->first != "}")) {
+			std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
 		if (it->first == "}")
 			continue ;
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
@@ -204,13 +225,9 @@ void	Validator::validateIndex(const std::vector<std::string>& values) const {
 	}
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, INDEX);
-	// validateStrictArgsNb(groups[0], 1, INDEX);
 	printGroups(groups);
+	validateMinimumArgs(groups[0], 1, INDEX);
 	semicolonCheck(values, INDEX);
-	// for (std::size_t i = 0; i < groups.size(); i++) {
-	// 	// validateStrictArgsNb(groups[i], 1, INDEX);
-	// 	semicolonCheck(groups[i], INDEX);
-	// }
 	if (groups.size() > 1) {
 		std::string errorMsg = "\"index\" directive is duplicate";
 		logger(errorMsg);
@@ -356,7 +373,13 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 		/* temp, j'ai peur que ca casse tout du coup mais je reflechirai a ca plus tard*/
 		if (key == "}")
 			continue ;
-
+		
+		// /!\ if only ;
+		if (it->first[0] == ';') {
+			std::string errorMsg = "unexpected \";\"";
+			logger(errorMsg);
+			throw std::invalid_argument(errorMsg);
+		}
 		std::vector<std::string>::const_iterator	allowedIt;
 		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
 			if (key == *allowedIt) {
