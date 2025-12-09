@@ -68,6 +68,13 @@ class Validator {
 
 		void	validateContextDirectives(Context& context, int contextType);
 
+		void	validateUploadTo(const std::vector<std::string>& values) const;
+		void	validateAlias(const std::vector<std::string>& values) const;
+
+		void	validatePostUploadToPairing(const Context& context) const;
+
+		// validateLocationContexts()
+		void	validateContextDirectives(const Context& context, int contextType) const;
 		/* member functions table pointer */
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
 		std::map<std::string, DirectiveValidator> _directiveValidators;
