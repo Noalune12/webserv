@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -162,6 +163,7 @@ void	Validator::validateLocationContexts(Context& serverContext) {
 		validateContextDirectives(*it, LOCATION_VALUE);
 
 		validateCGIPairing(*it);
+		validatePostUploadToPairing(*it);
 
 		if (!it->getContext().empty()) {
 			std::string errorMsg = "nested location blocks are not allowed";
@@ -189,7 +191,6 @@ void	Validator::validateServerContexts(void) {
 		_currentContext = NULL;
 
 		// it->printBinding();
-		validatePostUploadToPairing(*it);
 	}
 
 	/* temp, debug */
@@ -1382,7 +1383,6 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
     // listen localhost:8083;
     // server_name  localhost
 
-#include <algorithm>
 
 	void	Validator::validatePostUploadToPairing(const Context& context) const {
 
