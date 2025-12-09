@@ -945,13 +945,15 @@ bool	Validator::isValidAddress(std::string& address) const {
 		return (true);
 	}
 
+	if (address.empty() || address[0] == '.' || address[address.length() - 1] == '.')
+		return (false);
+
 	std::istringstream	iss(address);
 	std::string			octet;
 	int					octetCount = 0;
 
 	while (std::getline(iss, octet, '.')) {
 		octetCount++;
-
 		if (octet.empty())
 			return (false);
 
@@ -973,7 +975,7 @@ bool	Validator::isValidAddress(std::string& address) const {
 			throw std::invalid_argument(errorMsg);
 		}
 	}
-
+	std::cout << address << " " <<  octetCount << std::endl;
 	return (octetCount == 4);
 }
 
