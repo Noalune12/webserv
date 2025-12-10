@@ -74,19 +74,11 @@ void	Validator::initValidators(void) {
 
 	_directiveValidators[CL_MAX_B_SYZE] = &Validator::validateClientMaxBodySize;
 	_directiveValidators[ERR_PAGE] = &Validator::validateErrorPage;
-
-	// add lbuisson
 	_directiveValidators[ROOT] = &Validator::validateRoot;
 	_directiveValidators[INDEX] = &Validator::validateIndex;
-
-
-
 	_directiveValidators[AUTOINDEX] = &Validator::validateAutoIndex;
 	_directiveValidators[ALL_METHODS] = &Validator::validateAllowedMethods;
-
-
 	_directiveValidators[RETURN] = &Validator::validateReturn;
-
 	_directiveValidators[CGI_PATH] = &Validator::validateCGIPath;
 	_directiveValidators[CGI_EXT] = &Validator::validateCGIExt;
 	_directiveValidators[UPLOAD_TO] = &Validator::validateUploadTo;
@@ -151,6 +143,35 @@ void	Validator::validateGlobalDirective(void) const {
 }
 
 
+void	Validator::rejectAliasRootInSameLocation(const Context& context) const {
+
+
+	const	std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+
+	bool	hasRoot = false;
+	bool	hasAlias = false;
+
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	for (it = directives.begin(); it != directives.end(); ++it) {
+		if (it->first ==  ROOT) {
+			if (hasAlias == true) {
+				std::string errorMsg = "\"root\" directive is duplicate, \"alias\" directive was specified earlier";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+			hasRoot = true;
+		}
+		if (it->first == ALIAS) {
+			if (hasRoot == true) {
+				std::string errorMsg = "\"alias\" directive is duplicate, \"root\" directive was specified earlier";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+			hasAlias = true;
+		}
+	}
+}
+
 void	Validator::validateLocationContexts(Context& serverContext) {
 
 	std::vector<Context>&			locations = serverContext.getContext();
@@ -164,6 +185,7 @@ void	Validator::validateLocationContexts(Context& serverContext) {
 
 		validateCGIPairing(*it);
 		validatePostUploadToPairing(*it);
+		rejectAliasRootInSameLocation(*it);
 
 		if (!it->getContext().empty()) {
 			std::string errorMsg = "nested location blocks are not allowed";

@@ -72,6 +72,7 @@ class Validator {
 		void	validateAlias(const std::vector<std::string>& values) const;
 
 		void	validatePostUploadToPairing(const Context& context) const;
+		void	rejectAliasRootInSameLocation(const Context& context) const;
 
 		// validateLocationContexts()
 		void	validateContextDirectives(const Context& context, int contextType) const;
