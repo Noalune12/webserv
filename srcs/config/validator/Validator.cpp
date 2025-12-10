@@ -172,6 +172,30 @@ void	Validator::rejectAliasRootInSameLocation(const Context& context) const {
 	}
 }
 
+void	Validator::rejectDuplicateLocation(const Context& serverContext) const {
+
+	const std::vector<Context>&	locations = serverContext.getContext();
+	std::vector<std::string>	seenPaths;
+
+	for (size_t i = 0; i < locations.size(); ++i) {
+
+		std::string	name = locations[i].getName();
+		std::istringstream	iss(name);
+		std::string	keyword, path;
+
+		iss >> keyword >> path;
+
+		for (size_t j = 0; j < seenPaths.size(); ++j) {
+			if (seenPaths[j] == path) {
+				std::string errorMsg = "duplicate location \"" + path + "\"";
+				Utils::logger(errorMsg, _config.getFilePath());
+				throw std::invalid_argument(errorMsg);
+			}
+		}
+		seenPaths.push_back(path);
+	}
+}
+
 void	Validator::validateLocationContexts(Context& serverContext) {
 
 	std::vector<Context>&			locations = serverContext.getContext();
@@ -193,6 +217,7 @@ void	Validator::validateLocationContexts(Context& serverContext) {
 			throw std::invalid_argument(errorMsg);
 		}
 	}
+	rejectDuplicateLocation(serverContext);
 }
 
 /* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */

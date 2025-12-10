@@ -73,6 +73,7 @@ class Validator {
 
 		void	validatePostUploadToPairing(const Context& context) const;
 		void	rejectAliasRootInSameLocation(const Context& context) const;
+		void	rejectDuplicateLocation(const Context& serverContext) const;
 
 		// validateLocationContexts()
 		void	validateContextDirectives(const Context& context, int contextType) const;
