@@ -88,7 +88,6 @@ class Validator {
 
 
 		/* utilitary functions to move out*/
-		std::string	extractContextType(const std::string& contextName) const;
 		bool		isOnlySemicolons(const std::string& str) const;
 
 		/* listen utils */
@@ -108,7 +107,6 @@ class Validator {
 		~Validator();
 
 		/* debug methods */
-		void	printMap() const; /* name has to be changed for printPairs or something */
 		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 		void	printVector(const std::vector<std::string>& v) const;
 

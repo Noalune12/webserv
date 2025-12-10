@@ -85,8 +85,6 @@ void	Validator::initValidators(void) {
 	_directiveValidators[ALIAS] = &Validator::validateAlias;
 }
 
-
-
 // alone "} that are not in context are now rejected
 void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const {
 
@@ -100,7 +98,6 @@ void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std:
 	}
 }
 
-
 void	Validator::validateGlobalDirective(void) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
@@ -108,43 +105,27 @@ void	Validator::validateGlobalDirective(void) const {
 	std::cout << "entering global directives validation" << std::endl;
 	// /!\ if no global dir -> seg fault
 	if (it == directives.end())
-		return;
+		return ;
 	// /!\ if only ;
 
 	rejectSoleBrackets(directives);
-	if (it->first[0] == ';') {
-		std::string errorMsg = "unexpected \";\"";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-	if ((it->second.empty() && it->first != "}")) {
-		std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+
+	Utils::unexpectedBracket(it, _config.getFilePath());
+	Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
+
 	keyNameCheck(directives, GLOBAL_VALUE);
 
 	for (it = directives.begin(); it != directives.end(); ++it) {
 
-		if ((it->second.empty() && it->first != "}")) {
-			std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
-
+		Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 		if (validatorIt != _directiveValidators.end()) {
 			(this->*(validatorIt->second))(it->second);
 		}
 	}
-
-	/* temp, debug */
-	std::cout << BLUE "working properly for global directives" << RESET << std::endl;
 }
 
-
 void	Validator::rejectAliasRootInSameLocation(const Context& context) const {
-
 
 	const	std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
 
@@ -220,30 +201,21 @@ void	Validator::validateLocationContexts(Context& serverContext) {
 	rejectDuplicateLocation(serverContext);
 }
 
-/* j'ai mis le check de location a l'interieur de contextNameCheck pour tester, il faudrat le retirer car la directive location DOIT etre a l'interieur d'un server, on peut pas voir de context bloc location au meme niveau que les servers */
 void	Validator::validateServerContexts(void) {
 
 	std::vector<Context>&			contexts = _config.getTokenizer().getVectorContext();
 	std::vector<Context>::iterator	it;
 
-	std::cout << YELLOW "ENTERING VALIDATE SERVER CONTEXT" RESET << std::endl;
-
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
-		// std::cout << it->getName() << " " << SERV_VALUE << std::endl; // remove
 		contextNameCheck(*it, SERV_VALUE);
 
 		_currentContext = &(*it);
 		validateContextDirectives(*it, SERV_VALUE);
 		validateLocationContexts(*it);
 		_currentContext = NULL;
-
-		// it->printBinding();
 	}
 
-	/* temp, debug */
 	validateVirtualHostConflicts();
-	std::cout << GREEN "working properly for server/location directives" << RESET << std::endl;
-
 }
 
 void	Validator::validateContextDirectives(Context& context, int contextType) {
@@ -254,22 +226,11 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
-		std::cout << "directive = " << it->first << std::endl;
 
-		if ((it->second.empty() && it->first != "}")) {
-			std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
+		Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
+
 		if (it->first == "}")
 			continue ;
-
-
-		if (it->second.empty() && it->first != "}") {
-			std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
 
 		if (it->first == LISTEN) {
 			validateListen(it->second);
@@ -285,18 +246,12 @@ void	Validator::validateContextDirectives(Context& context, int contextType) {
 }
 
 void	Validator::validateAutoIndex(const std::vector<std::string>& values) const {
-
-	std::cout << GREEN "in validate autoindex" RESET << std::endl;
-	// printVector(values);
 	std::vector<std::string>::const_iterator	it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"autoindex\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+
+	Utils::invalidNumberOfArguments(it, AUTOINDEX, _config.getFilePath());
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, AUTOINDEX);
-	printGroups(groups);
+
 	validateStrictArgsNb(groups[0], 1, AUTOINDEX);
 
 	std::string	value = groups[0][0];
@@ -310,84 +265,43 @@ void	Validator::validateAutoIndex(const std::vector<std::string>& values) const 
 	}
 
 	semicolonCheck(groups[0], AUTOINDEX);
-
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"autoindex\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, AUTOINDEX, _config.getFilePath());
 }
 
 void	Validator::validateRoot(const std::vector<std::string>& values) const {
 	std::vector<std::string>::const_iterator it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"root\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
+	Utils::invalidNumberOfArguments(it, ROOT, _config.getFilePath());
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ROOT);
 	validateStrictArgsNb(groups[0], 1, ROOT);
 	semicolonCheck(groups[0], ROOT);
-	printGroups(groups);
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"root\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, ROOT, _config.getFilePath());
 }
 
 void	Validator::validateAlias(const std::vector<std::string>& values) const {
 	std::vector<std::string>::const_iterator it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"alias\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
+	Utils::invalidNumberOfArguments(it, ALIAS, _config.getFilePath());
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ALIAS);
 	validateStrictArgsNb(groups[0], 1, ALIAS);
 	semicolonCheck(groups[0], ALIAS);
-	printGroups(groups);
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"alias\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, ALIAS, _config.getFilePath());
 }
 
 
 void	Validator::validateIndex(const std::vector<std::string>& values) const {
 	std::vector<std::string>::const_iterator it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"index\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
+	Utils::invalidNumberOfArguments(it, INDEX, _config.getFilePath());
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, INDEX);
-	printGroups(groups);
 	validateMinimumArgs(groups[0], 1, INDEX);
 	semicolonCheck(values, INDEX);
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"index\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, INDEX, _config.getFilePath());
 }
 
 void	Validator::validateUploadTo(const std::vector<std::string>& values) const {
 	std::vector<std::string>::const_iterator it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"upload_to\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
+	Utils::invalidNumberOfArguments(it, UPLOAD_TO, _config.getFilePath());
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, UPLOAD_TO);
 	validateStrictArgsNb(groups[0], 1, UPLOAD_TO);
 	semicolonCheck(groups[0], UPLOAD_TO);
-	printGroups(groups);
 	const std::vector<std::string>&	group = groups[0];
 	std::string	pathValue = group[0];
 	if (pathValue[0] != '/') {
@@ -395,26 +309,13 @@ void	Validator::validateUploadTo(const std::vector<std::string>& values) const {
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"upload_to\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, UPLOAD_TO, _config.getFilePath());
 }
 
 void	Validator::validateAllowedMethods(const std::vector<std::string>& values) const {
-
-	std::cout << GREEN "in validate allow_methods" RESET << std::endl;
-	// printVector(values);
 	std::vector<std::string>::const_iterator	it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"autoindex\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
+	Utils::invalidNumberOfArguments(it, ALL_METHODS, _config.getFilePath());
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ALL_METHODS);
-	printGroups(groups);
 	validateMinimumArgs(groups[0], 1, ALL_METHODS);
 
 	for (size_t i = 0; i < groups[0].size(); ++i) {
@@ -434,12 +335,7 @@ void	Validator::validateAllowedMethods(const std::vector<std::string>& values) c
 	}
 
 	semicolonCheck(groups[0], ALL_METHODS);
-
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"allow_methods\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, ALL_METHODS, _config.getFilePath());
 }
 
 void	Validator::contextNameCheck(const Context& context, int expectedType) const {
@@ -451,7 +347,6 @@ void	Validator::contextNameCheck(const Context& context, int expectedType) const
 	std::string			value;
 
 	ss >> value;
-	// std::cout << value << std::endl;
 	if (expectedType == SERV_VALUE) {
 		if (value != SERV) {
 			std::string errorMsg = "\"" + value + "\" directive is not allowed here";
@@ -478,8 +373,6 @@ void	Validator::contextNameCheck(const Context& context, int expectedType) const
 // Working for now but I'm not sure I'm done with this function, need to test in depth
 void	Validator::validateLocation(const std::vector<std::string>& group, const Context& context) const {
 
-	// std::cout << GREEN << context.getName() << RESET << std::endl;
-
 	if (group.size() != 3) {
 		std::string errorMsg = "invalid number of arguments in \"location\" directive";
 		Utils::logger(errorMsg, _config.getFilePath());
@@ -499,28 +392,7 @@ void	Validator::validateLocation(const std::vector<std::string>& group, const Co
 	}
 
 	const std::string& bracketPart = group[2];
-
-	if (bracketPart.empty() || bracketPart[0] != '{') {
-		std::string errorMsg = "invalid number of arguments in \"location\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
-	if (bracketPart.length() > 1) {
-		char afterBracket = bracketPart[1];
-		if (afterBracket == ';' || afterBracket == '{' || afterBracket == '}') {
-			std::string	errorMsg = "unexpected \"";
-			errorMsg += afterBracket; // WTFFFFF
-			errorMsg += "\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		} else {
-			std::string	unknownPart = bracketPart.substr(1);
-			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
-	}
+	Utils::invalidNumberOfArgumentsInContext(bracketPart, LOCATION, _config.getFilePath());
 	checkContextClosedProperly(context);
 }
 
@@ -533,28 +405,7 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 	}
 
 	const std::string& bracketPart = group[1];
-
-	if (bracketPart.empty() || bracketPart[0] != '{') {
-		std::string errorMsg = "invalid number of arguments in \"server\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
-
-	if (bracketPart.length() > 1) {
-		char afterBracket = bracketPart[1];
-		if (afterBracket == ';' || afterBracket == '{' || afterBracket == '}') {
-			std::string	errorMsg = "unexpected \"";
-			errorMsg += afterBracket; // WTFFFFF
-			errorMsg += "\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		} else {
-			std::string	unknownPart = bracketPart.substr(1);
-			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
-	}
+	Utils::invalidNumberOfArgumentsInContext(bracketPart, SERV, _config.getFilePath());
 	checkContextClosedProperly(context);
 }
 
@@ -599,11 +450,8 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 			continue ;
 
 		// /!\ if only ;
-		if (it->first[0] == ';') {
-			std::string errorMsg = "unexpected \";\"";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
+		Utils::unexpectedBracket(it, _config.getFilePath());
+
 		std::vector<std::string>::const_iterator	allowedIt;
 		for (allowedIt = allowedDirectives.begin(); allowedIt != allowedDirectives.end(); ++allowedIt) {
 			if (key == *allowedIt) {
@@ -673,24 +521,7 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 }
 
 
-void	Validator::printMap() const {
 
-	std::cout << GREEN "Validator:" RESET << std::endl;
-
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
-
-	for (it = _config.getTokenizer().getGlobalDirective().begin(); it != _config.getTokenizer().getGlobalDirective().end(); ++it) {
-		std::cout << it->first << ": ";
-
-		std::vector<std::string>::const_iterator itv;
-		for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
-			std::cout << *itv;
-			if (itv != it->second.end() - 1)
-				std::cout << ", ";
-		}
-		std::cout << std::endl;
-	}
-}
 
 static bool	validateUnity(const std::string& leftover) {
 	if (leftover.length() != 1)
@@ -756,11 +587,8 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 		}
 	}
 
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"client_max_body_size\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, CL_MAX_B_SYZE, _config.getFilePath());
+
 	semicolonCheck(values, CL_MAX_B_SYZE);
 }
 
@@ -932,16 +760,6 @@ void	Validator::printVector(const std::vector<std::string>& v) const {
 /* END OF DEBUG FUNCTIONS */
 
 /* utilitary functions that will move to the Utils namespace later, not used anymore */
-std::string	Validator::extractContextType(const std::string& contextName) const {
-
-	std::istringstream	iss(contextName);
-	std::string			type;
-
-	iss >> type;
-
-	return (type);
-}
-
 std::vector<std::string>	Validator::createVectorFromString(const std::string& str) const {
 
 	std::vector<std::string>	res;
@@ -1077,9 +895,6 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 			throw std::invalid_argument(errorMsg);
 		}
 	}
-
-	// debug
-	// std::cout << "Parsed listen: " << address << ":" << port << std::endl;
 	_currentContext->addListenPair(address, port, _config.getFilePath());
 }
 /* end of utilitary functions for listen */
@@ -1100,7 +915,6 @@ void	Validator::validateListen(const std::vector<std::string>& values) {
 	}
 
 	semicolonCheck(values, LISTEN);
-	// printVector(values);
 }
 
 bool	Validator::isOnlySemicolons(const std::string& str) const {
@@ -1194,9 +1008,6 @@ void	Validator::validateVirtualHostConflicts(void) const {
 			names.push_back("");
 		}
 
-		// debug
-		// servers[i].printBinding();
-
 		for (size_t j = 0; j < binding.listenPairs.size(); ++j) {
 
 			const std::string&	addr = binding.listenPairs[j].first;
@@ -1231,14 +1042,10 @@ void	Validator::validateCGIPath(const std::vector<std::string>& values) const {
 	std::cout << GREEN "in validate cgi_path" RESET << std::endl;
 
 	std::vector<std::string>::const_iterator	it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"cgi_path\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::invalidNumberOfArguments(it, CGI_PATH, _config.getFilePath());
+
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, CGI_PATH);
-	// printGroups(groups);
 
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
@@ -1265,11 +1072,7 @@ void	Validator::validateCGIPath(const std::vector<std::string>& values) const {
 	}
 
 	/* not sure we can limit to only one type of script, leaving it like that right now */
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"cgi_path\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, CGI_PATH, _config.getFilePath());
 
 	semicolonCheck(values, CGI_PATH);
 }
@@ -1279,14 +1082,9 @@ void	Validator::validateCGIExt(const std::vector<std::string>& values) const {
 	std::cout << GREEN "in validate cgi_ext" RESET << std::endl;
 
 	std::vector<std::string>::const_iterator it = values.begin();
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"cgi_ext\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::invalidNumberOfArguments(it, CGI_EXT, _config.getFilePath());
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, CGI_EXT);
-	// printGroups(groups);
 
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
 	for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
@@ -1319,11 +1117,7 @@ void	Validator::validateCGIExt(const std::vector<std::string>& values) const {
 	}
 
 	/* same as validateCGIPath here */
-	if (groups.size() > 1) {
-		std::string errorMsg = "\"cgi_ext\" directive is duplicate";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::duplicateDirective(groups, CGI_EXT, _config.getFilePath());
 
 	semicolonCheck(values, CGI_EXT);
 }
@@ -1372,11 +1166,7 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
 
 	std::vector<std::string>::const_iterator	it = values.begin();
 
-	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"return\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
-	}
+	Utils::invalidNumberOfArguments(it, RETURN, _config.getFilePath());
 
 	semicolonCheck(values, RETURN);
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, RETURN);
@@ -1424,16 +1214,8 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
 		}
 	}
 }
-    // listen       80;
-    // listen 127.0.0.1:8000;
-    // listen 127.0.0.1;
-    // listen 8000;
-    // listen *:8081;
-    // listen localhost:8083;
-    // server_name  localhost
 
-
-	void	Validator::validatePostUploadToPairing(const Context& context) const {
+void	Validator::validatePostUploadToPairing(const Context& context) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
 
