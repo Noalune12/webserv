@@ -13,11 +13,13 @@ USE_VALGRIND=0
 WEBSERV_BIN="../webserv"
 VALID_CONFIGS_DIR="../config-files/valid"
 INVALID_CONFIGS_DIR="../config-files/invalid"
+UNDEFINED_SUBDIR="undefined"
 
 # Counters
 TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
+WARNING_TESTS=0
 
 # Usage function
 usage() {
@@ -34,6 +36,7 @@ OPTIONS:
 DIRECTORIES:
     Valid configs:      $VALID_CONFIGS_DIR
     Invalid configs:    $INVALID_CONFIGS_DIR
+    Undefined configs:  $INVALID_CONFIGS_DIR/$UNDEFINED_SUBDIR (warnings only)
 
 EXAMPLES:
     $0                  # Run basic tests
@@ -92,6 +95,15 @@ if [ $USE_VALGRIND -eq 1 ]; then
     echo -e "${BLUE}Running with valgrind memory checking${RESET}"
 fi
 
+# Function to check if a path is in the undefined directory
+is_undefined_test() {
+    local config_file="$1"
+    if [[ "$config_file" == *"/$UNDEFINED_SUBDIR/"* ]]; then
+        return 0  # true
+    fi
+    return 1  # false
+}
+
 # Function to run a single test
 run_test() {
     local config_file="$1"
@@ -100,10 +112,20 @@ run_test() {
     local test_category=$(dirname "$config_file")
     test_category=${test_category##*/}  # Get just the last directory name
 
+    # Check if this is an undefined test (behavior not guaranteed)
+    local is_undefined=0
+    if is_undefined_test "$config_file"; then
+        is_undefined=1
+    fi
+
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
     if [ $VERBOSE -eq 1 ]; then
-        echo -e "${BLUE}Testing: [$test_category] $test_name${RESET}"
+        if [ $is_undefined -eq 1 ]; then
+            echo -e "${CYAN}Testing (undefined behavior): [$test_category] $test_name${RESET}"
+        else
+            echo -e "${BLUE}Testing: [$test_category] $test_name${RESET}"
+        fi
     fi
 
     # Run the command and capture output
@@ -161,13 +183,24 @@ run_test() {
             PASSED_TESTS=$((PASSED_TESTS + 1))
             return 0
         else
-            echo -e "${RED}✗ [$test_category] $test_name - Invalid config was NOT rejected (exit code: $exit_code)${RESET}"
-            if [ $VERBOSE -eq 1 ]; then
-                echo -e "${YELLOW}Output:${RESET}"
-                echo "$output"
+            # Config was NOT rejected - check if it's an undefined test
+            if [ $is_undefined -eq 1 ]; then
+                echo -e "${YELLOW}⚠ [$test_category] $test_name - Undefined behavior (not rejected, but acceptable)${RESET}"
+                if [ $VERBOSE -eq 1 ]; then
+                    echo -e "${YELLOW}Output:${RESET}"
+                    echo "$output"
+                fi
+                WARNING_TESTS=$((WARNING_TESTS + 1))
+                return 0  # Don't count as failure
+            else
+                echo -e "${RED}✗ [$test_category] $test_name - Invalid config was NOT rejected (exit code: $exit_code)${RESET}"
+                if [ $VERBOSE -eq 1 ]; then
+                    echo -e "${YELLOW}Output:${RESET}"
+                    echo "$output"
+                fi
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+                return 1
             fi
-            FAILED_TESTS=$((FAILED_TESTS + 1))
-            return 1
         fi
     fi
 }
@@ -229,11 +262,16 @@ echo -e "${BLUE}  Test Summary${RESET}"
 echo -e "${BLUE}======================================${RESET}"
 echo -e "Total tests:  $TOTAL_TESTS"
 echo -e "${GREEN}Passed:       $PASSED_TESTS${RESET}"
+echo -e "${YELLOW}Warnings:     $WARNING_TESTS${RESET} (undefined behavior - not counted as failures)"
 echo -e "${RED}Failed:       $FAILED_TESTS${RESET}"
 echo ""
 
 if [ $FAILED_TESTS -eq 0 ] && [ $TOTAL_TESTS -gt 0 ]; then
-    echo -e "${GREEN}All tests passed! ✓${RESET}"
+    if [ $WARNING_TESTS -gt 0 ]; then
+        echo -e "${GREEN}All tests passed! ✓${RESET} ${YELLOW}(with $WARNING_TESTS undefined behavior warnings)${RESET}"
+    else
+        echo -e "${GREEN}All tests passed! ✓${RESET}"
+    fi
     exit 0
 elif [ $TOTAL_TESTS -eq 0 ]; then
     echo -e "${YELLOW}No tests were run. Please add config files to test.${RESET}"
