@@ -187,3 +187,15 @@ TODO:
 - chemin jusqu'a l'appel de validateLocation
 - finir de structurer validateLocation
 - coder validateLocation!
+
+
+
+Files to check:
+
+- empty-path.conf -> no error from nginx
+- multiple-codes-no-path.conf -> no error from nginx
+- circular-return.conf -> no error from nginx
+- root-and-alias-conflict.conf -> # nginx: [emerg] "alias" directive is duplicate, "root" directive was specified earlier
+                                  # ou quand on inverse:
+                                  # nginx: [emerg] "root" directive is duplicate, "alias" directive was specified earlier
+- conflict-location.conf -> # nginx: [emerg] duplicate location "/"
