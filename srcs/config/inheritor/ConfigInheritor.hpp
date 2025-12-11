@@ -80,6 +80,10 @@ class ConfigInheritor {
 		~ConfigInheritor();
 
 		void getGlobalDir(std::vector<std::pair<std::string, std::vector<std::string> > >	globalDir);
+		void getServer(std::vector<Context>	context);
+
+		void getErrPageFromGlobal(server& server);
+
 		void printContent() const;
 
 };
