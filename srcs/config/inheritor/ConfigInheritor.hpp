@@ -21,7 +21,7 @@ struct errorPage {
 };
 
 struct clMaxBSize {
-	int size;
+	long size;
 	char type;
 };
 
@@ -87,6 +87,9 @@ class ConfigInheritor {
 		ConfigInheritor();
 		ConfigInheritor(Tokenizer& tokens);
 		~ConfigInheritor();
+
+		void getGlobalDir(std::vector<std::pair<std::string, std::vector<std::string> > >	globalDir);
+		void printContent() const;
 
 };
 

@@ -23,7 +23,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		Validator validator(*this);
 		validator.validate();
 		
-    	_tokens.printContent();
+    	// _tokens.printContent();
 
 		ConfigInheritor _temp(_tokens);
 		
