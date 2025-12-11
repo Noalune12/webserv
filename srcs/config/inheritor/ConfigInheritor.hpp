@@ -12,22 +12,13 @@
  */
 
 # include <vector>
+# include <map>
 # include <string>
 # include "Tokenizer.hpp"
 
-struct errorPage {
-	std::vector<int> code;
-	std::string uri;
-};
-
-struct clMaxBSize {
-	long size;
-	char type;
-};
-
 struct globalDir {
-	errorPage errPage;
-	clMaxBSize bodySize; 
+	std::map<int, std::string> errPage;
+	double bodySize; // en kilo octect
 };
 
 struct listen {
@@ -52,8 +43,8 @@ struct location {
 	std::string cgiPath;
 	std::string cgiExt;
 
-	errorPage errPage;
-	clMaxBSize bodySize;
+	std::map<int, std::string> errPage;
+	double bodySize; // en kilo octect
 	std::string root;
 	std::vector<std::string> index;
 	allowMeth methods;
@@ -73,8 +64,8 @@ struct server {
 	std::string uploadTo;
 	ret r;
 
-	errorPage errPage;
-	clMaxBSize bodySize; 
+	std::map<int, std::string> errPage;
+	double bodySize; // en kilo octect
 };
 
 class ConfigInheritor {

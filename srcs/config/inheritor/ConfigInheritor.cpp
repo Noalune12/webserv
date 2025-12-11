@@ -28,34 +28,47 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
     std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(ERR_PAGE));
     if (it == globalDir.end()){
-        _globalDir.errPage.code.push_back(0); // default ? 
-        _globalDir.errPage.uri = "default"; //default ?
+        _globalDir.errPage[0] = "default"; //default ?
     } else {
         std::vector<std::string>::iterator itt = it->second.begin();
+        // errorPage ep;
+        std::vector<int> code;
         for (; itt != it->second.end(); itt++) {
-            if (itt == it->second.end() - 1) {
-                _globalDir.errPage.uri = *itt;
-                _globalDir.errPage.uri.erase(_globalDir.errPage.uri.size() - 1);
+            if (*itt == " ")
+                continue;
+            if (itt->find(';') != std::string::npos) {
+                std::string uri = *itt;
+                uri.erase(uri.size() - 1);
+
+                std::vector<int>::iterator ittt = code.begin();
+                for (; ittt != code.end(); ittt++) {
+                    _globalDir.errPage[*ittt] = uri;
+                }
+                code.clear();
             } else {
                 int value;
                 std::istringstream iss(*itt);
                 iss >> value;
-                _globalDir.errPage.code.push_back(value);
+                code.push_back(value);
             }
         }
     }
 
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(CL_MAX_B_SYZE));
     if (it == globalDir.end()){
-        _globalDir.bodySize.size = 0; // default ? 
-        _globalDir.bodySize.type = 'X'; //default ?
+        _globalDir.bodySize = 0; // default ? 
     } else {
         std::vector<std::string>::iterator itt = it->second.begin();
         std::string arg = *itt;
         std::string s = arg.substr(0, arg.size() - 2);
         std::istringstream iss(s);
-        iss >> _globalDir.bodySize.size;
-        _globalDir.bodySize.type = arg[arg.size() - 2];
+        iss >> _globalDir.bodySize;
+        char suffix = arg[arg.size() - 2];
+        switch (std::toupper(suffix)) { // overflow ?
+            case 'K': _globalDir.bodySize *= 1024; break;
+            case 'M': _globalDir.bodySize *= 1024 * 1024; break;
+            case 'G': _globalDir.bodySize *= 1024 * 1024 * 1024; break;
+        }
     }
 }		
 
@@ -64,11 +77,10 @@ void ConfigInheritor::printContent() const {
     std::cout << "GLOBAL DIRECTIVES" << std::endl;
 
     std::cout << "error page : ";
-    std::vector<int>::const_iterator it = _globalDir.errPage.code.begin();
-    for (; it != _globalDir.errPage.code.end(); it++) {
-        std::cout << *it << " ";
+    std::map<int, std::string>::const_iterator it = _globalDir.errPage.begin();
+    for (; it != _globalDir.errPage.end(); it++) {
+        std::cout << it->first << " " << it->second << " -- ";
     }
-    std::cout << _globalDir.errPage.uri << std::endl;
-    std::cout << "client max body size : ";
-    std::cout << _globalDir.bodySize.size << " " << _globalDir.bodySize.type << std::endl;
+    std::cout << "\nclient max body size : ";
+    std::cout << std::fixed <<_globalDir.bodySize << " k" << std::endl;
 }
