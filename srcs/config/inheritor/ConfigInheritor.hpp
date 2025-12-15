@@ -32,10 +32,10 @@ struct allowMeth {
 	bool post;
 };
 
-struct ret {
-	int code;
-	std::string url;
-};
+// struct ret {
+// 	int code;
+// 	std::string url; // change name
+// };
 
 struct location {
 	std::string path;
@@ -50,22 +50,23 @@ struct location {
 	allowMeth methods;
 	bool autoIndex;
 	std::string uploadTo;
-	ret r;
+	std::map<int, std::string> ret;
 };
 
 struct server {
 	std::vector<listen> lis;
 	std::vector<std::string> serverName;
-	std::string root;
-	std::vector<std::string> index;
+	std::string root; //done
+	std::vector<std::string> index; //done
 	std::vector<location> loc;
-	allowMeth methods;
-	bool autoIndex;
-	std::string uploadTo;
-	ret r;
+	allowMeth methods; //done
+	bool autoIndex; //done
+	std::string uploadTo; //done
+	// ret r;
+	std::map<int, std::string> ret; //done
 
-	std::map<int, std::string> errPage;
-	double bodySize; // en kilo octect
+	std::map<int, std::string> errPage; //done
+	double bodySize; // en kilo octect //done
 };
 
 class ConfigInheritor {

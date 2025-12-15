@@ -1,5 +1,6 @@
 #include "ConfigInheritor.hpp"
 #include "rules.h"
+#include <colors.h>
 
 #include <algorithm>
 #include <iostream>
@@ -106,15 +107,105 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
             getErrPageFromGlobal(temp);
         }
 
-        // bodysize
-    
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(CL_MAX_B_SYZE));
+        if (it == directives.end())
+            temp.bodySize = _globalDir.bodySize;
+        else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            std::string arg = *itt;
+            std::string s = arg.substr(0, arg.size() - 2);
+            std::istringstream iss(s);
+            iss >> temp.bodySize;
+            char suffix = arg[arg.size() - 2];
+            switch (std::toupper(suffix)) { // overflow ?
+                case 'K': temp.bodySize *= 1024; break;
+                case 'M': temp.bodySize *= 1024 * 1024; break;
+                case 'G': temp.bodySize *= 1024 * 1024 * 1024; break;
+            }
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
+        if (it == directives.end())
+            temp.root = "default"; // default 
+        else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            temp.root = *itt;
+            temp.root = temp.root.substr(0, temp.root.size() - 1);
+            // temp.root = arg;
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
+        if (it == directives.end())
+            temp.index.push_back("default"); // default 
+        else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            for (; itt != it->second.end(); itt++) {
+                if (itt == it->second.end() - 1) {
+                    std::string arg = *itt;
+                    arg = arg.substr(0, arg.size() - 1);
+                    temp.index.push_back(arg);
+                } else {
+                    temp.index.push_back(*itt);
+                }
+            }
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(ALL_METHODS));
+        temp.methods.del = false;
+        temp.methods.get = false;
+        temp.methods.post = false;
+        if (it != directives.end()) {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            for (; itt != it->second.end(); itt++) {
+                if (*itt == "GET" || *itt == "GET;")
+                    temp.methods.get = true;
+                else if (*itt == "POST" || *itt == "POST;")
+                    temp.methods.post = true;
+                else if (*itt == "DELETE" || *itt == "DELETE;")
+                    temp.methods.del = true;
+            }
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(UPLOAD_TO));
+        if (it == directives.end())
+            temp.uploadTo = "default"; // default
+        else {
+            temp.uploadTo = *(it->second.begin());
+            temp.uploadTo = temp.uploadTo.substr(0, temp.uploadTo.size() - 1);
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(AUTOINDEX));
+        if (it == directives.end())
+            temp.autoIndex = false;
+        else {
+            std::string arg = *(it->second.begin());
+            if (arg == "off;")
+                temp.autoIndex = false;
+            else if (arg == "on;")
+                temp.autoIndex = true;
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
+        if (it == directives.end()) {
+            temp.ret[0] = "default";
+        } else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            int value;
+            for (; itt != it->second.end(); itt++) {
+                if (*itt == " ")
+                    continue;
+                if (itt->find(';') != std::string::npos) {
+                    std::string url = *itt;
+                    url.erase(url.size() - 1);
+                    temp.ret[value] = url;
+                } else {
+                    std::istringstream iss(*itt);
+                    iss >> value;
+                }
+            }
+        }
         //listen
         //servername
-        //root
-        // index
-        //autoindex
-        //uploadto
-        //return
     
         //location
 
@@ -133,8 +224,8 @@ void ConfigInheritor::getErrPageFromGlobal(server& server) {
 }
 
 void ConfigInheritor::printContent() const {
-    std::cout << "\nINHERITOR FINAL\n" << std::endl;
-    std::cout << "GLOBAL DIRECTIVES" << std::endl;
+    std::cout << RED << "\nINHERITOR FINAL\n" << RESET << std::endl;
+    std::cout << BLUE << "GLOBAL DIRECTIVES" << RESET << std::endl;
 
     std::cout << "error page : ";
     std::map<int, std::string>::const_iterator it = _globalDir.errPage.begin();
@@ -144,13 +235,38 @@ void ConfigInheritor::printContent() const {
     std::cout << "\nclient max body size : ";
     std::cout << std::fixed <<_globalDir.bodySize << " k" << std::endl;
 
-    std::cout << "\nSERVER" << std::endl;
+    std::cout << GREEN << "\nSERVER" << RESET << std::endl;
     std::vector<server>::const_iterator itt = _server.begin();
+    int i = 1;
     for (; itt != _server.end(); itt++) {
+        std::cout << YELLOW << "\nsevrer n*" << i << RESET << std::endl;
         std::cout << "error page : ";
         std::map<int, std::string>::const_iterator it = itt->errPage.begin();
         for (; it != itt->errPage.end(); it++) {
             std::cout << it->first << " " << it->second << " -- ";
         }
+        std::cout << "\nclient max body size : ";
+        std::cout << std::fixed << itt->bodySize << " k" << std::endl;
+        std::cout << "\nroot : ";
+        std::cout << std::fixed << itt->root << std::endl;
+        std::cout << "index : ";
+        std::vector<std::string>::const_iterator index_it = itt->index.begin();
+        for (; index_it != itt->index.end(); index_it++)
+            std::cout << *index_it << ", ";
+        std::cout << std::endl;
+        std::cout << "allowed methods : ";
+        if (itt->methods.del == true) {std::cout << "DEL" << " ";} 
+        if (itt->methods.get == true) {std::cout << "GET" << " ";} 
+        if (itt->methods.post == true) {std::cout << "POST with upload to path \'" << itt->uploadTo << "\'";} 
+        if (itt->methods.del == false && itt->methods.get == false && itt->methods.post == false) {std::cout << "none";}
+        std::cout << std::endl;
+        std::cout << "auto index : ";
+        if (itt->autoIndex == true) {std::cout << "on" << std::endl;} else if (itt->autoIndex == false) {std::cout << "off" << std::endl;}
+        std::cout << "return : ";
+        it = itt->ret.begin();
+        for (; it != itt->ret.end(); it++) {
+            std::cout << it->first << " " << it->second << " -- ";
+        }
+        i++;
     }
 }
