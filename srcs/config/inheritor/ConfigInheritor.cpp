@@ -76,9 +76,9 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
 }
 
 void ConfigInheritor::getServer(std::vector<Context> context) {
-    std::vector<Context>::iterator it = context.begin();
-    for (; it != context.end(); it++) {
-        std::vector<std::pair<std::string, std::vector<std::string> > > directives = it->getDirectives();
+    std::vector<Context>::iterator context_it = context.begin();
+    for (; context_it != context.end(); context_it++) {
+        std::vector<std::pair<std::string, std::vector<std::string> > > directives = context_it->getDirectives();
         server temp;
         std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ERR_PAGE));
@@ -132,10 +132,8 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         if (it == directives.end())
             temp.root = "html"; // default 
         else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            temp.root = *itt;
+            temp.root = *(it->second.begin());
             temp.root = temp.root.substr(0, temp.root.size() - 1);
-            // temp.root = arg;
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
@@ -295,8 +293,181 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         }
     
         //location
-
+        if (!context.empty())
+            getLocation(context_it->getContext(), temp);
         _server.push_back(temp);
+    }
+}
+
+void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
+    std::vector<Context>::iterator loc_it = loc.begin();
+    for (; loc_it != loc.end(); loc_it++) {
+        location temp;
+        std::string name = loc_it->getName().substr(9);
+        std::istringstream iss(name);
+        iss >> temp.path;
+        if (loc_it->getContext().empty())
+            std::cout << "\nno more context in" << std::endl;
+        std::vector<std::pair<std::string, std::vector<std::string> > > directives = loc_it->getDirectives();
+        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
+        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itt;
+
+        // cgi path
+        // cgi ext
+
+        // errPage
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(ERR_PAGE));
+        if (it == directives.end()) {
+            getErrPageFromServer(server, temp);
+        } else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            std::vector<int> code;
+            for (; itt != it->second.end(); itt++) {
+                if (*itt == " ")
+                    continue;
+                if (itt->find(';') != std::string::npos) {
+                    std::string uri = *itt;
+                    uri.erase(uri.size() - 1);
+
+                    std::vector<int>::iterator ittt = code.begin();
+                    for (; ittt != code.end(); ittt++) {
+                        temp.errPage[*ittt] = uri;
+                    }
+                    code.clear();
+                } else {
+                    int value;
+                    std::istringstream iss(*itt);
+                    iss >> value;
+                    code.push_back(value);
+                }
+            }
+            getErrPageFromServer(server, temp);
+        }
+
+        // bodysize
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(CL_MAX_B_SYZE));
+        if (it == directives.end())
+            temp.bodySize = _globalDir.bodySize;
+        else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            std::string arg = *itt;
+            std::string s = arg.substr(0, arg.size() - 2);
+            std::istringstream iss(s);
+            iss >> temp.bodySize;
+            char suffix = arg[arg.size() - 2];
+            switch (std::toupper(suffix)) { // overflow ?
+                case 'M': temp.bodySize *= 1000; break;
+                case 'G': temp.bodySize *= 1000000; break;
+            }
+        }
+
+        // root & alias
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
+        itt = std::find_if(directives.begin(), directives.end(), MatchFirst(ALIAS));
+        if (it == directives.end() && itt == directives.end()) {
+            temp.root = server.root;
+            temp.alias = ""; // not sure
+        }
+        else if (itt != directives.end()) {
+            temp.alias = *(itt->second.begin());
+            temp.alias = temp.alias.substr(0, temp.alias.size() - 1);
+            temp.root = ""; // not sure
+        }
+        else {
+            temp.root = *(it->second.begin());
+            temp.root = temp.root.substr(0, temp.root.size() - 1);
+        }
+
+        // index
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
+        if (it == directives.end())
+            temp.index = server.index;
+        else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            for (; itt != it->second.end(); itt++) {
+                if (itt == it->second.end() - 1) {
+                    std::string arg = *itt;
+                    arg = arg.substr(0, arg.size() - 1);
+                    temp.index.push_back(arg);
+                } else {
+                    temp.index.push_back(*itt);
+                }
+            }
+        } // what if there was indexes in server do we add them to the vector of index ???
+
+        // methods
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(ALL_METHODS));
+        if (it == directives.end()) {
+            temp.methods.del = server.methods.del;
+            temp.methods.get = server.methods.get;
+            temp.methods.post = server.methods.post;
+        } else {
+            if (std::find(it->second.begin(), it->second.end(), "GET") != it->second.end() \
+                || std::find(it->second.begin(), it->second.end(), "GET;") != it->second.end())
+                temp.methods.get = true;
+            else
+                temp.methods.get = false;
+            if (std::find(it->second.begin(), it->second.end(), "DELETE") != it->second.end() \
+                || std::find(it->second.begin(), it->second.end(), "DELETE;") != it->second.end())
+                temp.methods.del = true;
+            else
+                temp.methods.del = false;
+            if (std::find(it->second.begin(), it->second.end(), "POST") != it->second.end() \
+                || std::find(it->second.begin(), it->second.end(), "POST;") != it->second.end())
+                temp.methods.post = true;
+            else
+                temp.methods.post = false;
+        }
+
+        // upload to
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(UPLOAD_TO));
+        if (it == directives.end())
+            temp.uploadTo = server.uploadTo; // default
+        else {
+            temp.uploadTo = *(it->second.begin());
+            temp.uploadTo = temp.uploadTo.substr(0, temp.uploadTo.size() - 1);
+        }
+
+        // auto index
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(AUTOINDEX));
+        if (it == directives.end())
+            temp.autoIndex = server.autoIndex;
+        else {
+            std::string arg = *(it->second.begin());
+            if (arg == "off;")
+                temp.autoIndex = false;
+            else if (arg == "on;")
+                temp.autoIndex = true;
+        }
+
+        // return 
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
+        if (it == directives.end()) {
+            getReturnFromServer(server, temp);
+        } else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            int value;
+            for (; itt != it->second.end(); itt++) {
+                if (*itt == " ")
+                    continue;
+                if (itt->find(';') != std::string::npos) {
+                    std::string url = *itt;
+                    url.erase(url.size() - 1);
+                    temp.ret[value] = url;
+                } else {
+                    std::istringstream iss(*itt);
+                    iss >> value;
+                }
+            }
+            getReturnFromServer(server, temp); // not sure
+        }
+
+
+        server.loc.push_back(temp);
     }
 }
 
@@ -306,6 +477,26 @@ void ConfigInheritor::getErrPageFromGlobal(server& server) {
     for (; it != _globalDir.errPage.end(); it++) {
         if (server.errPage.find(it->first) ==  server.errPage.end()) {
             server.errPage[it->first] = it->second;
+        }
+    }
+}
+
+void ConfigInheritor::getErrPageFromServer(server& server, location& location) {
+    std::map<int, std::string>::iterator it = server.errPage.begin();
+
+    for (; it != server.errPage.end(); it++) {
+        if (location.errPage.find(it->first) ==  location.errPage.end()) {
+            location.errPage[it->first] = it->second;
+        }
+    }
+}
+
+void ConfigInheritor::getReturnFromServer(server& server, location& location) {
+    std::map<int, std::string>::iterator it = server.ret.begin();
+
+    for (; it != server.ret.end(); it++) {
+        if (location.ret.find(it->first) ==  location.ret.end()) {
+            location.ret[it->first] = it->second;
         }
     }
 }
@@ -363,6 +554,45 @@ void ConfigInheritor::printContent() const {
         std::cout << "listen : ";
         for (; lisit != itt->lis.end(); lisit++) {
             std::cout << "[" << lisit->port << "] - " << lisit->ip << " , ";
+        }
+
+        std::cout << GREEN << "\nLOCATION" << RESET << std::endl;
+        std::vector<location>::const_iterator itl = itt->loc.begin();
+        int j = 1;
+        for (; itl != itt->loc.end(); itl++) {
+            std::cout << YELLOW << "\nlocation n*" << j << RESET << std::endl;
+            std::cout << "path : \'" << itl->path << "\'" << std::endl;
+            std::cout << "error page : ";
+            std::map<int, std::string>::const_iterator it = itl->errPage.begin();
+            for (; it != itl->errPage.end(); it++) {
+                std::cout << it->first << " " << it->second << " -- ";
+            }
+            std::cout << "\nclient max body size : ";
+            std::cout << std::fixed << itl->bodySize << " k" << std::endl;
+            std::cout << "root : ";
+            std::cout << std::fixed << itl->root << std::endl;
+            std::cout << "alias : ";
+            std::cout << std::fixed << itl->alias << std::endl;
+            std::cout << "index : ";
+            std::vector<std::string>::const_iterator vecstring_it = itl->index.begin();
+            for (; vecstring_it != itl->index.end(); vecstring_it++)
+                std::cout << *vecstring_it << ", ";
+            std::cout << std::endl;
+            std::cout << "allowed methods : ";
+            if (itl->methods.del == true) {std::cout << "DEL" << " ";} 
+            if (itl->methods.get == true) {std::cout << "GET" << " ";} 
+            if (itl->methods.post == true) {std::cout << "POST with upload to path \'" << itl->uploadTo << "\'";} 
+            if (itl->methods.del == false && itl->methods.get == false && itl->methods.post == false) {std::cout << "none";}
+            std::cout << std::endl;
+            std::cout << "auto index : ";
+            if (itl->autoIndex == true) {std::cout << "on" << std::endl;} else if (itl->autoIndex == false) {std::cout << "off" << std::endl;}
+            std::cout << "return : ";
+            it = itl->ret.begin();
+            for (; it != itl->ret.end(); it++) {
+                std::cout << it->first << " " << it->second << " -- ";
+            }
+            std::cout << std::endl;
+            j++;
         }
         i++;
     }

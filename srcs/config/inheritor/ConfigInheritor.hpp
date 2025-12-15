@@ -56,17 +56,16 @@ struct location {
 struct server {
 	std::vector<listen> lis;
 	std::vector<std::string> serverName;
-	std::string root; //done
-	std::vector<std::string> index; //done
+	std::string root;
+	std::vector<std::string> index;
 	std::vector<location> loc;
-	allowMeth methods; //done
-	bool autoIndex; //done
-	std::string uploadTo; //done
-	// ret r;
-	std::map<int, std::string> ret; //done
+	allowMeth methods;
+	bool autoIndex;
+	std::string uploadTo;
+	std::map<int, std::string> ret;
 
-	std::map<int, std::string> errPage; //done
-	double bodySize; // en kilo octect //done
+	std::map<int, std::string> errPage;
+	double bodySize; // en kilo octect
 };
 
 class ConfigInheritor {
@@ -82,9 +81,11 @@ class ConfigInheritor {
 
 		void getGlobalDir(std::vector<std::pair<std::string, std::vector<std::string> > >	globalDir);
 		void getServer(std::vector<Context>	context);
+		void getLocation(std::vector<Context> loc, server& server); // 
 
 		void getErrPageFromGlobal(server& server);
-
+		void getErrPageFromServer(server& server, location& location);
+		void getReturnFromServer(server& server, location& location);
 		void printContent() const;
 
 };
