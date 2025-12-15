@@ -313,7 +313,22 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
         std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itt;
 
         // cgi path
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(CGI_PATH));
+        if (it == directives.end())
+            temp.cgiPath = ""; // default
+        else {
+            temp.cgiPath = *(it->second.begin());
+            temp.cgiPath = temp.cgiPath.substr(0, temp.cgiPath.size() - 1);
+        }
+
         // cgi ext
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(CGI_EXT));
+        if (it == directives.end())
+            temp.cgiExt = ""; // default
+        else {
+            temp.cgiExt = *(it->second.begin());
+            temp.cgiExt = temp.cgiExt.substr(0, temp.cgiExt.size() - 1);
+        }
 
         // errPage
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ERR_PAGE));
@@ -592,6 +607,7 @@ void ConfigInheritor::printContent() const {
                 std::cout << it->first << " " << it->second << " -- ";
             }
             std::cout << std::endl;
+            std::cout << "CGI : " << itl->cgiPath << " with extension " << itl->cgiExt << std::endl;
             j++;
         }
         i++;
