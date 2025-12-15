@@ -57,7 +57,7 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
 
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(CL_MAX_B_SYZE));
     if (it == globalDir.end()){
-        _globalDir.bodySize = 0; // default ? 
+        _globalDir.bodySize = 1000; // default ? 
     } else {
         std::vector<std::string>::iterator itt = it->second.begin();
         std::string arg = *itt;
@@ -66,9 +66,11 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
         iss >> _globalDir.bodySize;
         char suffix = arg[arg.size() - 2];
         switch (std::toupper(suffix)) { // overflow ?
-            case 'K': _globalDir.bodySize *= 1024; break;
-            case 'M': _globalDir.bodySize *= 1024 * 1024; break;
-            case 'G': _globalDir.bodySize *= 1024 * 1024 * 1024; break;
+            // case 'K': _globalDir.bodySize *= 1024; break;
+            // case 'M': _globalDir.bodySize *= 1024 * 1024; break;
+            // case 'G': _globalDir.bodySize *= 1024 * 1024 * 1024; break;
+            case 'M': _globalDir.bodySize *= 1000; break;
+            case 'G': _globalDir.bodySize *= 1000000; break;
         }
     }
 }
@@ -118,15 +120,17 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
             iss >> temp.bodySize;
             char suffix = arg[arg.size() - 2];
             switch (std::toupper(suffix)) { // overflow ?
-                case 'K': temp.bodySize *= 1024; break;
-                case 'M': temp.bodySize *= 1024 * 1024; break;
-                case 'G': temp.bodySize *= 1024 * 1024 * 1024; break;
+                // case 'K': temp.bodySize *= 1024; break;
+                // case 'M': temp.bodySize *= 1024 * 1024; break;
+                // case 'G': temp.bodySize *= 1024 * 1024 * 1024; break;
+                case 'M': temp.bodySize *= 1000; break;
+                case 'G': temp.bodySize *= 1000000; break;
             }
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
         if (it == directives.end())
-            temp.root = "default"; // default 
+            temp.root = "html"; // default 
         else {
             std::vector<std::string>::iterator itt = it->second.begin();
             temp.root = *itt;
@@ -136,7 +140,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
         if (it == directives.end())
-            temp.index.push_back("default"); // default 
+            temp.index.push_back("index.html"); // default 
         else {
             std::vector<std::string>::iterator itt = it->second.begin();
             for (; itt != it->second.end(); itt++) {
@@ -151,24 +155,43 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ALL_METHODS));
-        temp.methods.del = false;
-        temp.methods.get = false;
-        temp.methods.post = false;
-        if (it != directives.end()) {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == "GET" || *itt == "GET;")
-                    temp.methods.get = true;
-                else if (*itt == "POST" || *itt == "POST;")
-                    temp.methods.post = true;
-                else if (*itt == "DELETE" || *itt == "DELETE;")
-                    temp.methods.del = true;
-            }
+        // temp.methods.del = false;
+        // temp.methods.get = false;
+        // temp.methods.post = false;
+        if (it == directives.end()) {
+            temp.methods.del = true;
+            temp.methods.get = true;
+            temp.methods.post = true;
+        } else {
+            // std::vector<std::string>::iterator itt = it->second.begin();
+            // for (; itt != it->second.end(); itt++) {
+            //     if (*itt == "GET" || *itt == "GET;")
+            //         temp.methods.get = true;
+            //     else if (*itt == "POST" || *itt == "POST;")
+            //         temp.methods.post = true;
+            //     else if (*itt == "DELETE" || *itt == "DELETE;")
+            //         temp.methods.del = true;
+            // }
+            if (std::find(it->second.begin(), it->second.end(), "GET") != it->second.end() \
+                || std::find(it->second.begin(), it->second.end(), "GET;") != it->second.end())
+                temp.methods.get = true;
+            else
+                temp.methods.get = false;
+            if (std::find(it->second.begin(), it->second.end(), "DELETE") != it->second.end() \
+                || std::find(it->second.begin(), it->second.end(), "DELETE;") != it->second.end())
+                temp.methods.del = true;
+            else
+                temp.methods.del = false;
+            if (std::find(it->second.begin(), it->second.end(), "POST") != it->second.end() \
+                || std::find(it->second.begin(), it->second.end(), "POST;") != it->second.end())
+                temp.methods.post = true;
+            else
+                temp.methods.post = false;
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(UPLOAD_TO));
         if (it == directives.end())
-            temp.uploadTo = "default"; // default
+            temp.uploadTo = ""; // default
         else {
             temp.uploadTo = *(it->second.begin());
             temp.uploadTo = temp.uploadTo.substr(0, temp.uploadTo.size() - 1);
@@ -187,7 +210,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
         if (it == directives.end()) {
-            temp.ret[0] = "default";
+            temp.ret[0] = "";
         } else {
             std::vector<std::string>::iterator itt = it->second.begin();
             int value;
