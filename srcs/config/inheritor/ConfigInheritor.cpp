@@ -227,8 +227,72 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
                 }
             }
         }
-        //listen
-        //servername
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(SERV_NAME));
+        if (it == directives.end()) {
+            temp.serverName.push_back(""); //default 
+        } else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            for (; itt != it->second.end(); itt++) {
+                if (*itt == " ")
+                    continue;
+                if (itt == it->second.end() - 1) {
+                    std::string arg = *itt;
+                    arg = arg.substr(0, arg.size() - 1);
+                    temp.serverName.push_back(arg);
+                } else {
+                    temp.serverName.push_back(*itt);
+                }
+            }
+        }
+
+        it = std::find_if(directives.begin(), directives.end(), MatchFirst(LISTEN));
+        if (it == directives.end()) {
+            listen lisTemp;
+            lisTemp.ip = "*";
+            lisTemp.port = 8080;
+            temp.lis.push_back(lisTemp);
+        } else {
+            std::vector<std::string>::iterator itt = it->second.begin();
+            for (; itt != it->second.end(); itt++) {
+                if (*itt == " ")
+                    continue;
+                else {
+                    std::string arg = *itt;
+                    size_t sepIndex;
+                    if ((sepIndex = arg.find(":")) != std::string::npos) {
+                        //: case -> iP + port
+                        listen lisTemp;
+                        lisTemp.ip = arg.substr(0, sepIndex);
+                        arg = arg.substr(sepIndex + 1, arg.size());
+                        int port;
+                        std::istringstream iss(arg);
+                        iss >> port;
+                        lisTemp.port = port;
+                        temp.lis.push_back(lisTemp);
+
+                    } else {
+                        //if . or localhost (only ip)
+                        if (arg.find(".") != std::string::npos ||  arg == "localhost;" || arg == "*;") {
+                        // arg.find("localhost") != std::string::npos || arg.find("*") != std::string::npos) {
+                            listen lisTemp;
+                            lisTemp.ip = arg.substr(0, arg.size() - 1);
+                            lisTemp.port = 8080;
+                            temp.lis.push_back(lisTemp);
+                        } else {
+                            listen lisTemp;
+                            int port;
+                            std::istringstream iss(arg);
+                            iss >> port;
+                            lisTemp.port = port;
+                            lisTemp.ip = "*";
+                            temp.lis.push_back(lisTemp);
+                        }
+
+                    }
+                }    
+            }
+        }
     
         //location
 
@@ -273,9 +337,9 @@ void ConfigInheritor::printContent() const {
         std::cout << "\nroot : ";
         std::cout << std::fixed << itt->root << std::endl;
         std::cout << "index : ";
-        std::vector<std::string>::const_iterator index_it = itt->index.begin();
-        for (; index_it != itt->index.end(); index_it++)
-            std::cout << *index_it << ", ";
+        std::vector<std::string>::const_iterator vecstring_it = itt->index.begin();
+        for (; vecstring_it != itt->index.end(); vecstring_it++)
+            std::cout << *vecstring_it << ", ";
         std::cout << std::endl;
         std::cout << "allowed methods : ";
         if (itt->methods.del == true) {std::cout << "DEL" << " ";} 
@@ -289,6 +353,16 @@ void ConfigInheritor::printContent() const {
         it = itt->ret.begin();
         for (; it != itt->ret.end(); it++) {
             std::cout << it->first << " " << it->second << " -- ";
+        }
+        std::cout << "\nserver name: ";
+        vecstring_it = itt->serverName.begin();
+        for (; vecstring_it != itt->serverName.end(); vecstring_it++)
+            std::cout << *vecstring_it << ", ";
+        std::cout << std::endl;
+        std::vector<listen>::const_iterator lisit = itt->lis.begin();
+        std::cout << "listen : ";
+        for (; lisit != itt->lis.end(); lisit++) {
+            std::cout << "[" << lisit->port << "] - " << lisit->ip << " , ";
         }
         i++;
     }
