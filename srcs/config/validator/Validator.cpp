@@ -96,7 +96,7 @@ void	Validator::validateGlobalDirective(void) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it = directives.begin();
-	std::cout << "entering global directives validation" << std::endl;
+
 	// /!\ if no global dir -> seg fault
 	if (it == directives.end())
 		return ;
@@ -432,7 +432,6 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 		std::string	key = it->first;
 		bool		found = false;
 
-		std::cout << RED << "key:" + key << RESET << std::endl;
 		// soucis ici,
 		while (!key.empty() && key[key.length() - 1] == ';') {
 			key = key.substr(0, key.length() - 1);
