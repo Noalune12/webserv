@@ -514,9 +514,6 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 	}
 }
 
-
-
-
 static bool	validateUnity(const std::string& leftover) {
 	if (leftover.length() != 1)
 		return (false);
@@ -889,7 +886,6 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 
 void	Validator::validateListen(const std::vector<std::string>& values) {
 
-	std::cout << RED "entered validateListen" RESET << std::endl;
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, LISTEN);
 
 	std::vector<std::vector<std::string> >::const_iterator groupIt;
@@ -1018,8 +1014,6 @@ void	Validator::validateVirtualHostConflicts(void) const {
 /* CGI */
 void	Validator::validateCGIPath(const std::vector<std::string>& values) const {
 
-	std::cout << GREEN "in validate cgi_path" RESET << std::endl;
-
 	std::vector<std::string>::const_iterator	it = values.begin();
 	Utils::invalidNumberOfArguments(it, CGI_PATH, _config.getFilePath());
 
@@ -1057,8 +1051,6 @@ void	Validator::validateCGIPath(const std::vector<std::string>& values) const {
 }
 
 void	Validator::validateCGIExt(const std::vector<std::string>& values) const {
-
-	std::cout << GREEN "in validate cgi_ext" RESET << std::endl;
 
 	std::vector<std::string>::const_iterator it = values.begin();
 	Utils::invalidNumberOfArguments(it, CGI_EXT, _config.getFilePath());
@@ -1132,8 +1124,6 @@ void	Validator::validateCGIPairing(const Context& context) const {
 
 void	Validator::validateReturn(const std::vector<std::string>& values) const {
 
-	std::cout << GREEN "in validate return" RESET << std::endl;
-
 	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
 
 	std::vector<std::string>::const_iterator	it = values.begin();
@@ -1197,11 +1187,6 @@ void	Validator::validatePostUploadToPairing(const Context& context) const {
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		const std::vector<std::string> arg = it->second;
-		std::vector<std::string>::const_iterator ita = arg.begin();
-		std::cout << "what is in ita" << std::endl;
-		for (; ita != arg.end(); ita++) {
-			std::cout << *ita << " ";
-		}
 		std::cout << std::endl;
 		if (it->first == ALL_METHODS && (std::find(arg.begin(), arg.end(), "POST") != arg.end() || std::find(arg.begin(), arg.end(), "POST;") != arg.end()))
 			hasPostMethod = true;
