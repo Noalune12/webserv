@@ -87,9 +87,6 @@ class Validator {
 		void	checkContextClosedProperly(const Context& context) const;
 
 
-		/* utilitary functions to move out*/
-		bool		isOnlySemicolons(const std::string& str) const;
-
 		/* listen utils */
 		bool	isValidPort(std::string& portStr, int& outPort) const;
 		bool	isValidAddress(std::string& address) const;

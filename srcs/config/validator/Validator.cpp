@@ -9,6 +9,13 @@
 #include "Validator.hpp"
 #include "Utils.hpp"
 
+static const int	error_codes[] = {
+	301, 302, 303, 307, 308,
+	400, 403, 404, 405, 408, 429,
+	500, 505
+};
+
+
 Validator::Validator(Config& config) : _config(config), _currentContext(NULL), _allowedInContext() {
 	initAllowedContext();
 	initValidators();
@@ -55,17 +62,6 @@ void	Validator::initAllowedContext(void) {
 	_allowedInContext[LOCATION_VALUE].second.push_back(ALIAS);
 	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_PATH); // started, not finished
 	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_EXT); // started, not finished
-
-	// for (size_t i = 0; i < _allowedInContext.size(); ++i) {
-	// 	std::cout << _allowedInContext[i].first << ": ";
-
-	// 	for (size_t j = 0; j < _allowedInContext[i].second.size(); ++j) {
-	// 		std::cout << _allowedInContext[i].second[j];
-	// 		if (j != _allowedInContext[i].second.size() - 1)
-	// 			std::cout << ", ";
-	// 	}
-	// 	std::cout << std::endl;
-	// }
 }
 
 void	Validator::initValidators(void) {
@@ -592,12 +588,6 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 
 void	Validator::validateErrorPage(const std::vector<std::string>& values) const {
 
-	static const int	error_codes[] = {
-		301, 302, 303, 307, 308,
-		400, 403, 404, 405, 408, 429,
-		500, 505
-	};
-
 	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
 
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ERR_PAGE);
@@ -915,15 +905,6 @@ void	Validator::validateListen(const std::vector<std::string>& values) {
 	semicolonCheck(values, LISTEN);
 }
 
-bool	Validator::isOnlySemicolons(const std::string& str) const {
-	if (str.empty())
-		return (false);
-	for (size_t i = 0; i < str.length(); ++i) {
-		if (str[i] != ';')
-			return (false);
-	}
-	return (true);
-}
 
 void	Validator::validateServerName(const std::vector<std::string>& values) {
 
@@ -1152,13 +1133,6 @@ void	Validator::validateCGIPairing(const Context& context) const {
 void	Validator::validateReturn(const std::vector<std::string>& values) const {
 
 	std::cout << GREEN "in validate return" RESET << std::endl;
-
-	// meant to be updated while building the server
-	static const int	error_codes[] = {
-		301, 302, 303, 307, 308,
-		400, 403, 404, 405, 408, 429,
-		500, 505
-	};
 
 	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
 
