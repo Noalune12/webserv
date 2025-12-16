@@ -184,22 +184,5 @@ Refuses:
 
 
 TODO:
-- chemin jusqu'a l'appel de validateLocation
-- finir de structurer validateLocation
-- coder validateLocation!
-
-
-
-Files to check:
-
-- empty-path.conf -> no error from nginx
-- multiple-codes-no-path.conf -> no error from nginx
-- circular-return.conf -> no error from nginx
-
-
-BEFORE REFACTOR:
-
-Total tests: 178
-Passed: 173
-Warnings: 5
-Failed: 0
+- Implement check of missing directives 
+- Check every comments in Validator and fix issues if there are some

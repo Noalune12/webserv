@@ -18,7 +18,7 @@ class Validator {
 
 	private:
 		Config&		_config;
-		Context*	_currentContext; // pointeur vers le Context actuel, pour faire les modifs de listen/server_name
+		Context*	_currentContext;
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
 		/* utils global methods */

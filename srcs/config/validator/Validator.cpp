@@ -22,8 +22,6 @@ void	Validator::validate(void) {
 	validateServerContexts();
 
 	// checkMissingDirectives(); ??
-	// fillDefaultDirective(); ?? probablement a l'heritage
-
 }
 
 void	Validator::initAllowedContext(void) {
