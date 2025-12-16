@@ -262,6 +262,10 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
                         //: case -> iP + port
                         listen lisTemp;
                         lisTemp.ip = arg.substr(0, sepIndex);
+                        if (lisTemp.ip == "localhost")
+                            lisTemp.ip = "127.0.0.1";
+                        else if (lisTemp.ip == "*")
+                            lisTemp.ip = "0.0.0.0";
                         arg = arg.substr(sepIndex + 1, arg.size());
                         int port;
                         std::istringstream iss(arg);
@@ -275,6 +279,10 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
                         // arg.find("localhost") != std::string::npos || arg.find("*") != std::string::npos) {
                             listen lisTemp;
                             lisTemp.ip = arg.substr(0, arg.size() - 1);
+                            if (lisTemp.ip == "localhost")
+                                lisTemp.ip = "127.0.0.1";
+                            else if (lisTemp.ip == "*")
+                                lisTemp.ip = "0.0.0.0";
                             lisTemp.port = 8080;
                             temp.lis.push_back(lisTemp);
                         } else {
@@ -283,7 +291,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
                             std::istringstream iss(arg);
                             iss >> port;
                             lisTemp.port = port;
-                            lisTemp.ip = "*";
+                            lisTemp.ip = "0.0.0.0";
                             temp.lis.push_back(lisTemp);
                         }
 
