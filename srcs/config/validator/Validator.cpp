@@ -79,14 +79,13 @@ void	Validator::initValidators(void) {
 	_directiveValidators[ALIAS] = &Validator::validateAlias;
 }
 
-// alone "} that are not in context are now rejected
 void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const {
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it)
 	{
 		const std::string &name = it->first;
-		if (name.empty()) // TODO: check when this case is true
+		if (name.empty())
 			continue ;
 		char c = name[0];
 		if (c == '{' || c == '}') {
@@ -433,17 +432,14 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 		std::string	key = it->first;
 		bool		found = false;
 
-		// soucis ici,
+		// check si cette boucle est toujours necessaire suite au changement que tu as fais le 17/12
 		while (!key.empty() && key[key.length() - 1] == ';') {
 			key = key.substr(0, key.length() - 1);
 		}
 
-		/* temp, j'ai peur que ca casse tout du coup mais je reflechirai a ca plus tard*/
-		/* UPDATE: ca casse des truc...*/
-		if (key == "}")
+		if (key == "}" || (!key.empty() && key[0] == '}'))
 			continue ;
 
-		// /!\ if only ;
 		Utils::unexpectedBracket(it, _config.getFilePath());
 
 		std::vector<std::string>::const_iterator	allowedIt;
@@ -462,7 +458,6 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 					throw std::invalid_argument(errorMsg);
 				}
 			}
-			std::cout << BLUE + key + RESET << std::endl;
 			std::string errorMsg = "unknown directive \"" + key + "\"";
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
