@@ -87,6 +87,8 @@ class Validator {
 		void	checkContextClosedProperly(const Context& context) const;
 
 
+		/* error code util*/
+		bool	isValidErrorCode(int code) const;
 		/* listen utils */
 		bool	isValidPort(std::string& portStr, int& outPort) const;
 		bool	isValidAddress(std::string& address) const;

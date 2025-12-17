@@ -567,8 +567,8 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 
 void	Validator::validateErrorPage(const std::vector<std::string>& values) const {
 
-	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
-
+	std::vector<std::string>::const_iterator	it = values.begin();
+	Utils::invalidNumberOfArguments(it, ERR_PAGE, _config.getFilePath());
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, ERR_PAGE);
 
 	std::vector<std::vector<std::string> >::const_iterator groupIt;
@@ -603,15 +603,8 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 				throw std::invalid_argument(errorMsg);
 			}
 
-			bool	validCode = false;
-			for (size_t j = 0; j < validCodeCount; ++j) {
-				if (error_codes[j] == value) {
-					validCode = true;
-					break ;
-				}
-			}
 
-			if (!validCode) {
+			if (!isValidErrorCode(value)) {
 				std::ostringstream	oss;
 				oss << value;
 				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
@@ -741,8 +734,21 @@ std::vector<std::string>	Validator::createVectorFromString(const std::string& st
 
 	return (res);
 }
-/* end of utilitary functions */
 
+bool	Validator::isValidErrorCode(int code) const {
+
+	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
+
+	bool	validCode = false;
+	for (size_t j = 0; j < validCodeCount; ++j) {
+		if (error_codes[j] == code) {
+			validCode = true;
+			break ;
+		}
+	}
+	return (validCode);
+}
+/* end of utilitary functions */
 
 
 /* start of utilitary functions for listen */
@@ -1106,14 +1112,12 @@ void	Validator::validateCGIPairing(const Context& context) const {
 
 void	Validator::validateReturn(const std::vector<std::string>& values) const {
 
-	const size_t	validCodeCount = sizeof(error_codes) / sizeof(error_codes[0]);
-
 	std::vector<std::string>::const_iterator	it = values.begin();
 
 	Utils::invalidNumberOfArguments(it, RETURN, _config.getFilePath());
 
-	semicolonCheck(values, RETURN);
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, RETURN);
+	semicolonCheck(values, RETURN);
 
 
 	std::vector<std::vector<std::string> >::const_iterator groupIt;
@@ -1140,15 +1144,7 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
 				throw std::invalid_argument(errorMsg);
 			}
 
-			bool	validCode = false;
-			for (size_t j = 0; j < validCodeCount; ++j) {
-				if (error_codes[j] == value) {
-					validCode = true;
-					break ;
-				}
-			}
-
-			if (!validCode) {
+			if (!isValidErrorCode(value)) {
 				std::ostringstream	oss;
 				oss << value;
 				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
