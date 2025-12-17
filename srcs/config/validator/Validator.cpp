@@ -102,26 +102,21 @@ void	Validator::validateGlobalDirective(void) const {
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it = directives.begin();
 
-	// /!\ if no global dir -> seg fault
-	if (it == directives.end())
+	if (directives.empty())
 		return ;
-	// /!\ if only ;
 
 	rejectSoleBrackets(directives);
 
-	Utils::unexpectedBracket(it, _config.getFilePath());
-	// Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
-
-	keyNameCheck(directives, GLOBAL_VALUE);
-
 	for (it = directives.begin(); it != directives.end(); ++it) {
 
+		Utils::unexpectedBracket(it, _config.getFilePath());
 		Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
 		std::map<std::string, DirectiveValidator>::const_iterator validatorIt = _directiveValidators.find(it->first);
 		if (validatorIt != _directiveValidators.end()) {
 			(this->*(validatorIt->second))(it->second);
 		}
 	}
+	keyNameCheck(directives, GLOBAL_VALUE);
 }
 
 void	Validator::rejectAliasRootInSameLocation(const Context& context) const {
@@ -159,9 +154,9 @@ void	Validator::rejectDuplicateLocation(const Context& serverContext) const {
 
 	for (size_t i = 0; i < locations.size(); ++i) {
 
-		std::string	name = locations[i].getName();
+		std::string			name = locations[i].getName();
 		std::istringstream	iss(name);
-		std::string	keyword, path;
+		std::string			keyword, path;
 
 		iss >> keyword >> path;
 
@@ -206,6 +201,7 @@ void	Validator::validateServerContexts(void) {
 	std::vector<Context>::iterator	it;
 
 	for (it = contexts.begin(); it != contexts.end(); ++it) {
+
 		contextNameCheck(*it, SERV_VALUE);
 
 		_currentContext = &(*it);
