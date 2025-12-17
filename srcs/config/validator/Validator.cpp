@@ -519,6 +519,9 @@ static bool	validateUnity(const std::string& leftover) {
 
 void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values) const {
 
+	std::vector<std::string>::const_iterator	it = values.begin();
+	Utils::invalidNumberOfArguments(it, CL_MAX_B_SYZE, _config.getFilePath());
+
 	std::vector<std::vector<std::string> >	groups = splitDirectiveGroups(values, CL_MAX_B_SYZE);
 
 	std::vector<std::vector<std::string> >::const_iterator	groupIt;
@@ -526,26 +529,9 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 
 		const std::vector<std::string>&	group = *groupIt;
 
-		size_t		argCount = 0;
-		std::string	value;
+		validateStrictArgsNb(group, 1, CL_MAX_B_SYZE);
 
-		std::vector<std::string>::const_iterator	it;
-		for (it = group.begin(); it != group.end(); ++it) {
-			if (!it->empty() && (*it)[0] != ';') {
-				++argCount;
-				if (value.empty()) {
-					value = *it;
-				}
-			}
-		}
-
-		if (argCount != 1) {
-			std::string	errorMsg = "invalid number of arguments in \"client_max_body_size\" directive";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
-		}
-
-		std::string	cleanValue = value;
+		std::string	cleanValue = group[0];
 		while (!cleanValue.empty() && cleanValue[cleanValue.length() - 1] == ';') {
 			cleanValue = cleanValue.substr(0, cleanValue.length() - 1);
 		}
@@ -576,7 +562,6 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 	}
 
 	Utils::duplicateDirective(groups, CL_MAX_B_SYZE, _config.getFilePath());
-
 	semicolonCheck(values, CL_MAX_B_SYZE);
 }
 
@@ -643,14 +628,15 @@ std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std
 	std::vector<std::vector<std::string> >	groups;
 	std::vector<std::string>				current;
 
-	std::vector<std::string>::const_iterator it;
-	std::string						errorMsg;
+	std::vector<std::string>::const_iterator	it;
+	std::string									errorMsg;
 
 	if (values.back() == " ") {
 		errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
+
 	for (it = values.begin(); it != values.end(); ++it) {
 		if (*it == " ") {
 			if (!current.empty()) {
@@ -661,6 +647,7 @@ std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std
 			current.push_back(*it);
 		}
 	}
+
 	if (!current.empty()) {
 		groups.push_back(current);
 	}
@@ -842,7 +829,6 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 	std::string	address;
 	int			port;
 
-	// address:port
 	if (colonPos != std::string::npos) {
 		address = cleanValue.substr(0, colonPos);
 		std::string	portStr = cleanValue.substr(colonPos + 1);
