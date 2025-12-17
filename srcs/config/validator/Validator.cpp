@@ -364,7 +364,7 @@ void	Validator::contextNameCheck(const Context& context, int expectedType) const
 	}
 }
 
-// Working for now but I'm not sure I'm done with this function, need to test in depth
+// Working for now but I'm not sure I'm done with this function, need to test in depth - update looks good to me
 void	Validator::validateLocation(const std::vector<std::string>& group, const Context& context) const {
 
 	if (group.size() != 3) {
@@ -403,6 +403,8 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 	checkContextClosedProperly(context);
 }
 
+
+// dead function with the actual Utils::handleContext behavior (open boolean behavior, might want to move the error message to that port of the code)
 void	Validator::checkContextClosedProperly(const Context& context) const {
 
 	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = context.getDirectives();
@@ -820,7 +822,6 @@ bool	Validator::isValidAddress(std::string& address) const {
 			throw std::invalid_argument(errorMsg);
 		}
 	}
-	std::cout << address << " " <<  octetCount << std::endl;
 	return (octetCount == 4);
 }
 
@@ -1182,7 +1183,6 @@ void	Validator::validatePostUploadToPairing(const Context& context) const {
 	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		const std::vector<std::string> arg = it->second;
-		std::cout << std::endl;
 		if (it->first == ALL_METHODS && (std::find(arg.begin(), arg.end(), "POST") != arg.end() || std::find(arg.begin(), arg.end(), "POST;") != arg.end()))
 			hasPostMethod = true;
 		if (it->first == UPLOAD_TO)
