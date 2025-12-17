@@ -82,10 +82,15 @@ void	Validator::initValidators(void) {
 // alone "} that are not in context are now rejected
 void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const {
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	checkIt;
-	for (checkIt = directives.begin(); checkIt != directives.end(); ++checkIt) {
-		if (checkIt->first == "}" || (!checkIt->first.empty() && checkIt->first[0] == '}')) {
-			std::string errorMsg = "unexpected \"}\"";
+	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	for (it = directives.begin(); it != directives.end(); ++it)
+	{
+		const std::string &name = it->first;
+		if (name.empty()) // TODO: check when this case is true
+			continue ;
+		char c = name[0];
+		if (c == '{' || c == '}') {
+			std::string errorMsg = std::string("unexpected \"") + c + "\"";
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -105,7 +110,7 @@ void	Validator::validateGlobalDirective(void) const {
 	rejectSoleBrackets(directives);
 
 	Utils::unexpectedBracket(it, _config.getFilePath());
-	Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
+	// Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
 
 	keyNameCheck(directives, GLOBAL_VALUE);
 
