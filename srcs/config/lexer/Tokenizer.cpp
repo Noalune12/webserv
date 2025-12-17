@@ -72,13 +72,13 @@ void Tokenizer::addDirective(std::string line) {
     std::vector<std::string> args;
     std::string arg;
 
-    if (index != std::string::npos) {
+    if (index != 0 && index != std::string::npos) {
         args.push_back(dir.substr(index, dir.size()));
         dir = dir.substr(0, index);
     }
 
     while (iss >> arg) {
-        if (arg == ";" && !args.empty())
+        if (arg[0] == ';' && !args.empty())
             args.back().append(arg);
         else
             args.push_back(arg);
