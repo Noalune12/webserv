@@ -57,7 +57,7 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
 
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(CL_MAX_B_SYZE));
     if (it == globalDir.end()){
-        _globalDir.bodySize = 1000; // default ? 
+        _globalDir.bodySize = 1000; // default ?
     } else {
         std::vector<std::string>::iterator itt = it->second.begin();
         std::string arg = *itt;
@@ -78,6 +78,8 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
 void ConfigInheritor::getServer(std::vector<Context> context) {
     std::vector<Context>::iterator context_it = context.begin();
     for (; context_it != context.end(); context_it++) {
+        if (context_it->getIsIgnored())
+            continue ;
         std::vector<std::pair<std::string, std::vector<std::string> > > directives = context_it->getDirectives();
         server temp;
         std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
@@ -130,7 +132,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
         if (it == directives.end())
-            temp.root = "html"; // default 
+            temp.root = "html"; // default
         else {
             temp.root = *(it->second.begin());
             temp.root = temp.root.substr(0, temp.root.size() - 1);
@@ -138,7 +140,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
         if (it == directives.end())
-            temp.index.push_back("index.html"); // default 
+            temp.index.push_back("index.html"); // default
         else {
             std::vector<std::string>::iterator itt = it->second.begin();
             for (; itt != it->second.end(); itt++) {
@@ -228,7 +230,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(SERV_NAME));
         if (it == directives.end()) {
-            temp.serverName.push_back(""); //default 
+            temp.serverName.push_back(""); //default
         } else {
             std::vector<std::string>::iterator itt = it->second.begin();
             for (; itt != it->second.end(); itt++) {
@@ -247,7 +249,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(LISTEN));
         if (it == directives.end()) {
             listen lisTemp;
-            lisTemp.ip = "*";
+            lisTemp.ip = "0.0.0.0";
             lisTemp.port = 8080;
             temp.lis.push_back(lisTemp);
         } else {
@@ -296,10 +298,10 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
                         }
 
                     }
-                }    
+                }
             }
         }
-    
+
         //location
         if (!context.empty())
             getLocation(context_it->getContext(), temp);
@@ -466,7 +468,7 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
                 temp.autoIndex = true;
         }
 
-        // return 
+        // return
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
         if (it == directives.end()) {
@@ -556,9 +558,9 @@ void ConfigInheritor::printContent() const {
             std::cout << *vecstring_it << ", ";
         std::cout << std::endl;
         std::cout << "allowed methods : ";
-        if (itt->methods.del == true) {std::cout << "DEL" << " ";} 
-        if (itt->methods.get == true) {std::cout << "GET" << " ";} 
-        if (itt->methods.post == true) {std::cout << "POST with upload to path \'" << itt->uploadTo << "\'";} 
+        if (itt->methods.del == true) {std::cout << "DEL" << " ";}
+        if (itt->methods.get == true) {std::cout << "GET" << " ";}
+        if (itt->methods.post == true) {std::cout << "POST with upload to path \'" << itt->uploadTo << "\'";}
         if (itt->methods.del == false && itt->methods.get == false && itt->methods.post == false) {std::cout << "none";}
         std::cout << std::endl;
         std::cout << "auto index : ";
@@ -602,9 +604,9 @@ void ConfigInheritor::printContent() const {
                 std::cout << *vecstring_it << ", ";
             std::cout << std::endl;
             std::cout << "allowed methods : ";
-            if (itl->methods.del == true) {std::cout << "DEL" << " ";} 
-            if (itl->methods.get == true) {std::cout << "GET" << " ";} 
-            if (itl->methods.post == true) {std::cout << "POST with upload to path \'" << itl->uploadTo << "\'";} 
+            if (itl->methods.del == true) {std::cout << "DEL" << " ";}
+            if (itl->methods.get == true) {std::cout << "GET" << " ";}
+            if (itl->methods.post == true) {std::cout << "POST with upload to path \'" << itl->uploadTo << "\'";}
             if (itl->methods.del == false && itl->methods.get == false && itl->methods.post == false) {std::cout << "none";}
             std::cout << std::endl;
             std::cout << "auto index : ";

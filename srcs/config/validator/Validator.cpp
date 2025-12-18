@@ -985,9 +985,7 @@ void	Validator::validateVirtualHostConflicts(void) const {
 				if (existing != bindingMap.end()) {
 					std::ostringstream	oss;
 					std::cerr << "webserv: [warn] conflicting server name \"" << names[k] << "\" on " << addr << ":" << port << " , ignored " << std::endl;
-
-					// need to add a boolean in current Context to tell the exec to ignore this serverblock.
-
+					servers[i].setIsIgnored();
 				}
 				bindingMap[key] = i;
 			}
