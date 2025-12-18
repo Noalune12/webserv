@@ -7,7 +7,7 @@
 #include "colors.h"
 #include "Utils.hpp"
 
-Context::Context(std::string name, std::string context): _name(name), _bindingsInfo() {
+Context::Context(std::string name, std::string context): _name(name), _bindingsInfo(), _isIgnored(false) {
 	std::istringstream f(context);
 	std::string line;
 	std::string content;
@@ -77,10 +77,18 @@ void Context::addDirective(std::string line) {
 		return ;
 	}
 
+    size_t index = dir.find(';');
+
     std::vector<std::string> args;
     std::string arg;
+
+    if (index != 0 && index != std::string::npos) {
+        args.push_back(dir.substr(index, dir.size()));
+        dir = dir.substr(0, index);
+    }
+
     while (iss >> arg) {
-        if (arg == ";" && !args.empty())
+        if (arg[0] == ';' && !args.empty())
             args.back().append(arg);
         else
             args.push_back(arg);
@@ -131,6 +139,14 @@ std::vector<Context>& Context::getContext(void) {
 
 const	Bindings& Context::getBinding(void) const {
 	return (this->_bindingsInfo);
+}
+
+bool    Context::getIsIgnored(void) const {
+    return (this->_isIgnored);
+}
+
+void    Context::setIsIgnored(void) {
+    this->_isIgnored = true;
 }
 
 /* second getter that doesn't return a const so we can modify the data during the validation */

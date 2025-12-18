@@ -17,13 +17,17 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 		_fileContent = reader.getFileContent();
 
-		Tokenizer temp(_fileContent);
-		_tokens = temp;
-    	_tokens.printContent();
-
+		Tokenizer tempToken(_fileContent);
+		_tokens = tempToken;
+		
 		Validator validator(*this);
 		validator.validate();
+		
+    	// _tokens.printContent();
 
+		ConfigInheritor tempConf(_tokens);
+		_conf = tempConf;
+		
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		throw;

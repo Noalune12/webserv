@@ -4,7 +4,7 @@
 # include <string>
 
 # include "Tokenizer.hpp"
-
+# include "ConfigInheritor.hpp"
 /*
  * Facade principale pour le parsing du fichier de configuration
  *
@@ -26,6 +26,8 @@ class Config {
 		std::string			_fileContent;
 
 		Tokenizer _tokens;
+		ConfigInheritor _conf;
+
 		// Config();
 
 	public:

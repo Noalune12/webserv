@@ -67,12 +67,22 @@ void Tokenizer::addDirective(std::string line) {
     if (!(iss >> dir)) {
         return ;
     }
+    size_t index = dir.find(';');
 
     std::vector<std::string> args;
     std::string arg;
+
+    if (index != 0 && index != std::string::npos) {
+        args.push_back(dir.substr(index, dir.size()));
+        dir = dir.substr(0, index);
+    }
+
     while (iss >> arg) {
-        args.push_back(arg);
-	}
+        if (arg[0] == ';' && !args.empty())
+            args.back().append(arg);
+        else
+            args.push_back(arg);
+    }
 
 	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.begin();
 	for (; itm != _globalDirectives.end(); itm++) {

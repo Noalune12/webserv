@@ -74,11 +74,11 @@ Context Utils::handleContext(std::istringstream& f, std::string& content) {
             open--;
         if (open == 0) {
             contextContent.append(line.substr(0, index+1));
-            contextContent.push_back('\n');    
+            contextContent.push_back('\n');
             break;
         }
         contextContent.append(line);
-        contextContent.push_back('\n');    
+        contextContent.push_back('\n');
     }
     Context C(content, contextContent);
     if (open == 0) {
@@ -103,4 +103,69 @@ void	Utils::logger(const std::string& error, const std::string& filePath) {
 	file << WEBSERV_PREFIX << "configuration file " << filePath << " test failed" << std::endl;
 
 	file.close();
+}
+
+
+void    Utils::unexpectedBracket(std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it, const std::string& filePath) {
+ 	if (it->first[0] == ';') {
+		std::string errorMsg = "unexpected \";\"";
+		Utils::logger(errorMsg, filePath);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+
+void    Utils::directiveNotTerminatedBySemicolon(std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it, const std::string& filePath) {
+    if ((it->second.empty() && it->first != "}")) {
+        std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
+        Utils::logger(errorMsg, filePath);
+        throw std::invalid_argument(errorMsg);
+    }
+}
+
+
+void    Utils::invalidNumberOfArguments(std::vector<std::string>::const_iterator it, const char* directive, const std::string& filePath) {
+	if (*it == ";") {
+		std::string errorMsg = "invalid number of arguments in \"";
+        errorMsg += directive;
+        errorMsg += "\" directive";
+        Utils::logger(errorMsg, filePath);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+void    Utils::duplicateDirective(std::vector<std::vector<std::string> > groups, const char* directive, const std::string& filePath) {
+	if (groups.size() > 1) {
+		std::string errorMsg = "\"";
+        errorMsg += directive;
+        errorMsg += "\" directive is duplicate";
+        Utils::logger(errorMsg, filePath);
+		throw std::invalid_argument(errorMsg);
+	}
+}
+
+void    Utils::invalidNumberOfArgumentsInContext(const std::string& bracketPart, const char* context, const std::string& filePath) {
+	if (bracketPart.empty() || bracketPart[0] != '{') {
+		std::string errorMsg = "invalid number of arguments in \"";
+        errorMsg += context;
+        errorMsg += "\" directive";
+        Utils::logger(errorMsg, filePath);
+		throw std::invalid_argument(errorMsg);
+	}
+
+	if (bracketPart.length() > 1) {
+		char afterBracket = bracketPart[1];
+		if (afterBracket == ';' || afterBracket == '{' || afterBracket == '}') {
+			std::string	errorMsg = "unexpected \"";
+			errorMsg += afterBracket;
+			errorMsg += "\"";
+			Utils::logger(errorMsg, filePath);
+			throw std::invalid_argument(errorMsg);
+		} else {
+			std::string	unknownPart = bracketPart.substr(1);
+			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
+			Utils::logger(errorMsg, filePath);
+			throw std::invalid_argument(errorMsg);
+		}
+	}
 }

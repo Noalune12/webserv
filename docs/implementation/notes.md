@@ -184,14 +184,5 @@ Refuses:
 
 
 TODO:
-- chemin jusqu'a l'appel de validateLocation
-- finir de structurer validateLocation
-- coder validateLocation!
-
-
-
-Files to check:
-
-- empty-path.conf -> no error from nginx
-- multiple-codes-no-path.conf -> no error from nginx
-- circular-return.conf -> no error from nginx
+- Implement check of missing directives 
+- Check every comments in Validator and fix issues if there are some

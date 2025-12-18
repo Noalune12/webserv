@@ -18,7 +18,7 @@ class Validator {
 
 	private:
 		Config&		_config;
-		Context*	_currentContext; // pointeur vers le Context actuel, pour faire les modifs de listen/server_name
+		Context*	_currentContext;
 		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
 
 		/* utils global methods */
@@ -87,10 +87,8 @@ class Validator {
 		void	checkContextClosedProperly(const Context& context) const;
 
 
-		/* utilitary functions to move out*/
-		std::string	extractContextType(const std::string& contextName) const;
-		bool		isOnlySemicolons(const std::string& str) const;
-
+		/* error code util*/
+		bool	isValidErrorCode(int code) const;
 		/* listen utils */
 		bool	isValidPort(std::string& portStr, int& outPort) const;
 		bool	isValidAddress(std::string& address) const;
@@ -108,7 +106,6 @@ class Validator {
 		~Validator();
 
 		/* debug methods */
-		void	printMap() const; /* name has to be changed for printPairs or something */
 		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 		void	printVector(const std::vector<std::string>& v) const;
 
