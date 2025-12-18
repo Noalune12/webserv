@@ -11,7 +11,6 @@ override INHERITORDIR	:= $(CONFIGDIR)inheritor/
 override LEXERDIR		:= $(CONFIGDIR)lexer/
 override READERDIR		:= $(CONFIGDIR)reader/
 override VALIDATORDIR	:= $(CONFIGDIR)validator/
-override INHERITORDIR	:= $(CONFIGDIR)inheritor/
 
 override SERVERDIR		:= server/
 
@@ -72,4 +71,4 @@ override LEXERSRC	:= \
 SRC += $(addprefix $(INHERITORDIR), $(addsuffix .cpp, $(INHERITORSRC)))
 
 override INHERITORSRC	:= \
-	ConfigInheritor 
+	ConfigInheritor
