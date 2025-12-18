@@ -5,6 +5,7 @@
 
 # include "Tokenizer.hpp"
 # include "ConfigInheritor.hpp"
+
 /*
  * Facade principale pour le parsing du fichier de configuration
  *

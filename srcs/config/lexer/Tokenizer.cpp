@@ -3,7 +3,9 @@
 
 Tokenizer::Tokenizer() {}
 
-Tokenizer::Tokenizer(const std::string& fileContent) {
+Tokenizer::~Tokenizer() {}
+
+void Tokenizer::tokenize(const std::string& fileContent) {
     std::istringstream f(fileContent);
     std::string line;
     std::string content;
@@ -57,8 +59,6 @@ Tokenizer::Tokenizer(const std::string& fileContent) {
     }
 }
 
-Tokenizer::~Tokenizer() {}
-
 void Tokenizer::addDirective(std::string line) {
 
     std::istringstream iss(line);
@@ -84,7 +84,7 @@ void Tokenizer::addDirective(std::string line) {
             args.push_back(arg);
     }
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _globalDirectives.begin();
+	PairVector::iterator itm = _globalDirectives.begin();
 	for (; itm != _globalDirectives.end(); itm++) {
 		if (itm->first == dir)
 			break ;
@@ -107,7 +107,7 @@ void Tokenizer::printContent() const {
 	}
 }
 
-const std::vector<std::pair<std::string, std::vector<std::string> > >&	Tokenizer::getGlobalDirective(void) const {
+const PairVector&	Tokenizer::getGlobalDirective(void) const {
 	return (this->_globalDirectives);
 }
 

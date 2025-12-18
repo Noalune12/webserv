@@ -18,7 +18,7 @@
 
 struct globalDir {
 	std::map<int, std::string> errPage;
-	double bodySize; // en kilo octect
+	double bodySize;
 };
 
 struct listen {
@@ -32,11 +32,6 @@ struct allowMeth {
 	bool post;
 };
 
-// struct ret {
-// 	int code;
-// 	std::string url; // change name
-// };
-
 struct location {
 	std::string path;
 	std::string alias;
@@ -44,7 +39,7 @@ struct location {
 	std::string cgiExt;
 
 	std::map<int, std::string> errPage;
-	double bodySize; // en kilo octect
+	double bodySize;
 	std::string root;
 	std::vector<std::string> index;
 	allowMeth methods;
@@ -65,7 +60,7 @@ struct server {
 	std::map<int, std::string> ret;
 
 	std::map<int, std::string> errPage;
-	double bodySize; // en kilo octect
+	double bodySize;
 };
 
 class ConfigInheritor {
@@ -73,21 +68,34 @@ class ConfigInheritor {
 	private:
 		globalDir _globalDir;
 		std::vector<server> _server;
-
-	public:
-		ConfigInheritor();
-		ConfigInheritor(Tokenizer& tokens);
-		~ConfigInheritor();
-
-		void getGlobalDir(std::vector<std::pair<std::string, std::vector<std::string> > >	globalDir);
+		
+		void getGlobalDir(PairVector	globalDir);
 		void getServer(std::vector<Context>	context);
 		void getLocation(std::vector<Context> loc, server& server); // 
-
+	
 		void getErrPageFromGlobal(server& server);
 		void getErrPageFromServer(server& server, location& location);
 		void getReturnFromServer(server& server, location& location);
 		void printContent() const;
+	
+		template <typename T>
+		void setErrorPage(PairVector::iterator& it, T& t);
+		template <typename T>
+		void setBodySize(PairVector::iterator& it, T& t);
+		template <typename T>
+		void setIndex(PairVector::iterator& it, T& t);
+		template <typename T>
+		void setReturn(PairVector::iterator& it, T& t);
+		
+		void setMethods(PairVector::iterator& it, allowMeth& methods);
+		void setServerName(PairVector::iterator& it, std::vector<std::string>& serverName);
+		void setListen(PairVector::iterator& it, server& s);
 
+	public:
+		ConfigInheritor();
+		~ConfigInheritor();
+
+		void inherit(Tokenizer& tokens);
 };
 
 #endif

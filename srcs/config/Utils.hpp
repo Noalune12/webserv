@@ -18,10 +18,10 @@ namespace Utils {
 
 	void	logger(const std::string& error, const std::string& filePath);
 
-	void	printDirectives(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives);
+	void	printDirectives(const PairVector& directives);
 
-	void	unexpectedBracket(std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it, const std::string& filePath);
-	void	directiveNotTerminatedBySemicolon(std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it, const std::string& filePath);
+	void	unexpectedBracket(PairVector::const_iterator it, const std::string& filePath);
+	void	directiveNotTerminatedBySemicolon(PairVector::const_iterator it, const std::string& filePath);
 	void	duplicateDirective(std::vector<std::vector<std::string> > groups, const char* directive, const std::string& filePath);
 
 	void	invalidNumberOfArguments(std::vector<std::string>::const_iterator it, const char* directive, const std::string& filePath);

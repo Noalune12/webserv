@@ -94,7 +94,7 @@ void Context::addDirective(std::string line) {
             args.push_back(arg);
     }
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itm = _directives.begin();
+	PairVector::iterator itm = _directives.begin();
 	for (; itm != _directives.end(); itm++) {
 		if (itm->first == dir)
 			break ;
@@ -125,7 +125,7 @@ const	std::string&  Context::getName(void) const {
 	return (this->_name);
 }
 
-const	std::vector<std::pair<std::string, std::vector<std::string> > >&  Context::getDirectives(void) const {
+const	PairVector&  Context::getDirectives(void) const {
 	return (this->_directives);
 }
 

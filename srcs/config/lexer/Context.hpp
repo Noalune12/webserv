@@ -3,6 +3,7 @@
 
 # include <vector>
 # include <string>
+# include "define.h"
 
 struct Bindings {
 	std::vector<std::pair<std::string, int> >	listenPairs;
@@ -30,11 +31,12 @@ struct Bindings {
 class Context {
 
 	private:
-		std::vector<std::pair<std::string, std::vector<std::string> > >	_directives;
+		PairVector	_directives;
 		std::vector<Context>	_context;
 		std::string				_name;
 		Bindings				_bindingsInfo;
 		bool					_isIgnored;
+		
 	public:
 		Context(std::string name, std::string context);
 		~Context();
@@ -45,7 +47,7 @@ class Context {
 		const std::string&														getName(void) const;
 		const std::vector<Context>&												getContext(void) const;
 		std::vector<Context>&													getContext(void);
-		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getDirectives(void) const;
+		const PairVector&	getDirectives(void) const;
 
 		const Bindings&	getBinding(void) const;
 		Bindings&		getBinding(void);
