@@ -3,9 +3,6 @@
 
 Tokenizer::Tokenizer() {}
 
-// Tokenizer::Tokenizer(const std::string& fileContent): _fileContent(fileContent) {
-// }
-
 Tokenizer::~Tokenizer() {}
 
 void Tokenizer::tokenize(const std::string& fileContent) {
