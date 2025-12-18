@@ -79,7 +79,7 @@ class ConfigInheritor {
 		ConfigInheritor(Tokenizer& tokens);
 		~ConfigInheritor();
 
-		void getGlobalDir(std::vector<std::pair<std::string, std::vector<std::string> > >	globalDir);
+		void getGlobalDir(PairVector	globalDir);
 		void getServer(std::vector<Context>	context);
 		void getLocation(std::vector<Context> loc, server& server); // 
 
@@ -89,17 +89,17 @@ class ConfigInheritor {
 		void printContent() const;
 
 		template <typename T>
-		void setErrorPage(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		void setErrorPage(PairVector::iterator& it, T& t);
 		template <typename T>
-		void setBodySize(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		void setBodySize(PairVector::iterator& it, T& t);
 		template <typename T>
-		void setIndex(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		void setIndex(PairVector::iterator& it, T& t);
 		template <typename T>
-		void setReturn(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		void setReturn(PairVector::iterator& it, T& t);
 		
-		void setMethods(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, allowMeth& methods);
-		void setServerName(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, std::vector<std::string>& serverName);
-		void setListen(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, server& s);
+		void setMethods(PairVector::iterator& it, allowMeth& methods);
+		void setServerName(PairVector::iterator& it, std::vector<std::string>& serverName);
+		void setListen(PairVector::iterator& it, server& s);
 };
 
 #endif

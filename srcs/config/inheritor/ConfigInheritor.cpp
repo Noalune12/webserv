@@ -26,8 +26,8 @@ struct MatchFirst {
     }
 };
 
-void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vector<std::string> > >	globalDir) {
-    std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
+void ConfigInheritor::getGlobalDir(PairVector	globalDir) {
+    PairVector::iterator it;
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(ERR_PAGE));
     if (it == globalDir.end()){
         _globalDir.errPage[0] = "default";
@@ -48,9 +48,9 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
     for (; context_it != context.end(); context_it++) {
         if (context_it->getIsIgnored())
             continue ;
-        std::vector<std::pair<std::string, std::vector<std::string> > > directives = context_it->getDirectives();
+        PairVector directives = context_it->getDirectives();
         server temp;
-        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
+        PairVector::iterator it;
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ERR_PAGE));
         if (it == directives.end()) {
             getErrPageFromGlobal(temp);
@@ -143,8 +143,8 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
         std::string name = loc_it->getName().substr(9);
         std::istringstream iss(name);
         iss >> temp.path;
-        std::vector<std::pair<std::string, std::vector<std::string> > > directives = loc_it->getDirectives();
-        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
+        PairVector directives = loc_it->getDirectives();
+        PairVector::iterator it;
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(CGI_PATH));
         if (it == directives.end())
@@ -176,7 +176,7 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
-        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itAlias = std::find_if(directives.begin(), directives.end(), MatchFirst(ALIAS));
+        PairVector::iterator itAlias = std::find_if(directives.begin(), directives.end(), MatchFirst(ALIAS));
         if (it == directives.end() && itAlias == directives.end()) {
             temp.root = server.root;
             temp.alias = "";
@@ -264,7 +264,7 @@ void ConfigInheritor::getReturnFromServer(server& server, location& location) {
     }
 }
 
-void ConfigInheritor::setMethods(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, allowMeth& methods) {
+void ConfigInheritor::setMethods(PairVector::iterator& it, allowMeth& methods) {
     if (std::find(it->second.begin(), it->second.end(), "GET") != it->second.end() \
         || std::find(it->second.begin(), it->second.end(), "GET;") != it->second.end())
         methods.get = true;
@@ -283,7 +283,7 @@ void ConfigInheritor::setMethods(std::vector<std::pair<std::string, std::vector<
 }
 
 template <typename T>
-void ConfigInheritor::setErrorPage(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+void ConfigInheritor::setErrorPage(PairVector::iterator& it, T& t) {
     std::vector<int> code;
     std::vector<std::string>::iterator itArg = it->second.begin();
     for (; itArg != it->second.end(); itArg++) {
@@ -308,7 +308,7 @@ void ConfigInheritor::setErrorPage(std::vector<std::pair<std::string, std::vecto
 }
 
 template <typename T>
-void ConfigInheritor::setBodySize(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+void ConfigInheritor::setBodySize(PairVector::iterator& it, T& t) {
             std::vector<std::string>::iterator itArg = it->second.begin();
         std::string arg = *itArg;
         std::string s = arg.substr(0, arg.size() - 2);
@@ -322,7 +322,7 @@ void ConfigInheritor::setBodySize(std::vector<std::pair<std::string, std::vector
 }
 
 template <typename T>
-void ConfigInheritor::setIndex(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+void ConfigInheritor::setIndex(PairVector::iterator& it, T& t) {
     std::vector<std::string>::iterator itArg = it->second.begin();
     for (; itArg != it->second.end(); itArg++) {
         if (itArg == it->second.end() - 1) {
@@ -334,7 +334,7 @@ void ConfigInheritor::setIndex(std::vector<std::pair<std::string, std::vector<st
 }
 
 template <typename T>
-void ConfigInheritor::setReturn(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+void ConfigInheritor::setReturn(PairVector::iterator& it, T& t) {
     std::vector<std::string>::iterator itArg = it->second.begin();
     int value;
     for (; itArg != it->second.end(); itArg++) {
@@ -349,7 +349,7 @@ void ConfigInheritor::setReturn(std::vector<std::pair<std::string, std::vector<s
     }
 }
 
-void ConfigInheritor::setServerName(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, std::vector<std::string>& serverName) {
+void ConfigInheritor::setServerName(PairVector::iterator& it, std::vector<std::string>& serverName) {
     std::vector<std::string>::iterator itArg = it->second.begin();
     for (; itArg != it->second.end(); itArg++) {
         if (*itArg == " ")
@@ -362,7 +362,7 @@ void ConfigInheritor::setServerName(std::vector<std::pair<std::string, std::vect
     }
 }
 
-void ConfigInheritor::setListen(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, server& s) {
+void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
     std::vector<std::string>::iterator itArg = it->second.begin();
     for (; itArg != it->second.end(); itArg++) {
         if (*itArg == " ")

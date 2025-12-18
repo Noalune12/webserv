@@ -27,7 +27,7 @@ bool Utils::isOnlyWSpace(const std::string& line) {
 
 void Utils::printDirectives(const std::vector<std::pair<std::string,
                std::vector<std::string> > >& directives) {
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it;
+	PairVector::const_iterator it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		std::cout << it->first << ": ";
 
@@ -106,7 +106,7 @@ void	Utils::logger(const std::string& error, const std::string& filePath) {
 }
 
 
-void    Utils::unexpectedBracket(std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it, const std::string& filePath) {
+void    Utils::unexpectedBracket(PairVector::const_iterator it, const std::string& filePath) {
  	if (it->first[0] == ';') {
 		std::string errorMsg = "unexpected \";\"";
 		Utils::logger(errorMsg, filePath);
@@ -115,7 +115,7 @@ void    Utils::unexpectedBracket(std::vector<std::pair<std::string, std::vector<
 }
 
 
-void    Utils::directiveNotTerminatedBySemicolon(std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator it, const std::string& filePath) {
+void    Utils::directiveNotTerminatedBySemicolon(PairVector::const_iterator it, const std::string& filePath) {
     if ((it->second.empty() && it->first != "}")) {
         std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
         Utils::logger(errorMsg, filePath);

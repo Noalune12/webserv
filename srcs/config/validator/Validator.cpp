@@ -77,9 +77,9 @@ void	Validator::initValidators(void) {
 	_directiveValidators[ALIAS] = &Validator::validateAlias;
 }
 
-void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const {
+void	Validator::rejectSoleBrackets(const PairVector& directives) const {
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	PairVector::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it)
 	{
 		const std::string &name = it->first;
@@ -96,8 +96,8 @@ void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std:
 
 void	Validator::validateGlobalDirective(void) const {
 
-	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = _config.getTokenizer().getGlobalDirective();
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it = directives.begin();
+	const PairVector& directives = _config.getTokenizer().getGlobalDirective();
+	PairVector::const_iterator	it = directives.begin();
 
 	if (directives.empty())
 		return ;
@@ -118,12 +118,12 @@ void	Validator::validateGlobalDirective(void) const {
 
 void	Validator::rejectAliasRootInSameLocation(const Context& context) const {
 
-	const	std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+	const	PairVector&	directives = context.getDirectives();
 
 	bool	hasRoot = false;
 	bool	hasAlias = false;
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	PairVector::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		if (it->first ==  ROOT) {
 			if (hasAlias == true) {
@@ -212,11 +212,11 @@ void	Validator::validateServerContexts(void) {
 
 void	Validator::validateContextDirectives(Context& context, int contextType) {
 
-	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+	const PairVector&	directives = context.getDirectives();
 
 	keyNameCheck(directives, contextType);
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	PairVector::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 
 		Utils::directiveNotTerminatedBySemicolon(it, _config.getFilePath());
@@ -405,7 +405,7 @@ void	Validator::validateServer(const std::vector<std::string>& group, const Cont
 // dead function with the actual Utils::handleContext behavior (open boolean behavior, might want to move the error message to that port of the code)
 void	Validator::checkContextClosedProperly(const Context& context) const {
 
-	const std::vector<std::pair<std::string, std::vector<std::string> > >& directives = context.getDirectives();
+	const PairVector& directives = context.getDirectives();
 	const std::string&	lastKey = directives.back().first;
 
 	if (directives.back().second.size() != 0 || lastKey != "}" ) {
@@ -416,7 +416,7 @@ void	Validator::checkContextClosedProperly(const Context& context) const {
 }
 
 
-void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives, int contextType) const {
+void	Validator::keyNameCheck(const PairVector& directives, int contextType) const {
 
 	static const char	*allDirectives[] = {
 		ERR_PAGE, CL_MAX_B_SYZE, SERV, SERV_NAME, LISTEN, ROOT, INDEX,
@@ -427,7 +427,7 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 
 	const std::vector<std::string>&	allowedDirectives = _allowedInContext[contextType].second;
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	PairVector::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		std::string	key = it->first;
 		bool		found = false;
@@ -1078,12 +1078,12 @@ void	Validator::validateCGIExt(const std::vector<std::string>& values) const {
 
 void	Validator::validateCGIPairing(const Context& context) const {
 
-	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+	const PairVector&	directives = context.getDirectives();
 
 	bool	hasCGIPath = false;
 	bool	hasCGIExt = false;
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	PairVector::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		if (it->first == CGI_PATH)
 			hasCGIPath = true;
@@ -1152,12 +1152,12 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
 
 void	Validator::validatePostUploadToPairing(const Context& context) const {
 
-	const std::vector<std::pair<std::string, std::vector<std::string> > >&	directives = context.getDirectives();
+	const PairVector&	directives = context.getDirectives();
 
 	bool	hasPostMethod = false;
 	bool	hasUploadto = false;
 
-	std::vector<std::pair<std::string, std::vector<std::string> > >::const_iterator	it;
+	PairVector::const_iterator	it;
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		const std::vector<std::string> arg = it->second;
 		if (it->first == ALL_METHODS && (std::find(arg.begin(), arg.end(), "POST") != arg.end() || std::find(arg.begin(), arg.end(), "POST;") != arg.end()))

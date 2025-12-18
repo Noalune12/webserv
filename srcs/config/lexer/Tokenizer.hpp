@@ -5,6 +5,7 @@
 # include <vector>
 
 # include "Context.hpp"
+# include "define.h"
 
 struct Token {
 	/*
@@ -26,7 +27,7 @@ class Tokenizer {
 
 	private:
 		std::vector<Context>								_context;
-		std::vector<std::pair<std::string, std::vector<std::string> > >	_globalDirectives;
+		PairVector	_globalDirectives;
 
 	public:
 		Tokenizer();
@@ -36,7 +37,7 @@ class Tokenizer {
 		void addDirective(std::string line);
 		void printContent() const;
 
-		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getGlobalDirective(void) const;
+		const PairVector&	getGlobalDirective(void) const;
 		std::vector<Context>&	getVectorContext(void) ;
 };
 

@@ -19,10 +19,10 @@ class Validator {
 	private:
 		Config&		_config;
 		Context*	_currentContext;
-		std::vector<std::pair<std::string, std::vector<std::string> > > _allowedInContext;
+		PairVector _allowedInContext;
 
 		/* utils global methods */
-		void	keyNameCheck(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives, int contextType) const;
+		void	keyNameCheck(const PairVector& directives, int contextType) const;
 		void	semicolonCheck(const std::vector<std::string>& v, const std::string& directive) const;
 		void	validateMinimumArgs(const std::vector<std::string>& group, size_t minArgs, const std::string& directive) const;
 		void	validateStrictArgsNb(const std::vector<std::string>& group, size_t exactNb, const std::string& directive) const;
@@ -98,7 +98,7 @@ class Validator {
 		void	validateVirtualHostConflicts(void) const;
 
 
-		void	rejectSoleBrackets(const std::vector<std::pair<std::string, std::vector<std::string> > >& directives) const;
+		void	rejectSoleBrackets(const PairVector& directives) const;
 
 	public:
 
