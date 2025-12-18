@@ -1,17 +1,11 @@
-#include "Utils.hpp"
-
-#include <sstream>
-#include <iostream>
 #include <fstream>
+
+#include "error_messages.h"
+#include "Utils.hpp"
 
 # define LOG_FILE "var/log/error.log"
 # define WEBSERV_PREFIX "webserv: "
 # define EMERG "[emerg] "
-# define UNKNOWN_DIR "unknown directive "
-# define UNEXPECTED "unexpected "
-# define CONF_FILE "configuration file "
-# define TEST_FAILED "test failed\n"
-
 
 bool Utils::isOnlyWSpace(const std::string& line) {
 	size_t count = 0;
@@ -100,7 +94,7 @@ void	Utils::logger(const std::string& error, const std::string& filePath) {
 	file.open(outputFile, std::ios::out | std::ios::app);
 
 	file << WEBSERV_PREFIX << EMERG << error << " in " << filePath << std::endl; // will NOT add line of the misconfiguration
-	file << WEBSERV_PREFIX << "configuration file " << filePath << " test failed" << std::endl;
+	file << WEBSERV_PREFIX << CONF_FILE << filePath << TEST_FAILED << std::endl;
 
 	file.close();
 }
@@ -108,16 +102,15 @@ void	Utils::logger(const std::string& error, const std::string& filePath) {
 
 void    Utils::unexpectedBracket(PairVector::const_iterator it, const std::string& filePath) {
  	if (it->first[0] == ';') {
-		std::string errorMsg = "unexpected \";\"";
-		Utils::logger(errorMsg, filePath);
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(UNEXP_SEMICOLON, filePath);
+		throw std::invalid_argument(UNEXP_SEMICOLON);
 	}
 }
 
 
 void    Utils::directiveNotTerminatedBySemicolon(PairVector::const_iterator it, const std::string& filePath) {
     if ((it->second.empty() && it->first != "}")) {
-        std::string errorMsg = "directive \"" + it->first + "\" is not terminated by \";\"";
+        std::string errorMsg = DIRECTIVE_PREFIX + it->first + NOT_TERMINATED_BY_SEMICOLON;
         Utils::logger(errorMsg, filePath);
         throw std::invalid_argument(errorMsg);
     }
@@ -126,9 +119,9 @@ void    Utils::directiveNotTerminatedBySemicolon(PairVector::const_iterator it, 
 
 void    Utils::invalidNumberOfArguments(std::vector<std::string>::const_iterator it, const char* directive, const std::string& filePath) {
 	if (*it == ";") {
-		std::string errorMsg = "invalid number of arguments in \"";
+		std::string errorMsg = INV_NB_ARG;
         errorMsg += directive;
-        errorMsg += "\" directive";
+        errorMsg += DIRECTIVE_SUFFIX;
         Utils::logger(errorMsg, filePath);
 		throw std::invalid_argument(errorMsg);
 	}
@@ -138,7 +131,7 @@ void    Utils::duplicateDirective(std::vector<std::vector<std::string> > groups,
 	if (groups.size() > 1) {
 		std::string errorMsg = "\"";
         errorMsg += directive;
-        errorMsg += "\" directive is duplicate";
+        errorMsg += DUP_DIRECTIVE_SUFFIX;
         Utils::logger(errorMsg, filePath);
 		throw std::invalid_argument(errorMsg);
 	}
@@ -146,9 +139,9 @@ void    Utils::duplicateDirective(std::vector<std::vector<std::string> > groups,
 
 void    Utils::invalidNumberOfArgumentsInContext(const std::string& bracketPart, const char* context, const std::string& filePath) {
 	if (bracketPart.empty() || bracketPart[0] != '{') {
-		std::string errorMsg = "invalid number of arguments in \"";
+		std::string errorMsg = INV_NB_ARG;
         errorMsg += context;
-        errorMsg += "\" directive";
+        errorMsg += DIRECTIVE_SUFFIX;
         Utils::logger(errorMsg, filePath);
 		throw std::invalid_argument(errorMsg);
 	}
@@ -156,14 +149,14 @@ void    Utils::invalidNumberOfArgumentsInContext(const std::string& bracketPart,
 	if (bracketPart.length() > 1) {
 		char afterBracket = bracketPart[1];
 		if (afterBracket == ';' || afterBracket == '{' || afterBracket == '}') {
-			std::string	errorMsg = "unexpected \"";
+			std::string	errorMsg = UNEXPECTED;
 			errorMsg += afterBracket;
 			errorMsg += "\"";
 			Utils::logger(errorMsg, filePath);
 			throw std::invalid_argument(errorMsg);
 		} else {
 			std::string	unknownPart = bracketPart.substr(1);
-			std::string	errorMsg = "unknown directive \"" + unknownPart + "\"";
+			std::string	errorMsg = UNKNOWN_DIR_PREFIX + unknownPart + "\"";
 			Utils::logger(errorMsg, filePath);
 			throw std::invalid_argument(errorMsg);
 		}
