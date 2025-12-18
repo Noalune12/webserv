@@ -309,7 +309,7 @@ void ConfigInheritor::setErrorPage(PairVector::iterator& it, T& t) {
 
 template <typename T>
 void ConfigInheritor::setBodySize(PairVector::iterator& it, T& t) {
-            std::vector<std::string>::iterator itArg = it->second.begin();
+        std::vector<std::string>::iterator itArg = it->second.begin();
         std::string arg = *itArg;
         std::string s = arg.substr(0, arg.size() - 2);
         std::istringstream iss(s);
