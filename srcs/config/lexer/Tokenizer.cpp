@@ -3,7 +3,12 @@
 
 Tokenizer::Tokenizer() {}
 
-Tokenizer::Tokenizer(const std::string& fileContent) {
+// Tokenizer::Tokenizer(const std::string& fileContent): _fileContent(fileContent) {
+// }
+
+Tokenizer::~Tokenizer() {}
+
+void Tokenizer::tokenize(const std::string& fileContent) {
     std::istringstream f(fileContent);
     std::string line;
     std::string content;
@@ -56,8 +61,6 @@ Tokenizer::Tokenizer(const std::string& fileContent) {
         }
     }
 }
-
-Tokenizer::~Tokenizer() {}
 
 void Tokenizer::addDirective(std::string line) {
 

@@ -36,6 +36,7 @@ class Context {
 		std::string				_name;
 		Bindings				_bindingsInfo;
 		bool					_isIgnored;
+		
 	public:
 		Context(std::string name, std::string context);
 		~Context();

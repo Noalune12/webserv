@@ -7,12 +7,6 @@
 # include "Context.hpp"
 # include "define.h"
 
-struct Token {
-	/*
-	 * des trucs ? un enum de type ? aled
-	 */
-};
-
 /*
  * Tokenizer - Analyse lexicale du contenu du fichier
  *
@@ -23,20 +17,22 @@ struct Token {
  * - Ignore les commentaires (#) et les espaces/tabulations
  * - Gère les erreurs de syntaxe basiques (caractères invalides)
  */
+
 class Tokenizer {
 
 	private:
 		std::vector<Context>								_context;
 		PairVector	_globalDirectives;
-
-	public:
-		Tokenizer();
-		Tokenizer(const std::string& fileContent);
-		~Tokenizer();
+		std::string _fileContent;
 
 		void addDirective(std::string line);
+		
+	public:
+		Tokenizer();
+		~Tokenizer();
+		
+		void tokenize(const std::string& fileContent);
 		void printContent() const;
-
 		const PairVector&	getGlobalDirective(void) const;
 		std::vector<Context>&	getVectorContext(void) ;
 };

@@ -7,6 +7,8 @@
 #include "FileReader.hpp"
 #include "Validator.hpp"
 
+#include "colors.h"
+
 // Config::Config() {}
 
 Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chose dans mes fichiers de test */) : _filePath(configFile), _fileContent() {
@@ -17,16 +19,14 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 
 		_fileContent = reader.getFileContent();
 
-		Tokenizer tempToken(_fileContent);
-		_tokens = tempToken;
+		_tokens.tokenize(_fileContent);
 		
 		Validator validator(*this);
 		validator.validate();
 		
     	// _tokens.printContent();
 
-		ConfigInheritor tempConf(_tokens);
-		_conf = tempConf;
+		_conf.inherit(_tokens);
 		
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
