@@ -1,13 +1,38 @@
 #include <algorithm>
-#include <exception>
 #include <fstream>
-#include <iostream>
-#include <sstream>
 
 #include "colors.h"
 #include "rules.h"
 #include "Validator.hpp"
 #include "Utils.hpp"
+#include "error_messages.h"
+
+#define ALIAS_DUP_ROOT_SPECIFIED  "\"alias\" directive is duplicate, \"root\" directive was specified earlier"
+#define ALL_METHOD_REQ "\" in \"allow_methods\" directive, it must be \"GET\", \"POST\" or \"DELETE\""
+#define AUTOINDEX_ON_OFF_MUST "\" in \"autoindex\" directive, it must be \"on\" or \"off\""
+#define CL_MAX_B_SIZE_INV_VALUE "\"client_max_body_size\" directive invalid value"
+#define DIR_NOT_ALLOWED_SUFFIX "\" directive is not allowed here"
+#define DUP_LOCATION "duplicate location \""
+#define HOST_NOT_FOUND "host not found in \""
+#define IN_LISTEN_DIR "\" in \"listen\" directive"
+#define LISTEN_SUFFIX "\" of the \"listen\" directive"
+#define LOC_NO_OPENING_BRACKET "directive \"location\" has no opening \"{\""
+#define NESTED_LOCATION "nested location blocks are not allowed"
+#define ROOT_DUP_ALIAS_SPECIFIED "\"root\" directive is duplicate, \"alias\" directive was specified earlier"
+#define UNEXPECTED_EOF "unexpected end of file, expecting \";\" or \"}\""
+#define UPLOAD_POST_PAIRING_REJECTION "\"upload_to\" directive requires \"allow_methods\" directive with POST argument in the same location"
+#define UPLOAD_TO_PATH_REQ "\"upload_to\" directive requires an absolute path, got \""
+#define WILDCARD_REJECTION "wildcards rejected in \""
+
+#define INV_CHAR_IDENTIFIED "invalid characters identified in \""
+#define INV_METHOD "invalid method \""
+#define INV_NB_ARG_LISTEN "invalid number of arguments in \"listen\" directive"
+#define INV_NB_ARG_LOCATION "invalid number of arguments in \"location\" directive"
+#define INV_NB_ARG_SERVER "invalid number of arguments in \"server\" directive"
+#define INV_PARAM "invalid parameter \""
+#define INV_PORT "invalid port in \""
+#define INV_RET_CODE "invalid return code \""
+#define INV_VALUE "invalid value \""
 
 static const int	error_codes[] = {
 	301, 302, 303, 307, 308,
@@ -87,7 +112,7 @@ void	Validator::rejectSoleBrackets(const std::vector<std::pair<std::string, std:
 			continue ;
 		char c = name[0];
 		if (c == '{' || c == '}') {
-			std::string errorMsg = std::string("unexpected \"") + c + "\"";
+			std::string errorMsg = std::string(UNEXPECTED) + c + "\"";
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -127,17 +152,15 @@ void	Validator::rejectAliasRootInSameLocation(const Context& context) const {
 	for (it = directives.begin(); it != directives.end(); ++it) {
 		if (it->first ==  ROOT) {
 			if (hasAlias == true) {
-				std::string errorMsg = "\"root\" directive is duplicate, \"alias\" directive was specified earlier";
-				Utils::logger(errorMsg, _config.getFilePath());
-				throw std::invalid_argument(errorMsg);
+				Utils::logger(ROOT_DUP_ALIAS_SPECIFIED, _config.getFilePath());
+				throw std::invalid_argument(ROOT_DUP_ALIAS_SPECIFIED);
 			}
 			hasRoot = true;
 		}
 		if (it->first == ALIAS) {
 			if (hasRoot == true) {
-				std::string errorMsg = "\"alias\" directive is duplicate, \"root\" directive was specified earlier";
-				Utils::logger(errorMsg, _config.getFilePath());
-				throw std::invalid_argument(errorMsg);
+				Utils::logger(ALIAS_DUP_ROOT_SPECIFIED, _config.getFilePath());
+				throw std::invalid_argument(ALIAS_DUP_ROOT_SPECIFIED);
 			}
 			hasAlias = true;
 		}
@@ -159,7 +182,7 @@ void	Validator::rejectDuplicateLocation(const Context& serverContext) const {
 
 		for (size_t j = 0; j < seenPaths.size(); ++j) {
 			if (seenPaths[j] == path) {
-				std::string errorMsg = "duplicate location \"" + path + "\"";
+				std::string errorMsg = DUP_LOCATION + path + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
@@ -184,9 +207,8 @@ void	Validator::validateLocationContexts(Context& serverContext) {
 		rejectAliasRootInSameLocation(*it);
 
 		if (!it->getContext().empty()) {
-			std::string errorMsg = "nested location blocks are not allowed";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
+			Utils::logger(NESTED_LOCATION, _config.getFilePath());
+			throw std::invalid_argument(NESTED_LOCATION);
 		}
 	}
 	rejectDuplicateLocation(serverContext);
@@ -251,7 +273,7 @@ void	Validator::validateAutoIndex(const std::vector<std::string>& values) const 
 		value = value.substr(0, value.length() - 1);
 
 	if (value != "on" && value != "off") {
-		std::string errorMsg = "invalid value \"" + value + "\" in \"autoindex\" directive, it must be \"on\" or \"off\"";
+		std::string errorMsg = INV_VALUE + value + AUTOINDEX_ON_OFF_MUST;
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -297,7 +319,7 @@ void	Validator::validateUploadTo(const std::vector<std::string>& values) const {
 	const std::vector<std::string>&	group = groups[0];
 	std::string	pathValue = group[0];
 	if (pathValue[0] != '/') {
-		std::string	errorMsg = "\"upload_to\" directive requires an absolute path, got \"" + pathValue + "\"";
+		std::string	errorMsg = UPLOAD_TO_PATH_REQ + pathValue + "\"";
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -320,7 +342,7 @@ void	Validator::validateAllowedMethods(const std::vector<std::string>& values) c
 			continue;
 
 		if (value != "GET" && value != "POST" && value != "DELETE") {
-			std::string errorMsg = "invalid method \"" + value + "\" in \"allow_methods\" directive, it must be \"GET\", \"POST\" or \"DELETE\"";
+			std::string errorMsg = INV_METHOD + value + ALL_METHOD_REQ;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -341,7 +363,7 @@ void	Validator::contextNameCheck(const Context& context, int expectedType) const
 	ss >> value;
 	if (expectedType == SERV_VALUE) {
 		if (value != SERV) {
-			std::string errorMsg = "\"" + value + "\" directive is not allowed here";
+			std::string errorMsg = "\"" + value + DIR_NOT_ALLOWED_SUFFIX;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -349,14 +371,14 @@ void	Validator::contextNameCheck(const Context& context, int expectedType) const
 		validateServer(group, context);
 	} else if (expectedType == LOCATION_VALUE) {
 		if (value != LOCATION) {
-			std::string errorMsg = "\"" + value + "\" directive is not allowed here";
+			std::string errorMsg = "\"" + value + DIR_NOT_ALLOWED_SUFFIX;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 		validateStrictArgsNb(group, 3, LOCATION);
 		validateLocation(group, context);
 	} else {
-		std::string errorMsg = "unknown directive \"" + value + "\"";
+		std::string errorMsg = UNKNOWN_DIR_PREFIX + value + "\"";
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -366,21 +388,18 @@ void	Validator::contextNameCheck(const Context& context, int expectedType) const
 void	Validator::validateLocation(const std::vector<std::string>& group, const Context& context) const {
 
 	if (group.size() != 3) {
-		std::string errorMsg = "invalid number of arguments in \"location\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(INV_NB_ARG_LOCATION, _config.getFilePath());
+		throw std::invalid_argument(INV_NB_ARG_LOCATION);
 	}
 
 	const std::string& middlePart = group[1];
 
 	if (middlePart.find(";") != std::string::npos) {
-		std::string errorMsg = "directive \"location\" has no opening \"{\"";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(LOC_NO_OPENING_BRACKET, _config.getFilePath());
+		throw std::invalid_argument(LOC_NO_OPENING_BRACKET);
 	} else if (middlePart.find("{") != std::string::npos) {
-		std::string errorMsg = "invalid number of arguments in \"location\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(INV_NB_ARG_LOCATION, _config.getFilePath());
+		throw std::invalid_argument(INV_NB_ARG_LOCATION);
 	}
 
 	const std::string& bracketPart = group[2];
@@ -391,9 +410,8 @@ void	Validator::validateLocation(const std::vector<std::string>& group, const Co
 void	Validator::validateServer(const std::vector<std::string>& group, const Context& context) const {
 
 	if (group.size() != 2) {
-		std::string errorMsg = "invalid number of arguments in \"server\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(INV_NB_ARG_SERVER, _config.getFilePath());
+		throw std::invalid_argument(INV_NB_ARG_SERVER);
 	}
 
 	const std::string& bracketPart = group[1];
@@ -409,9 +427,8 @@ void	Validator::checkContextClosedProperly(const Context& context) const {
 	const std::string&	lastKey = directives.back().first;
 
 	if (directives.back().second.size() != 0 || lastKey != "}" ) {
-		std::string errorMsg = "unexpected end of file, expecting \";\" or \"}\"";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(UNEXPECTED_EOF, _config.getFilePath());
+		throw std::invalid_argument(UNEXPECTED_EOF);
 	}
 }
 
@@ -453,12 +470,12 @@ void	Validator::keyNameCheck(const std::vector<std::pair<std::string, std::vecto
 		if (!found) {
 			for (size_t i = 0; i < directivesCount; ++i) {
 				if (key == allDirectives[i]) {
-					std::string errorMsg = "\"" + key + "\" directive is not allowed here";
+					std::string errorMsg = "\"" + key + DIR_NOT_ALLOWED_SUFFIX;
 					Utils::logger(errorMsg, _config.getFilePath());
 					throw std::invalid_argument(errorMsg);
 				}
 			}
-			std::string errorMsg = "unknown directive \"" + key + "\"";
+			std::string errorMsg = UNKNOWN_DIR_PREFIX + key + "\"";
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -472,7 +489,7 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 	std::string						errorMsg;
 
 	if (groups.empty()) {
-		errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+		errorMsg = DIRECTIVE_PREFIX + directive + NOT_TERMINATED_BY_SEMICOLON;
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -483,7 +500,7 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 		const std::string&				lastValue = group.back();
 
 		if (lastValue[lastValue.length() - 1] != ';') {
-			errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+			errorMsg = DIRECTIVE_PREFIX + directive + NOT_TERMINATED_BY_SEMICOLON;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -497,13 +514,12 @@ void	Validator::semicolonCheck(const std::vector<std::string>& v, const std::str
 			if (nextNonSemicolon != std::string::npos) {
 				std::string	unknownPart = lastValue.substr(firstSemicolon + 1);
 				unknownPart = unknownPart.substr(0, unknownPart.find_first_of(";"));
-				errorMsg = "unknown directive \"" + unknownPart + "\"";
+				errorMsg = UNKNOWN_DIR_PREFIX + unknownPart + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			} else {
-				errorMsg = "unexpected \";\"";
-				Utils::logger(errorMsg, _config.getFilePath());
-				throw std::invalid_argument(errorMsg);
+				Utils::logger(UNEXP_SEMICOLON, _config.getFilePath());
+				throw std::invalid_argument(UNEXP_SEMICOLON);
 			}
 		}
 	}
@@ -538,24 +554,21 @@ void	Validator::validateClientMaxBodySize(const std::vector<std::string>& values
 		long				number;
 
 		if (!(iss >> number)) {
-			std::string	errorMsg = "\"client_max_body_size\" directive invalid value";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
+			Utils::logger(CL_MAX_B_SIZE_INV_VALUE, _config.getFilePath());
+			throw std::invalid_argument(CL_MAX_B_SIZE_INV_VALUE);
 		}
 
 		if (number <= 0) {
-			std::string	errorMsg = "\"client_max_body_size\" directive invalid value";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
+			Utils::logger(CL_MAX_B_SIZE_INV_VALUE, _config.getFilePath());
+			throw std::invalid_argument(CL_MAX_B_SIZE_INV_VALUE);
 		}
 
 		std::string	unit;
 		iss >> unit;
 
 		if (!validateUnity(unit)) {
-			std::string errorMsg = "\"client_max_body_size\" directive invalid value";
-			Utils::logger(errorMsg, _config.getFilePath());
-			throw std::invalid_argument(errorMsg);
+			Utils::logger(CL_MAX_B_SIZE_INV_VALUE, _config.getFilePath());
+			throw std::invalid_argument(CL_MAX_B_SIZE_INV_VALUE);
 		}
 	}
 
@@ -582,13 +595,13 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 			int					value;
 
 			if (!(iss >> value)) {
-				std::string	errorMsg = "invalid value \"" + group[i] + "\"";
+				std::string	errorMsg = INV_VALUE + group[i] + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 
 			if (iss.peek() != EOF) {
-				std::string	errorMsg = "invalid value \"" + group[i] + "\"";
+				std::string	errorMsg = INV_VALUE + group[i] + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
@@ -604,7 +617,7 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 			if (!isValidErrorCode(value)) {
 				std::ostringstream	oss;
 				oss << value;
-				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
+				std::string errorMsg = INV_VALUE + oss.str() + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
@@ -622,7 +635,7 @@ std::vector<std::vector<std::string> >	Validator::splitDirectiveGroups(const std
 	std::string									errorMsg;
 
 	if (values.back() == " ") {
-		errorMsg = "directive \"" + directive + "\" is not terminated by \";\"";
+		errorMsg = DIRECTIVE_PREFIX + directive + NOT_TERMINATED_BY_SEMICOLON;
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -656,7 +669,7 @@ void	Validator::validateMinimumArgs(const std::vector<std::string>& group, size_
 	}
 
 	if (validArgsCount < minArgs) {
-		std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+		std::string	errorMsg = INV_NB_ARG + directive + DIRECTIVE_SUFFIX;
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -673,7 +686,7 @@ void	Validator::validateStrictArgsNb(const std::vector<std::string>& group, size
 	}
 
 	if (argCount != exactNb) {
-		std::string	errorMsg = "invalid number of arguments in \"" + directive + "\" directive";
+		std::string	errorMsg = INV_NB_ARG + directive + DIRECTIVE_SUFFIX;
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -763,7 +776,7 @@ bool	Validator::isValidPort(std::string& portStr, int& outPort) const {
 		return (false);
 
 	if (outPort < 1 || outPort > 65535) {
-		std::string errorMsg = "invalid port in \"" + portStr + "\" of the \"listen\" directive";
+		std::string errorMsg = INV_PORT + portStr + LISTEN_SUFFIX;
 		Utils::logger(errorMsg, _config.getFilePath());
 		throw std::invalid_argument(errorMsg);
 	}
@@ -807,7 +820,7 @@ bool	Validator::isValidAddress(std::string& address) const {
 			return (false);
 
 		if (value < 0 || value > 255) {
-			std::string errorMsg = "host not found in \"" + address + "\" of the \"listen\" directive";
+			std::string errorMsg = HOST_NOT_FOUND + address + LISTEN_SUFFIX;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -823,9 +836,8 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 		cleanValue = cleanValue.substr(0, cleanValue.length() - 1);
 
 	if (cleanValue.empty()) {
-		std::string errorMsg = "invalid number of arguments in \"listen\" directive";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(INV_NB_ARG_LISTEN, _config.getFilePath());
+		throw std::invalid_argument(INV_NB_ARG_LISTEN);
 	}
 
 	std::size_t	colonPos = cleanValue.find(':');
@@ -837,19 +849,19 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 		std::string	portStr = cleanValue.substr(colonPos + 1);
 
 		if (address.empty() || portStr.empty()) {
-			std::string errorMsg = "invalid parameter \"" + cleanValue + "\" in \"listen\" directive";
+			std::string errorMsg = INV_PARAM + cleanValue + IN_LISTEN_DIR;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
 		if (!isValidAddress(address)) {
-			std::string errorMsg = "host not found in \"" + address + "\" of the \"listen\" directive";
+			std::string errorMsg = HOST_NOT_FOUND + address + LISTEN_SUFFIX;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
 
 		if (!isValidPort(portStr, port)) {
-			std::string errorMsg = "invalid port in \"" + cleanValue + "\" of the \"listen\" directive";
+			std::string errorMsg = INV_PORT + cleanValue + LISTEN_SUFFIX;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -860,7 +872,7 @@ void	Validator::subdivideListen(const std::string& listenValue) const {
 			address = cleanValue;
 			port = 80;
 		} else {
-			std::string errorMsg = "invalid parameter \"" + cleanValue + "\" in \"listen\" directive";
+			std::string errorMsg = INV_PARAM + cleanValue + IN_LISTEN_DIR;
 			Utils::logger(errorMsg, _config.getFilePath());
 			throw std::invalid_argument(errorMsg);
 		}
@@ -912,9 +924,9 @@ void	Validator::validateServerName(const std::vector<std::string>& values) {
 				std::string	errorMsg;
 
 				if (nextToken.empty()) {
-					errorMsg = "unexpected \";\"";
+					errorMsg = UNEXP_SEMICOLON;
 				} else {
-					errorMsg = "unknown directive \"" + nextToken + "\"";
+					errorMsg = UNKNOWN_DIR_PREFIX + nextToken + "\"";
 				}
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
@@ -931,14 +943,14 @@ void	Validator::validateServerName(const std::vector<std::string>& values) {
 				continue ;
 
 			if (name.find_first_of("*") != std::string::npos) {
-				std::string errorMsg = "wildcards rejected in \"" + name + "\"";
+				std::string errorMsg = WILDCARD_REJECTION + name + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 
 			std::string	delimiters = "!\"#$%&'()+,/:;<=>?@[\\]^`{|}~\t\n\r";
 			if (name.find_first_of(delimiters) != std::string::npos) {
-				std::string errorMsg = "invalid characters identified in \"" + name + "\"";
+				std::string errorMsg = INV_CHAR_IDENTIFIED + name + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
@@ -1128,13 +1140,13 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
 			int					value;
 
 			if (!(iss >> value)) {
-				std::string	errorMsg = "invalid return code \"" + group[i] + "\"";
+				std::string	errorMsg = INV_RET_CODE + group[i] + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
 
 			if (iss.peek() != EOF) {
-				std::string	errorMsg = "invalid return code \"" + group[i] + "\"";
+				std::string	errorMsg = INV_RET_CODE + group[i] + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
@@ -1142,7 +1154,7 @@ void	Validator::validateReturn(const std::vector<std::string>& values) const {
 			if (!isValidErrorCode(value)) {
 				std::ostringstream	oss;
 				oss << value;
-				std::string errorMsg = "invalid value \"" + oss.str() + "\"";
+				std::string errorMsg = INV_VALUE + oss.str() + "\"";
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
@@ -1167,8 +1179,7 @@ void	Validator::validatePostUploadToPairing(const Context& context) const {
 	}
 
 	if (hasUploadto && !hasPostMethod) {
-		std::string errorMsg = "\"upload_to\" directive requires \"allow_methods\" directive with POST argument in the same location";
-		Utils::logger(errorMsg, _config.getFilePath());
-		throw std::invalid_argument(errorMsg);
+		Utils::logger(UPLOAD_POST_PAIRING_REJECTION, _config.getFilePath());
+		throw std::invalid_argument(UPLOAD_POST_PAIRING_REJECTION);
 	}
 }
