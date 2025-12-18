@@ -27,8 +27,6 @@ void	Validator::validate(void) {
 
 	validateGlobalDirective();
 	validateServerContexts();
-
-	// checkMissingDirectives(); ??
 }
 
 void	Validator::initAllowedContext(void) {
@@ -602,7 +600,6 @@ void	Validator::validateErrorPage(const std::vector<std::string>& values) const 
 				Utils::logger(errorMsg, _config.getFilePath());
 				throw std::invalid_argument(errorMsg);
 			}
-
 
 			if (!isValidErrorCode(value)) {
 				std::ostringstream	oss;
