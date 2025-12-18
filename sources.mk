@@ -36,7 +36,7 @@ override MAIN			:= \
 SRC += $(addprefix $(SUBD_TESTDIR), $(addsuffix .cpp, $(SUBD_TESTSRC)))
 
 override SUBD_TESTSRC			:= \
-	test \
+	# test \
 
 
 
@@ -48,10 +48,22 @@ override SERVERSRC	:= \
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
 override CONFIGSRC	:= \
-	Config
+	Config \
+	Utils
 
 
 SRC += $(addprefix $(READERDIR), $(addsuffix .cpp, $(READERSRC)))
 
 override READERSRC	:= \
 	FileReader
+
+SRC += $(addprefix $(VALIDATORDIR), $(addsuffix .cpp, $(VALIDATORSRC)))
+
+override VALIDATORSRC	:= \
+	Validator
+
+SRC += $(addprefix $(LEXERDIR), $(addsuffix .cpp, $(LEXERSRC)))
+
+override LEXERSRC	:= \
+	Context \
+	Tokenizer

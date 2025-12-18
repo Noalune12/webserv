@@ -3,7 +3,8 @@
 
 # include <string>
 # include <vector>
-# include <map>
+
+# include "Context.hpp"
 
 struct Token {
 	/*
@@ -24,20 +25,19 @@ struct Token {
 class Tokenizer {
 
 	private:
-		std::string _content;
-		// std::vector<Token> _tokens; ?
-		// std::map<Token, std::string>	tokens; ??
-		// std::map<std::vector<Token>, std::string> ??? JE SAIS PAS QUOI METTRE ALED LOU-ANNE
-
+		std::vector<Context>								_context;
+		std::vector<std::pair<std::string, std::vector<std::string> > >	_globalDirectives;
 
 	public:
-		Tokenizer(const std::string& content);
+		Tokenizer();
+		Tokenizer(const std::string& fileContent);
 		~Tokenizer();
 
-		// Tokenize le contenu et retourne une liste de tokens
-		// std::vector<Token> tokenize();
-		// std::map<...>
-		// je sais vraiment pas
+		void addDirective(std::string line);
+		void printContent() const;
+
+		const std::vector<std::pair<std::string, std::vector<std::string> > >&	getGlobalDirective(void) const;
+		std::vector<Context>&	getVectorContext(void) ;
 };
 
 #endif

@@ -1,10 +1,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "main.hpp"
 #include "Server.hpp"
 
-#define DEFAULT_CONFIGURATION_FILE "/config-files/default.conf"
+#define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
 
 int	main(int ac, char **av) {
 

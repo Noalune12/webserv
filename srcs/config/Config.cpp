@@ -1,17 +1,28 @@
 #include <iostream>
+#include <sstream>
+#include <algorithm>
+#include <string>
 
-#include "Config.hpp"
+#include "colors.h"
 #include "FileReader.hpp"
+#include "Validator.hpp"
 
 // Config::Config() {}
 
-Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chose dans mes fichiers de test */) {
+Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chose dans mes fichiers de test */) : _filePath(configFile), _fileContent() {
 
 	try {
 
-		FileReader reader(configFile);
+		FileReader reader(_filePath);
 
 		_fileContent = reader.getFileContent();
+
+		Tokenizer temp(_fileContent);
+		_tokens = temp;
+    	_tokens.printContent();
+
+		Validator validator(*this);
+		validator.validate();
 
 	} catch(const std::exception& e) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
@@ -20,3 +31,17 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 }
 
 Config::~Config() {}
+
+/* getters */
+
+Tokenizer&	Config::getTokenizer(void) {
+	return (this->_tokens);
+}
+
+const std::string&	Config::getFilePath(void) const {
+	return (this->_filePath);
+}
+
+const std::string&	Config::getFileContent(void) const {
+	return (this->_fileContent);
+}

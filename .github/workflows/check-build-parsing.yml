@@ -6,8 +6,9 @@ on:
       - '*'
     paths:
       - 'srcs/config/**'
+      - 'config-files/**'
       - 'config/**'
-      - 'test_parser.sh'
+      - 'scripts/test_parser.sh'
   push:
     branches:
       - 'main'
@@ -64,10 +65,10 @@ jobs:
         run: chmod +x scripts/test_parser.sh
 
       - name: Run parser tests (basic)
-        run: cd scripts/ && ./scripts/test_parser.sh -v
+        run: cd scripts && ./test_parser.sh -v
 
       - name: Run parser tests (with valgrind)
-        run: ./scripts/test_parser.sh --valgrind
+        run: cd scripts && ./test_parser.sh --valgrind
         continue-on-error: false
 
   test-summary:
@@ -86,5 +87,3 @@ jobs:
             echo "❌ Parser tests failed!"
             exit 1
           fi
-
-# this summary needs to be modified as well, it doesn't match the paths behavior (if it works properly).

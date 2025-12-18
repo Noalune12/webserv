@@ -2,10 +2,8 @@
 # define CONFIG_HPP
 
 # include <string>
-# include <map>
-# include <vector>
 
-# include "Context.hpp"
+# include "Tokenizer.hpp"
 
 /*
  * Facade principale pour le parsing du fichier de configuration
@@ -24,23 +22,23 @@
 class Config {
 
 	private:
-		const std::string& _filePath; // FileReader.getFilePath()
-		const std::string& _fileContent; // FileReader.getFileContent()
+		const std::string&	_filePath;
+		std::string			_fileContent;
 
-		// Donnees de configuration parsées et validées (au fur et a mesure)
-		// std::vector<ServerBlock> _servers;
-
-		std::map<std::string, std::vector<std::string> >	_globalDirectives;
-		std::vector<Context>								_context;
-
+		Tokenizer _tokens;
 		// Config();
 
 	public:
 
-
 		// Constructeur: orchestre tout le parsing et stocke la configuration
-		Config(const std::string& configFileContent);
+		Config(const std::string& configFile);
 		~Config();
+		// void addDirective(std::string line);
+		// void printContent() const;
+
+		Tokenizer&	getTokenizer(void);
+		const std::string&	getFilePath(void) const;
+		const std::string&	getFileContent(void) const;
 };
 
 #endif
