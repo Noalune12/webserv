@@ -30,48 +30,16 @@ void ConfigInheritor::getGlobalDir(std::vector<std::pair<std::string, std::vecto
     std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(ERR_PAGE));
     if (it == globalDir.end()){
-        _globalDir.errPage[0] = "default"; //default ?
+        _globalDir.errPage[0] = "default";
     } else {
-        std::vector<std::string>::iterator itt = it->second.begin();
-        std::vector<int> code;
-        for (; itt != it->second.end(); itt++) {
-            if (*itt == " ")
-                continue;
-            if (itt->find(';') != std::string::npos) {
-                std::string uri = *itt;
-                uri.erase(uri.size() - 1);
-
-                std::vector<int>::iterator ittt = code.begin();
-                for (; ittt != code.end(); ittt++) {
-                    _globalDir.errPage[*ittt] = uri;
-                }
-                code.clear();
-            } else {
-                int value;
-                std::istringstream iss(*itt);
-                iss >> value;
-                code.push_back(value);
-            }
-        }
+        setErrorPage(it, _globalDir);
     }
 
     it = std::find_if(globalDir.begin(), globalDir.end(), MatchFirst(CL_MAX_B_SYZE));
     if (it == globalDir.end()){
-        _globalDir.bodySize = 1000; // default ?
+        _globalDir.bodySize = 1000;
     } else {
-        std::vector<std::string>::iterator itt = it->second.begin();
-        std::string arg = *itt;
-        std::string s = arg.substr(0, arg.size() - 2);
-        std::istringstream iss(s);
-        iss >> _globalDir.bodySize;
-        char suffix = arg[arg.size() - 2];
-        switch (std::toupper(suffix)) { // overflow ?
-            // case 'K': _globalDir.bodySize *= 1024; break;
-            // case 'M': _globalDir.bodySize *= 1024 * 1024; break;
-            // case 'G': _globalDir.bodySize *= 1024 * 1024 * 1024; break;
-            case 'M': _globalDir.bodySize *= 1000; break;
-            case 'G': _globalDir.bodySize *= 1000000; break;
-        }
+        setBodySize(it, _globalDir);
     }
 }
 
@@ -87,27 +55,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         if (it == directives.end()) {
             getErrPageFromGlobal(temp);
         } else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            std::vector<int> code;
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == " ")
-                    continue;
-                if (itt->find(';') != std::string::npos) {
-                    std::string uri = *itt;
-                    uri.erase(uri.size() - 1);
-
-                    std::vector<int>::iterator ittt = code.begin();
-                    for (; ittt != code.end(); ittt++) {
-                        temp.errPage[*ittt] = uri;
-                    }
-                    code.clear();
-                } else {
-                    int value;
-                    std::istringstream iss(*itt);
-                    iss >> value;
-                    code.push_back(value);
-                }
-            }
+            setErrorPage(it, temp);
             getErrPageFromGlobal(temp);
         }
 
@@ -115,96 +63,46 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         if (it == directives.end())
             temp.bodySize = _globalDir.bodySize;
         else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            std::string arg = *itt;
-            std::string s = arg.substr(0, arg.size() - 2);
-            std::istringstream iss(s);
-            iss >> temp.bodySize;
-            char suffix = arg[arg.size() - 2];
-            switch (std::toupper(suffix)) { // overflow ?
-                // case 'K': temp.bodySize *= 1024; break;
-                // case 'M': temp.bodySize *= 1024 * 1024; break;
-                // case 'G': temp.bodySize *= 1024 * 1024 * 1024; break;
-                case 'M': temp.bodySize *= 1000; break;
-                case 'G': temp.bodySize *= 1000000; break;
-            }
+            setBodySize(it, temp);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
         if (it == directives.end())
-            temp.root = "html"; // default
+            temp.root = "html";
         else {
-            temp.root = *(it->second.begin());
-            temp.root = temp.root.substr(0, temp.root.size() - 1);
+            temp.root = (*(it->second.begin())).substr(0, (*(it->second.begin())).size() - 1);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
         if (it == directives.end())
-            temp.index.push_back("index.html"); // default
+            temp.index.push_back("index.html");
         else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            for (; itt != it->second.end(); itt++) {
-                if (itt == it->second.end() - 1) {
-                    std::string arg = *itt;
-                    arg = arg.substr(0, arg.size() - 1);
-                    temp.index.push_back(arg);
-                } else {
-                    temp.index.push_back(*itt);
-                }
-            }
+            setIndex(it, temp);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ALL_METHODS));
-        // temp.methods.del = false;
-        // temp.methods.get = false;
-        // temp.methods.post = false;
         if (it == directives.end()) {
             temp.methods.del = true;
             temp.methods.get = true;
             temp.methods.post = true;
         } else {
-            // std::vector<std::string>::iterator itt = it->second.begin();
-            // for (; itt != it->second.end(); itt++) {
-            //     if (*itt == "GET" || *itt == "GET;")
-            //         temp.methods.get = true;
-            //     else if (*itt == "POST" || *itt == "POST;")
-            //         temp.methods.post = true;
-            //     else if (*itt == "DELETE" || *itt == "DELETE;")
-            //         temp.methods.del = true;
-            // }
-            if (std::find(it->second.begin(), it->second.end(), "GET") != it->second.end() \
-                || std::find(it->second.begin(), it->second.end(), "GET;") != it->second.end())
-                temp.methods.get = true;
-            else
-                temp.methods.get = false;
-            if (std::find(it->second.begin(), it->second.end(), "DELETE") != it->second.end() \
-                || std::find(it->second.begin(), it->second.end(), "DELETE;") != it->second.end())
-                temp.methods.del = true;
-            else
-                temp.methods.del = false;
-            if (std::find(it->second.begin(), it->second.end(), "POST") != it->second.end() \
-                || std::find(it->second.begin(), it->second.end(), "POST;") != it->second.end())
-                temp.methods.post = true;
-            else
-                temp.methods.post = false;
+            setMethods(it, temp.methods);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(UPLOAD_TO));
         if (it == directives.end())
-            temp.uploadTo = ""; // default
+            temp.uploadTo = "";
         else {
-            temp.uploadTo = *(it->second.begin());
-            temp.uploadTo = temp.uploadTo.substr(0, temp.uploadTo.size() - 1);
+            temp.uploadTo = (*(it->second.begin())).substr(0, (*(it->second.begin())).size() - 1);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(AUTOINDEX));
         if (it == directives.end())
             temp.autoIndex = false;
         else {
-            std::string arg = *(it->second.begin());
-            if (arg == "off;")
+            if (*(it->second.begin()) == "off;")
                 temp.autoIndex = false;
-            else if (arg == "on;")
+            else if (*(it->second.begin()) == "on;")
                 temp.autoIndex = true;
         }
 
@@ -212,38 +110,14 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
         if (it == directives.end()) {
             temp.ret[0] = "";
         } else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            int value;
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == " ")
-                    continue;
-                if (itt->find(';') != std::string::npos) {
-                    std::string url = *itt;
-                    url.erase(url.size() - 1);
-                    temp.ret[value] = url;
-                } else {
-                    std::istringstream iss(*itt);
-                    iss >> value;
-                }
-            }
+            setReturn(it, temp);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(SERV_NAME));
         if (it == directives.end()) {
-            temp.serverName.push_back(""); //default
+            temp.serverName.push_back("");
         } else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == " ")
-                    continue;
-                if (itt == it->second.end() - 1) {
-                    std::string arg = *itt;
-                    arg = arg.substr(0, arg.size() - 1);
-                    temp.serverName.push_back(arg);
-                } else {
-                    temp.serverName.push_back(*itt);
-                }
-            }
+            setServerName(it, temp.serverName);
         }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(LISTEN));
@@ -253,56 +127,9 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
             lisTemp.port = 8080;
             temp.lis.push_back(lisTemp);
         } else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == " ")
-                    continue;
-                else {
-                    std::string arg = *itt;
-                    size_t sepIndex;
-                    if ((sepIndex = arg.find(":")) != std::string::npos) {
-                        //: case -> iP + port
-                        listen lisTemp;
-                        lisTemp.ip = arg.substr(0, sepIndex);
-                        if (lisTemp.ip == "localhost")
-                            lisTemp.ip = "127.0.0.1";
-                        else if (lisTemp.ip == "*")
-                            lisTemp.ip = "0.0.0.0";
-                        arg = arg.substr(sepIndex + 1, arg.size());
-                        int port;
-                        std::istringstream iss(arg);
-                        iss >> port;
-                        lisTemp.port = port;
-                        temp.lis.push_back(lisTemp);
-
-                    } else {
-                        //if . or localhost (only ip)
-                        if (arg.find(".") != std::string::npos ||  arg == "localhost;" || arg == "*;") {
-                        // arg.find("localhost") != std::string::npos || arg.find("*") != std::string::npos) {
-                            listen lisTemp;
-                            lisTemp.ip = arg.substr(0, arg.size() - 1);
-                            if (lisTemp.ip == "localhost")
-                                lisTemp.ip = "127.0.0.1";
-                            else if (lisTemp.ip == "*")
-                                lisTemp.ip = "0.0.0.0";
-                            lisTemp.port = 8080;
-                            temp.lis.push_back(lisTemp);
-                        } else {
-                            listen lisTemp;
-                            int port;
-                            std::istringstream iss(arg);
-                            iss >> port;
-                            lisTemp.port = port;
-                            lisTemp.ip = "0.0.0.0";
-                            temp.lis.push_back(lisTemp);
-                        }
-
-                    }
-                }
-            }
+            setListen(it, temp);
         }
 
-        //location
         if (!context.empty())
             getLocation(context_it->getContext(), temp);
         _server.push_back(temp);
@@ -316,111 +143,58 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
         std::string name = loc_it->getName().substr(9);
         std::istringstream iss(name);
         iss >> temp.path;
-        if (loc_it->getContext().empty())
-            std::cout << "\nno more context in" << std::endl;
         std::vector<std::pair<std::string, std::vector<std::string> > > directives = loc_it->getDirectives();
         std::vector<std::pair<std::string, std::vector<std::string> > >::iterator it;
-        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itt;
 
-        // cgi path
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(CGI_PATH));
         if (it == directives.end())
-            temp.cgiPath = ""; // default
+            temp.cgiPath = "";
         else {
-            temp.cgiPath = *(it->second.begin());
-            temp.cgiPath = temp.cgiPath.substr(0, temp.cgiPath.size() - 1);
+            temp.cgiPath = (*(it->second.begin())).substr(0, (*(it->second.begin())).size() - 1);
         }
 
-        // cgi ext
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(CGI_EXT));
         if (it == directives.end())
-            temp.cgiExt = ""; // default
+            temp.cgiExt = "";
         else {
-            temp.cgiExt = *(it->second.begin());
-            temp.cgiExt = temp.cgiExt.substr(0, temp.cgiExt.size() - 1);
+            temp.cgiExt = (*(it->second.begin())).substr(0, (*(it->second.begin())).size() - 1);
         }
 
-        // errPage
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ERR_PAGE));
         if (it == directives.end()) {
             getErrPageFromServer(server, temp);
         } else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            std::vector<int> code;
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == " ")
-                    continue;
-                if (itt->find(';') != std::string::npos) {
-                    std::string uri = *itt;
-                    uri.erase(uri.size() - 1);
-
-                    std::vector<int>::iterator ittt = code.begin();
-                    for (; ittt != code.end(); ittt++) {
-                        temp.errPage[*ittt] = uri;
-                    }
-                    code.clear();
-                } else {
-                    int value;
-                    std::istringstream iss(*itt);
-                    iss >> value;
-                    code.push_back(value);
-                }
-            }
+            setErrorPage(it, temp);
             getErrPageFromServer(server, temp);
         }
 
-        // bodysize
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(CL_MAX_B_SYZE));
         if (it == directives.end())
             temp.bodySize = _globalDir.bodySize;
         else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            std::string arg = *itt;
-            std::string s = arg.substr(0, arg.size() - 2);
-            std::istringstream iss(s);
-            iss >> temp.bodySize;
-            char suffix = arg[arg.size() - 2];
-            switch (std::toupper(suffix)) { // overflow ?
-                case 'M': temp.bodySize *= 1000; break;
-                case 'G': temp.bodySize *= 1000000; break;
-            }
+            setBodySize(it, temp);
         }
 
-        // root & alias
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ROOT));
-        itt = std::find_if(directives.begin(), directives.end(), MatchFirst(ALIAS));
-        if (it == directives.end() && itt == directives.end()) {
+        std::vector<std::pair<std::string, std::vector<std::string> > >::iterator itAlias = std::find_if(directives.begin(), directives.end(), MatchFirst(ALIAS));
+        if (it == directives.end() && itAlias == directives.end()) {
             temp.root = server.root;
-            temp.alias = ""; // not sure
+            temp.alias = "";
         }
-        else if (itt != directives.end()) {
-            temp.alias = *(itt->second.begin());
-            temp.alias = temp.alias.substr(0, temp.alias.size() - 1);
-            temp.root = ""; // not sure
+        else if (itAlias != directives.end()) {
+            temp.alias = (*(itAlias->second.begin())).substr(0, (*(itAlias->second.begin())).size() - 1);
+            temp.root = "";
         }
         else {
-            temp.root = *(it->second.begin());
-            temp.root = temp.root.substr(0, temp.root.size() - 1);
+            temp.root = (*(it->second.begin())).substr(0, (*(it->second.begin())).size() - 1);
         }
 
-        // index
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(INDEX));
         if (it == directives.end())
             temp.index = server.index;
         else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            for (; itt != it->second.end(); itt++) {
-                if (itt == it->second.end() - 1) {
-                    std::string arg = *itt;
-                    arg = arg.substr(0, arg.size() - 1);
-                    temp.index.push_back(arg);
-                } else {
-                    temp.index.push_back(*itt);
-                }
-            }
-        } // what if there was indexes in server do we add them to the vector of index ???
-
-        // methods
+            setIndex(it, temp);
+        }
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(ALL_METHODS));
         if (it == directives.end()) {
@@ -428,69 +202,33 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
             temp.methods.get = server.methods.get;
             temp.methods.post = server.methods.post;
         } else {
-            if (std::find(it->second.begin(), it->second.end(), "GET") != it->second.end() \
-                || std::find(it->second.begin(), it->second.end(), "GET;") != it->second.end())
-                temp.methods.get = true;
-            else
-                temp.methods.get = false;
-            if (std::find(it->second.begin(), it->second.end(), "DELETE") != it->second.end() \
-                || std::find(it->second.begin(), it->second.end(), "DELETE;") != it->second.end())
-                temp.methods.del = true;
-            else
-                temp.methods.del = false;
-            if (std::find(it->second.begin(), it->second.end(), "POST") != it->second.end() \
-                || std::find(it->second.begin(), it->second.end(), "POST;") != it->second.end())
-                temp.methods.post = true;
-            else
-                temp.methods.post = false;
+            setMethods(it, temp.methods);
         }
-
-        // upload to
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(UPLOAD_TO));
         if (it == directives.end())
-            temp.uploadTo = server.uploadTo; // default
+            temp.uploadTo = server.uploadTo;
         else {
-            temp.uploadTo = *(it->second.begin());
-            temp.uploadTo = temp.uploadTo.substr(0, temp.uploadTo.size() - 1);
+            temp.uploadTo = (*(it->second.begin())).substr(0, (*(it->second.begin())).size() - 1);
         }
-
-        // auto index
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(AUTOINDEX));
         if (it == directives.end())
             temp.autoIndex = server.autoIndex;
         else {
-            std::string arg = *(it->second.begin());
-            if (arg == "off;")
+            if (*(it->second.begin()) == "off;")
                 temp.autoIndex = false;
-            else if (arg == "on;")
+            else if (*(it->second.begin()) == "on;")
                 temp.autoIndex = true;
         }
-
-        // return
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
         if (it == directives.end()) {
             getReturnFromServer(server, temp);
         } else {
-            std::vector<std::string>::iterator itt = it->second.begin();
-            int value;
-            for (; itt != it->second.end(); itt++) {
-                if (*itt == " ")
-                    continue;
-                if (itt->find(';') != std::string::npos) {
-                    std::string url = *itt;
-                    url.erase(url.size() - 1);
-                    temp.ret[value] = url;
-                } else {
-                    std::istringstream iss(*itt);
-                    iss >> value;
-                }
-            }
-            getReturnFromServer(server, temp); // not sure
+            setReturn(it, temp);
+            getReturnFromServer(server, temp);
         }
-
 
         server.loc.push_back(temp);
     }
@@ -525,6 +263,148 @@ void ConfigInheritor::getReturnFromServer(server& server, location& location) {
         }
     }
 }
+
+void ConfigInheritor::setMethods(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, allowMeth& methods) {
+    if (std::find(it->second.begin(), it->second.end(), "GET") != it->second.end() \
+        || std::find(it->second.begin(), it->second.end(), "GET;") != it->second.end())
+        methods.get = true;
+    else
+        methods.get = false;
+    if (std::find(it->second.begin(), it->second.end(), "DELETE") != it->second.end() \
+        || std::find(it->second.begin(), it->second.end(), "DELETE;") != it->second.end())
+        methods.del = true;
+    else
+        methods.del = false;
+    if (std::find(it->second.begin(), it->second.end(), "POST") != it->second.end() \
+        || std::find(it->second.begin(), it->second.end(), "POST;") != it->second.end())
+        methods.post = true;
+    else
+        methods.post = false;
+}
+
+template <typename T>
+void ConfigInheritor::setErrorPage(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+    std::vector<int> code;
+    std::vector<std::string>::iterator itArg = it->second.begin();
+    for (; itArg != it->second.end(); itArg++) {
+        if (*itArg == " ")
+            continue;
+        if (itArg->find(';') != std::string::npos) {
+            std::string uri = *itArg;
+            uri.erase(uri.size() - 1);
+
+            std::vector<int>::iterator itCode = code.begin();
+            for (; itCode != code.end(); itCode++) {
+                t.errPage[*itCode] = uri;
+            }
+            code.clear();
+        } else {
+            int value;
+            std::istringstream iss(*itArg);
+            iss >> value;
+            code.push_back(value);
+        }
+    }
+}
+
+template <typename T>
+void ConfigInheritor::setBodySize(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+            std::vector<std::string>::iterator itArg = it->second.begin();
+        std::string arg = *itArg;
+        std::string s = arg.substr(0, arg.size() - 2);
+        std::istringstream iss(s);
+        iss >> t.bodySize;
+        char suffix = arg[arg.size() - 2];
+        switch (std::toupper(suffix)) { // overflow ?
+            case 'M': t.bodySize *= 1000; break;
+            case 'G': t.bodySize *= 1000000; break;
+        }
+}
+
+template <typename T>
+void ConfigInheritor::setIndex(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+    std::vector<std::string>::iterator itArg = it->second.begin();
+    for (; itArg != it->second.end(); itArg++) {
+        if (itArg == it->second.end() - 1) {
+            t.index.push_back((*itArg).substr(0, (*itArg).size() - 1));
+        } else {
+            t.index.push_back(*itArg);
+        }
+    }
+}
+
+template <typename T>
+void ConfigInheritor::setReturn(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t) {
+    std::vector<std::string>::iterator itArg = it->second.begin();
+    int value;
+    for (; itArg != it->second.end(); itArg++) {
+        if (*itArg == " ")
+            continue;
+        if (itArg->find(';') != std::string::npos) {
+            t.ret[value] = (*itArg).substr(0, (*itArg).size() - 1);
+        } else {
+            std::istringstream iss(*itArg);
+            iss >> value;
+        }
+    }
+}
+
+void ConfigInheritor::setServerName(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, std::vector<std::string>& serverName) {
+    std::vector<std::string>::iterator itArg = it->second.begin();
+    for (; itArg != it->second.end(); itArg++) {
+        if (*itArg == " ")
+            continue;
+        if (itArg == it->second.end() - 1) {
+            serverName.push_back((*itArg).substr(0, (*itArg).size() - 1));
+        } else {
+            serverName.push_back(*itArg);
+        }
+    }
+}
+
+void ConfigInheritor::setListen(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, server& s) {
+    std::vector<std::string>::iterator itArg = it->second.begin();
+    for (; itArg != it->second.end(); itArg++) {
+        if (*itArg == " ")
+            continue;
+        else {
+            size_t sepIndex;
+            if ((sepIndex = (*itArg).find(":")) != std::string::npos) {
+                listen lisTemp;
+
+                lisTemp.ip = (*itArg).substr(0, sepIndex);
+                if (lisTemp.ip == "localhost")
+                    lisTemp.ip = "127.0.0.1";
+                else if (lisTemp.ip == "*")
+                    lisTemp.ip = "0.0.0.0";
+
+                std::istringstream iss((*itArg).substr(sepIndex + 1, (*itArg).size()));
+                iss >> lisTemp.port;
+
+                s.lis.push_back(lisTemp);
+
+            } else {
+                if ((*itArg).find(".") != std::string::npos ||  (*itArg) == "localhost;" || (*itArg) == "*;") {
+                    listen lisTemp;
+                    lisTemp.ip = (*itArg).substr(0, (*itArg).size() - 1);
+                    if (lisTemp.ip == "localhost")
+                        lisTemp.ip = "127.0.0.1";
+                    else if (lisTemp.ip == "*")
+                        lisTemp.ip = "0.0.0.0";
+                    lisTemp.port = 8080;
+                    s.lis.push_back(lisTemp);
+                } else {
+                    listen lisTemp;
+                    std::istringstream iss(*itArg);
+                    iss >> lisTemp.port;
+                    lisTemp.ip = "0.0.0.0";
+                    s.lis.push_back(lisTemp);
+                }
+            }
+        }
+    }
+}
+
 
 void ConfigInheritor::printContent() const {
     std::cout << RED << "\nINHERITOR FINAL\n" << RESET << std::endl;

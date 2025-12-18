@@ -88,6 +88,18 @@ class ConfigInheritor {
 		void getReturnFromServer(server& server, location& location);
 		void printContent() const;
 
+		template <typename T>
+		void setErrorPage(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		template <typename T>
+		void setBodySize(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		template <typename T>
+		void setIndex(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		template <typename T>
+		void setReturn(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, T& t);
+		
+		void setMethods(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, allowMeth& methods);
+		void setServerName(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, std::vector<std::string>& serverName);
+		void setListen(std::vector<std::pair<std::string, std::vector<std::string> > >::iterator& it, server& s);
 };
 
 #endif
