@@ -14,7 +14,7 @@ L'architecture événementielle, autour de `poll()`, `epoll()`, etc, résout ce 
 
 ## Fondamentaux asynchrone
 
-En programmation asynchrone, les opérations Input/Ouput (I/O) `return` immédiatement, permettant au programme de continuer à exécuter d'autres taches sous la forme d'une boucle événementielle, qui traite chaque connexion tour à tour, uniquement quand elle a réellement des données disponibles.
+En programmation asynchrone basée sur un mécanisme de surveillance comme poll/epoll, le programme utilise une boucle événementielle qui attend que les fds deviennent prêts, puis traite chaque connexion uniquement lorsqu’elle a effectivement des données à lire ou à écrire, ce qui évite de bloquer inutilement sur une connexion individuelle.
 
 ## Les mécanismes poll, select, epoll et kqueue: le multiplexage d'I/O
 
