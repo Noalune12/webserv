@@ -12,6 +12,7 @@
 - [ ] Lien programme asynchrone, multiplexing etc (gros du travail ?)
 - [ ] Requests.md
 
+https://beej.us/guide/bgnet/html/#what-is-a-socket
 
 ### Notions
 
