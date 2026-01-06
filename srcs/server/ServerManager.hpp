@@ -36,6 +36,7 @@ class ServerManager
 		void	groupServersByEndPoint(void);
 
 		int		createListenSocket(const std::string& address, int port);
+		bool	configureSocket(int socketFd);
 
 		/* debug */
 		void	printEndpoints(void);

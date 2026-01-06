@@ -1,5 +1,6 @@
 #include <cstring>
 #include <errno.h>
+#include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
@@ -69,6 +70,12 @@ int	ServerManager::createListenSocket(const std::string& address, int port) {
 		return (-1); // return -1 for now for error reporting
 	}
 
+	if (!configureSocket(socketFd))
+	{
+		close(socketFd);
+		return (-1);
+	}
+
 	struct sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));
 
@@ -132,6 +139,31 @@ void	ServerManager::groupServersByEndPoint(void) {
 			}
 		}
 	}
+}
+
+bool	ServerManager::configureSocket(int socketFd) {
+
+	// allow address reuse (avoid "Address already in use" when restarting server/while developping)
+	int optval = 1;
+	if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+		std::cerr << "setsockopt(SO_REUSEADDR) failed: " << strerror(errno) << std::endl;
+		return (false);
+	}
+
+	// flag retrieval
+	int flags = fcntl(socketFd, F_GETFL, 0);
+	if (flags < 0) {
+		std::cerr << "fcntl(F_GETFL) failed: " << strerror(errno) << std::endl;
+		return (false);
+	}
+
+	// adding O_NONBLOCK to list of existing flags
+	if (fcntl(socketFd, F_SETFL, flags | O_NONBLOCK) < 0) {
+		std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed: " << strerror(errno) << std::endl;
+		return (false);
+	}
+
+	return (true);
 }
 
 
