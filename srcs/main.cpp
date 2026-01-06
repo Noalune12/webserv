@@ -48,6 +48,7 @@ int	main(int ac, char **av) {
 	}
 	catch(const std::exception& e)
 	{
+		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		return (EXIT_FAILURE);
 	}
 
