@@ -21,7 +21,7 @@ struct globalDir {
 	double bodySize;
 };
 
-struct listen {
+struct listenDirective {
 	std::string ip;
 	int port;
 };
@@ -49,7 +49,7 @@ struct location {
 };
 
 struct server {
-	std::vector<listen> lis;
+	std::vector<listenDirective> lis;
 	std::vector<std::string> serverName;
 	std::string root;
 	std::vector<std::string> index;

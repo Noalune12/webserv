@@ -122,7 +122,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(LISTEN));
         if (it == directives.end()) {
-            listen lisTemp;
+            listenDirective lisTemp;
             lisTemp.ip = "0.0.0.0";
             lisTemp.port = 8080;
             temp.lis.push_back(lisTemp);
@@ -370,7 +370,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
         else {
             size_t sepIndex;
             if ((sepIndex = (*itArg).find(":")) != std::string::npos) {
-                listen lisTemp;
+                listenDirective lisTemp;
 
                 lisTemp.ip = (*itArg).substr(0, sepIndex);
                 if (lisTemp.ip == "localhost")
@@ -385,7 +385,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
 
             } else {
                 if ((*itArg).find(".") != std::string::npos ||  (*itArg) == "localhost;" || (*itArg) == "*;") {
-                    listen lisTemp;
+                    listenDirective lisTemp;
                     lisTemp.ip = (*itArg).substr(0, (*itArg).size() - 1);
                     if (lisTemp.ip == "localhost")
                         lisTemp.ip = "127.0.0.1";
@@ -394,7 +394,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
                     lisTemp.port = 8080;
                     s.lis.push_back(lisTemp);
                 } else {
-                    listen lisTemp;
+                    listenDirective lisTemp;
                     std::istringstream iss(*itArg);
                     iss >> lisTemp.port;
                     lisTemp.ip = "0.0.0.0";
@@ -455,7 +455,7 @@ void ConfigInheritor::printContent() const {
         for (; vecstring_it != itt->serverName.end(); vecstring_it++)
             std::cout << *vecstring_it << ", ";
         std::cout << std::endl;
-        std::vector<listen>::const_iterator lisit = itt->lis.begin();
+        std::vector<listenDirective>::const_iterator lisit = itt->lis.begin();
         std::cout << "listen : ";
         for (; lisit != itt->lis.end(); lisit++) {
             std::cout << "[" << lisit->port << "] - " << lisit->ip << " , ";
