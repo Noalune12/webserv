@@ -1,8 +1,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "Config.hpp"
 #include "colors.h"
+#include "Config.hpp"
+#include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
 
@@ -27,8 +28,8 @@ int	main(int ac, char **av) {
 
 		std::cout << GREEN "Server setup" RESET << std::endl;
 		std::vector<server>& servers = config.getServers();
-		(void) servers;
-		// ServerManager(servers); -> will setup the informations needed for each servers in their own subclasses
+		// (void) servers;
+		ServerManager	serverManager(servers); // -> will setup the informations needed for each servers in their own subclasses
 
 
 		/*
@@ -47,5 +48,6 @@ int	main(int ac, char **av) {
 		return (EXIT_FAILURE);
 	}
 
+	std::cout << YELLOW "Closing server properly" RESET << std::endl;
 	return (EXIT_SUCCESS);
 }
