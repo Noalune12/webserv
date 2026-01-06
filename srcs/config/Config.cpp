@@ -29,8 +29,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		_conf.inherit(_tokens);
 
 	} catch(const std::exception& e) {
-		std::cerr << "Server initialization failed: " << e.what() << std::endl;
-		throw;
+		throw ;
 	}
 }
 
@@ -50,4 +49,6 @@ const std::string&	Config::getFileContent(void) const {
 	return (this->_fileContent);
 }
 
-std::vector<server>&	Config::getServers(void) { return (this->_conf.getServers()); }
+std::vector<server>&	Config::getServers(void) {
+	return (this->_conf.getServers());
+}
