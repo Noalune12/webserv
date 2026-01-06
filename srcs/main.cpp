@@ -27,10 +27,13 @@ int	main(int ac, char **av) {
 		Config	config(configFile);
 
 		std::cout << GREEN "Server setup" RESET << std::endl;
-		std::vector<server>& servers = config.getServers();
-		// (void) servers;
-		ServerManager	serverManager(servers); // -> will setup the informations needed for each servers in their own subclasses
 
+		ServerManager	serverManager(config.getServers()); // -> will setup the informations needed for each servers in their own subclasses
+		serverManager.setupListenSockets();
+
+		// EventLoop	eventLoop(serverManager);
+		// eventLoop.init();
+		// eventLoop.run();
 
 		/*
 			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
