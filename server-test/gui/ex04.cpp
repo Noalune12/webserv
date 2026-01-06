@@ -42,6 +42,7 @@ int main(void)
 
 	if (bind(socket_fd, ((struct sockaddr*) &address), sizeof(address)) == -1) {
 		std::cout << "binding failed" << std::endl;
+		
 		return (1);
 	}
 
