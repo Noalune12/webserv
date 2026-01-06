@@ -1,7 +1,8 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "Server.hpp"
+#include "Config.hpp"
+#include "colors.h"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
 
@@ -21,7 +22,15 @@ int	main(int ac, char **av) {
 
 	try
 	{
-		Server server(configFile); // calls the facade, once its build the configuration file is parsed etc
+		std::cout << BLUE "Loading configuration via Facade" RESET << std::endl;
+		Config	config(configFile);
+
+		std::cout << GREEN "Server setup" RESET << std::endl;
+		std::vector<server>& servers = config.getServers();
+		(void) servers;
+		// ServerManager(servers); -> will setup the informations needed for each servers in their own subclasses
+
+
 		/*
 			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
 			Faire en sorte que cette loop gere les events de facon asynchrone
