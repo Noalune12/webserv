@@ -503,3 +503,5 @@ void ConfigInheritor::printContent() const {
         i++;
     }
 }
+
+std::vector<server>&    ConfigInheritor::getServers(void) { return (_server); }

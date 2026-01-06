@@ -68,16 +68,16 @@ class ConfigInheritor {
 	private:
 		globalDir _globalDir;
 		std::vector<server> _server;
-		
+
 		void getGlobalDir(PairVector	globalDir);
 		void getServer(std::vector<Context>	context);
-		void getLocation(std::vector<Context> loc, server& server); // 
-	
+		void getLocation(std::vector<Context> loc, server& server); //
+
 		void getErrPageFromGlobal(server& server);
 		void getErrPageFromServer(server& server, location& location);
 		void getReturnFromServer(server& server, location& location);
 		void printContent() const;
-	
+
 		template <typename T>
 		void setErrorPage(PairVector::iterator& it, T& t);
 		template <typename T>
@@ -86,7 +86,7 @@ class ConfigInheritor {
 		void setIndex(PairVector::iterator& it, T& t);
 		template <typename T>
 		void setReturn(PairVector::iterator& it, T& t);
-		
+
 		void setMethods(PairVector::iterator& it, allowMeth& methods);
 		void setServerName(PairVector::iterator& it, std::vector<std::string>& serverName);
 		void setListen(PairVector::iterator& it, server& s);
@@ -96,6 +96,7 @@ class ConfigInheritor {
 		~ConfigInheritor();
 
 		void inherit(Tokenizer& tokens);
+		std::vector<server>&	getServers(void);
 };
 
 #endif
