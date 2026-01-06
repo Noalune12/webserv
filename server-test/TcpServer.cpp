@@ -287,68 +287,131 @@ bool TcpServer::checkRequestSem() {
         std::cout << "error empty request" << std::endl;
         return false;
     }
-    std::stringstream ss(_req);
-    std::string line;
-    bool isReqLine = true;
-    std::string method, uri, http, host;
-    while (std::getline(ss, line)) {
-        printWithoutR("LINE", line);
-        if (isReqLine == true) {
-            if (line.empty() || (isspace(line[0]) && line[0] != ' ')) {
-                send400();
-                std::cout << "error with request line" << std::endl;
-                return false;
-            }
 
-            // method
-            size_t i = line.find(' ');
-            if (i == std::string::npos || i == 0) {
-                send400();
-                std::cout << "error with request line" << std::endl;
-                return false;
-            }
-            method = line.substr(0, i);
-            std::string remain = line.substr(i + 1, line.length());
-            printWithoutR("METHOD", method);
-            printWithoutR("REMAIN", remain);
-
-            // uri
-            i = remain.find(' ');
-            if (i == std::string::npos || i == 0) {
-                send400();
-                std::cout << "error with request line" << std::endl;
-                return false;
-            }
-            uri = remain.substr(0, i);
-            remain = remain.substr(i + 1, remain.length());
-            printWithoutR("URI", uri);
-            printWithoutR("REMAIN", remain);
-
-            //http
-            if (remain.empty()) {
-                send400();
-                std::cout << "error with request line" << std::endl;
-                return false;
-            }
-            http = remain;
-            printWithoutR("HTTP", http);
-
-            isReqLine = false;
-            std::cout << "request line is ok" << std::endl;
-            continue;
-        }
-    }
-    if (host.empty()) {
+    // extracts request line, headers and body
+    std::string requestLine, headers, body;
+    size_t index = _req.find("\r\n");
+    if (index == std::string::npos || index == 0) {
         send400();
-        std::cout << "error no host" << std::endl;
+        std::cout << "error with request line" << std::endl;
+        return false;  
+    }
+    std::cout << "INDEX of r n = " << index << std::endl;
+    requestLine = _req.substr(0, index);
+    _req = _req.substr(index + 2);
+    printWithoutR("REQUEST LINE", requestLine);
+    printWithoutR("REMAINING REQUEST", _req);
+    std::string method, uri, http, host;
+
+    // method
+    index = requestLine.find(' ');
+    if (index == std::string::npos || index == 0) {
+        send400();
+        std::cout << "error with request line" << std::endl;
         return false;
     }
-    if (!checkRequestLine(method, uri, http))
+    method = requestLine.substr(0, index);
+    std::string remain = requestLine.substr(index + 1, requestLine.length());
+    printWithoutR("METHOD", method);
+    printWithoutR("REMAIN", remain);
+
+    // uri
+    index = remain.find(' ');
+    if (index == std::string::npos || index == 0) {
+        send400();
+        std::cout << "error with request line" << std::endl;
         return false;
+    }
+    uri = remain.substr(0, index);
+    remain = remain.substr(index + 1, remain.length());
+    printWithoutR("URI", uri);
+    printWithoutR("REMAIN", remain);
+
+    //http
+    if (remain.empty()) {
+        send400();
+        std::cout << "error with request line" << std::endl;
+        return false;
+    }
+    http = remain;
+    printWithoutR("HTTP", http);
+
+    std::cout << "request line is ok" << std::endl;
+
+    if (!checkRequestLine(method, uri, http)) {
+        return false;
+    }
+    // std::stringstream ss(_req);
+    // std::string line;
+    // bool isReqLine = true;
+    // while (std::getline(ss, line)) {
+    //     printWithoutR("LINE", line);
+    //     if (isReqLine == true) {
+    //         if (line.empty() || isspace(line[0])) {
+    //             send400();
+    //             std::cout << "error with request line" << std::endl;
+    //             return false;
+    //         }
+
+    //         // method
+    //         size_t i = line.find(' ');
+    //         if (i == std::string::npos || i == 0) {
+    //             send400();
+    //             std::cout << "error with request line" << std::endl;
+    //             return false;
+    //         }
+    //         method = line.substr(0, i);
+    //         std::string remain = line.substr(i + 1, line.length());
+    //         printWithoutR("METHOD", method);
+    //         printWithoutR("REMAIN", remain);
+
+    //         // uri
+    //         i = remain.find(' ');
+    //         if (i == std::string::npos || i == 0) {
+    //             send400();
+    //             std::cout << "error with request line" << std::endl;
+    //             return false;
+    //         }
+    //         uri = remain.substr(0, i);
+    //         remain = remain.substr(i + 1, remain.length());
+    //         printWithoutR("URI", uri);
+    //         printWithoutR("REMAIN", remain);
+
+    //         //http
+    //         if (remain.empty()) {
+    //             send400();
+    //             std::cout << "error with request line" << std::endl;
+    //             return false;
+    //         }
+    //         http = remain;
+    //         printWithoutR("HTTP", http);
+
+    //         isReqLine = false;
+    //         std::cout << "request line is ok" << std::endl;
+    //         continue;
+    //     }
+    // }
+    // if (host.empty()) {
+    //     send400();
+    //     std::cout << "error no host" << std::endl;
+    //     return false;
+    // }
+
+    // there can only be one host, content-length and user-agent
+    // if transfer-encoding: chunked no content-length -> body finish with \r\n\r\n and then next request
+    // compare body with content-length
+
+    // if (!checkRequestLine(method, uri, http))
+    //     return false;
     return true;
 }
 
 bool TcpServer::checkRequestLine(std::string& method, std::string& uri, std::string& http) {
+    if (_req.empty()) {
+        send400();
+        std::cout << "error no headers" << std::endl;
+        return false;
+    }
     if (method != "GET" && method != "POST" && method != "DELETE") { //what if method is not accepted
         send400();
         std::cout << "error with method" << std::endl;
@@ -359,7 +422,7 @@ bool TcpServer::checkRequestLine(std::string& method, std::string& uri, std::str
         std::cout << "error with uri" << std::endl;
         return false;
     }
-    if (http != "HTTP/1.1\r") {
+    if (http != "HTTP/1.1") {
         send400();
         std::cout << "error with http" << std::endl;
         return false;
