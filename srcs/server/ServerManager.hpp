@@ -5,13 +5,14 @@
 
 struct ListenEndPoint
 {
-	std::string _addr;
-	int			_port;
-	int			_socketFd;
+	std::string addr;
+	int			port;
+	int			socketFd;
 
-	std::vector<const server*>	_server;
+	// List of servers that are linked/listening to that endpoint (Virtual Hosting)
+	std::vector<const server*>	servers;
 
-	ListenEndPoint() : _addr(), _port(0), _socketFd(-1), _server() {} // RAII
+	ListenEndPoint() : addr(), port(0), socketFd(-1), servers() {} // RAII
 };
 
 
@@ -21,6 +22,8 @@ class ServerManager
 		std::vector<server>			_servers;
 		std::vector<ListenEndPoint>	_endpoints;
 
+		// might want to use that for quick search of socketFd to endpoints indexes
+		// std::map<int, size_t>		_socketToEndpoint;
 
 		void	closeSockets(void);
 
@@ -28,6 +31,10 @@ class ServerManager
 		ServerManager(std::vector<server>& servers);
 		~ServerManager();
 
+		// reminder: move to private what can be
+		void	setupListenSockets(void);
+		void	groupServersByEndPoint(void);
+		void	printListenEndPointContent(void);
 };
 
 #endif
