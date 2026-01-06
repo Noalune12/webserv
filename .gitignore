@@ -43,5 +43,6 @@
 .build/
 .obj/
 webserv
+server
 .vscode
 *.log
