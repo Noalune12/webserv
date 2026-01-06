@@ -23,7 +23,7 @@ class ServerManager
 		std::vector<ListenEndPoint>	_endpoints;
 
 		// might want to use that for quick search of socketFd to endpoints indexes
-		// std::map<int, size_t>		_socketToEndpoint;
+		std::map<int, size_t>		_socketToEndpoint;
 
 		void	closeSockets(void);
 
@@ -34,7 +34,12 @@ class ServerManager
 		// reminder: move to private what can be
 		void	setupListenSockets(void);
 		void	groupServersByEndPoint(void);
-		void	printListenEndPointContent(void);
+
+		int		createListenSocket(const std::string& address, int port);
+
+		/* debug */
+		void	printEndpoints(void);
+
 };
 
 #endif

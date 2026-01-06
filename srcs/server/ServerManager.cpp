@@ -1,12 +1,17 @@
+#include <cstring>
+#include <errno.h>
 #include <iostream>
+#include <netinet/in.h>
 #include <sstream>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #include "colors.h"
-
 #include "ServerManager.hpp"
 
-ServerManager::ServerManager(std::vector<server>& servers) : _servers(servers), _endpoints() /*, _socketToEndpoint()*/ {}
+static uint32_t	ipv4_str_to_int(const std::string &address);
+
+ServerManager::ServerManager(std::vector<server>& servers) : _servers(servers), _endpoints(), _socketToEndpoint() {}
 
 ServerManager::~ServerManager() {
 	closeSockets(); // exit properly, might want to put that somewhere else tho
@@ -19,7 +24,7 @@ void	ServerManager::closeSockets(void) {
 			_endpoints[i].socketFd = -1;
 		}
 	}
-	// _socketToEndpoint.clear();
+	_socketToEndpoint.clear();
 }
 
 
@@ -28,8 +33,64 @@ void	ServerManager::setupListenSockets(void) {
 	// need to group all servers by listen ip:port -> needed for virtual hosting
 	groupServersByEndPoint();
 
+
+	// reason for this is if the user wants to bind sockets on ip/port that are not allowed, we have to try them all and them tell then its not possible to open the server
+	bool	oneSuccess = false;
+
+	for (size_t i = 0; i < _endpoints.size(); ++i) {
+
+		ListenEndPoint& ep = _endpoints[i];
+
+		int sockFd = createListenSocket(ep.addr, ep.port);
+		if (sockFd < 0) {
+			std::cerr << RED << "Failed to create socket for " << ep.addr << ":" << ep.port << RESET << std::endl;
+			continue ;
+		}
+
+		ep.socketFd = sockFd;
+		_socketToEndpoint[sockFd] = i;
+		oneSuccess = true;
+	}
+
+	if (!oneSuccess) {
+		std::cerr << RED << "Not a single socket has been created." << RESET << std::endl;
+		return ;
+	}
 	// debug
-	printListenEndPointContent();
+	printEndpoints();
+}
+
+int	ServerManager::createListenSocket(const std::string& address, int port) {
+
+	int	socketFd = socket(AF_INET, SOCK_STREAM, 0);
+	if (socketFd < 0) {
+		// throw error instead ?
+		std::cerr << "socket() failed: " << strerror(errno) << std::endl;
+		return (-1); // return -1 for now for error reporting
+	}
+
+	struct sockaddr_in addr;
+	std::memset(&addr, 0, sizeof(addr));
+
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+	addr.sin_addr.s_addr = ipv4_str_to_int(address);
+
+	if (bind(socketFd, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+		std::cerr << "bind() failed: " << strerror(errno) << std::endl;
+		close(socketFd);
+		return (-1);
+	}
+
+	// need to change 512 for something else
+	// found this value in cat /proc/sys/net/ipv4/tcp_max_syn_backlog (value's the same in nginx docker container)
+	if (listen(socketFd, 512) == -1) {
+		std::cerr << "listen() failed: " << strerror(errno) << std::endl;
+		close(socketFd);
+		return -1;
+	}
+
+	return (socketFd);
 }
 
 void	ServerManager::groupServersByEndPoint(void) {
@@ -47,7 +108,7 @@ void	ServerManager::groupServersByEndPoint(void) {
 		// Check and handle multiple listen directives in a single server block
 		for (size_t j = 0; j < srv.lis.size(); ++j) {
 
-			const listen& lis = srv.lis[j];
+			const listenDirective& lis = srv.lis[j];
 
 			// Formatting ip:port into key (string) -> 0.0.0.0:8080 for exemple
 			std::ostringstream keyStream;
@@ -75,14 +136,40 @@ void	ServerManager::groupServersByEndPoint(void) {
 
 
 /* DEBUG */
-void	ServerManager::printListenEndPointContent(void) {
+void	ServerManager::printEndpoints(void) {
 
-	std::vector<ListenEndPoint>::const_iterator	it;
+	std::cout << std::endl;
+	for (size_t i = 0; i < _endpoints.size(); ++i) {
 
-	for (it = _endpoints.begin(); it != _endpoints.end(); ++it) {
-		std::cout << RED "IP addresss: " << it->addr
-			<< "\nPort: " << it->port
-			<< "\nSocket fd[" << it->socketFd
-			<< "]\nnumber of server_name: " << it->servers.size() << RESET << std::endl;
+		const ListenEndPoint& ep = _endpoints[i];
+
+		std::cout << "Listening on " GREEN << ep.addr << ":" << ep.port << std::endl
+		<< RESET "Socket fd[" RED << ep.socketFd << RESET "]" << std::endl
+		<< RED << ep.servers.size() << RESET " virtual host(s)" << std::endl;
+		for (size_t j = 0; j < ep.servers.size(); ++j) {
+			std::cout << "server_names: ";
+			for (size_t k = 0; k < ep.servers[j]->serverName.size(); ++k) {
+				std::cout << "\"" BLUE << ep.servers[j]->serverName[k] << RESET "\" ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << RESET << std::endl;
 	}
+}
+
+static uint32_t	ipv4_str_to_int(const std::string &address)
+{
+	uint32_t			res = 0;
+	std::istringstream	iss(address);
+	unsigned int		bytes;
+
+	for (size_t i = 0; i < 4; ++i) {
+		iss >> bytes;
+		res |= bytes << (24 - (i * 8));
+
+		char reminder;
+		if (iss >> reminder)
+			continue ;
+	}
+	return (htonl(res));
 }
