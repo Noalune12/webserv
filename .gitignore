@@ -43,6 +43,6 @@
 .build/
 .obj/
 webserv
-server
+servertest
 .vscode
 *.log
