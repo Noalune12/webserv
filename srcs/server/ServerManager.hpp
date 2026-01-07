@@ -37,6 +37,7 @@ class ServerManager
 
 		int		createListenSocket(const std::string& address, int port);
 		bool	configureSocket(int socketFd);
+		bool	isListenSocket(int fd) const;
 
 		/* debug */
 		void	printEndpoints(void);

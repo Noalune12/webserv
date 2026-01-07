@@ -189,6 +189,7 @@ void	ServerManager::printEndpoints(void) {
 	}
 }
 
+/* utils */
 static uint32_t	ipv4_str_to_int(const std::string &address)
 {
 	uint32_t			res = 0;
@@ -205,7 +206,9 @@ static uint32_t	ipv4_str_to_int(const std::string &address)
 	return (htonl(res));
 }
 
-
+bool	ServerManager::isListenSocket(int fd) const {
+	return (_socketToEndpoint.find(fd) != _socketToEndpoint.end());
+}
 
 /* getter */
 
