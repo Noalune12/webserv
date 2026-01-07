@@ -120,3 +120,6 @@ note si on utilise `epoll()`:
 - On veut pas qu'il soit Edge-Triggered car selon le man (recommandation d'utilisation dans un contexte non-bloquant):
   - pour eviter un bloquage des read/write il est preconisé d'attendre que les events de read/write aient renvoyé `EAGAIN`
   - Sujet: `Checking the value of errno to adjust the server behaviour is strictly forbidden after performing a read or write operation.` Pour respecter le sujet on ne peut pas utiliser epoll en mode ET, a moins de l'utiliser volontairement de la mauvaise facon...
+
+
+[epoll visual explaination](https://copyconstruct.medium.com/the-method-to-epolls-madness-d9d2d6378642)
