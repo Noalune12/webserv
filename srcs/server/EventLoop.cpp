@@ -41,7 +41,6 @@ bool	EventLoop::init(void) {
 
 	for (size_t i = 0; i < listenFds.size(); ++i) {
 		if (!addToEpoll(listenFds[i], EPOLLIN)) {
-			// std::cerr << RED << "Failed to add listen socket to epoll" << RESET << std::endl;
 			close(_epollFd);
 			_epollFd = -1;
 			return (false);
@@ -85,24 +84,41 @@ size_t	EventLoop::getConnectionCount(void) const {
 
 
 bool	EventLoop::addToEpoll(int fd, uint32_t events) {
-	// TODO
-	(void) fd;
-	(void) events;
-	return (true);
 
+	struct epoll_event ev;
+	ev.events = events;
+	ev.data.fd = fd;
+
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) < 0) {
+		std::cerr << "epoll_ctl(ADD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+		return (false);
+	}
+
+	return (true);
 }
 
+// works for EPOLLIN | EPOLLOUT, can also set them both at the same time (see if this we have the use -> discussed with lthan)
 bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
-	// TODO
-	(void) fd;
-	(void) events;
-	return (true);
 
+	struct epoll_event ev;
+	ev.events = events;
+	ev.data.fd = fd;
+
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) < 0) {
+		std::cerr << "epoll_ctl(MOD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+		return (false);
+	}
+
+	return (true);
 }
 
 bool	EventLoop::removeFromEpoll(int fd) {
-	// TODO
-	(void) fd;
+
+	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0) {
+		std::cerr << "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+		return (false);
+	}
+
 	return (true);
 }
 
@@ -118,7 +134,7 @@ bool	EventLoop::setNonBlocking(int fd) {
 	int	flags = fcntl(fd, F_GETFL, 0);
 
 	if (flags < 0)
-		return false;
+		return (false);
 
 	return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0);
 }
