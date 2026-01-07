@@ -199,9 +199,8 @@ static uint32_t	ipv4_str_to_int(const std::string &address)
 		iss >> bytes;
 		res |= bytes << (24 - (i * 8));
 
-		char reminder;
-		if (iss >> reminder)
-			continue ;
+		char dot;
+		iss >> dot;
 	}
 	return (htonl(res));
 }
