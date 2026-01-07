@@ -13,7 +13,7 @@ ConfigInheritor::~ConfigInheritor() {};
 void ConfigInheritor::inherit(Tokenizer& tokens) {
     getGlobalDir(tokens.getGlobalDirective());
     getServer(tokens.getVectorContext());
-    printContent();
+    // printContent();
 }
 
 

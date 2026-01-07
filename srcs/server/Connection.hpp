@@ -16,8 +16,9 @@ class Connection {
 		int					_clientFd;
 		ConnectionState		_state;
 
-	public:
-		Connection();
+		public:
+		Connection(); // cannot compile without it and I don't understand why...
+		Connection(int clientFd);
 		~Connection();
 };
 
