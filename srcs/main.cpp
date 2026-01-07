@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <csignal>
 
 #include "colors.h"
 #include "Config.hpp"
@@ -8,19 +9,24 @@
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
 
+static EventLoop*	g_eventLoop = NULL;
+
+void	signalHandler(int signum) {
+
+	if (g_eventLoop) {
+		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
+	}
+	std::cout << std::endl << YELLOW << "Received signal " << signum << ", shutting down..." << RESET << std::endl;
+}
+
+// add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
+void	setupSignalHandlers(void) {
+	signal(SIGINT, signalHandler);
+}
+
 int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
-	// std::cout << configFile << std::endl;
-	// return (0);
-
-	// if (ac == 2) {
-	// 	configFile = av[1];
-	// }
-	// else {
-	// 	configFile = DEFAULT_CONFIGURATION_FILE;
-	// }
-
 
 	try
 	{
@@ -34,7 +40,12 @@ int	main(int ac, char **av) {
 
 		EventLoop	eventLoop(serverManager);
 		eventLoop.init(); // not checking the return value yet
-		// eventLoop.run();
+
+		// ctrl+c only for now
+		g_eventLoop = &eventLoop;
+		setupSignalHandlers();
+
+		eventLoop.run();
 
 		/*
 			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
@@ -52,7 +63,5 @@ int	main(int ac, char **av) {
 		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		return (EXIT_FAILURE);
 	}
-
-	std::cout << YELLOW "Closing server properly" RESET << std::endl;
 	return (EXIT_SUCCESS);
 }
