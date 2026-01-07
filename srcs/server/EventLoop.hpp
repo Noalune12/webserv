@@ -36,6 +36,8 @@ class EventLoop {
 
 		bool	isRunning(void) const;
 		size_t	getConnectionCount(void) const;
+
+		void	acceptConnection(int fd);
 };
 
 #endif

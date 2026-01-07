@@ -31,7 +31,7 @@ EventLoop::~EventLoop() {
 
 bool	EventLoop::init(void) {
 
-	_epollFd = epoll_create(42); // parce que pourquoi pas
+	_epollFd = epoll_create(42); // parce que pourquoi pas (go mettre un esther egg)
 	if (_epollFd < 0) {
 		std::cerr << RED << "epoll_create() failed: " << strerror(errno) << RESET << std::endl;
 		return (false);
@@ -56,17 +56,66 @@ void	EventLoop::run(void) {
 	_running = true;
 	struct epoll_event events[MAX_EVENTS];
 
-
-	(void) events;
-
-
 	std::cout << BLUE << "EventLoop running..." << RESET << std::endl;
 
 	while (_running) {
-		// TODO
+		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 10000); // define for timeout ?
+
+		if (nEvents < 0) {
+			if (errno == EINTR) // errno error for signal interruption
+				continue ;
+			std::cerr << "epoll_wait() failed: " << strerror(errno) << std::endl;
+			break ;
+		}
+
+		// main loop, will dispatch the sockets to specific handlers
+		for (int i = 0; i < nEvents; ++i) {
+
+			int			fd = events[i].data.fd;
+			uint32_t	ev = events[i].events;
+
+			(void) ev;
+
+			// accept + client informations storage
+			if (_serverManager.isListenSocket(fd))
+				acceptConnection(fd);
+			// else if () {
+			// } // client ?
+			// else {
+			// } // cgi ?
+		}
+	}
+	std::cout << YELLOW << "EventLoop stopped" << RESET << std::endl;
+}
+
+void	EventLoop::acceptConnection(int listenFd) {
+
+	struct sockaddr_in	clientAddr;
+	socklen_t			clientLen = sizeof(clientAddr);
+
+	int	clientFd = accept(listenFd, (struct sockaddr *)&clientAddr, &clientLen);
+	if (clientFd < 0) {
+		if (errno != EAGAIN && errno != EWOULDBLOCK) { // if one of those appear then we do not consider it an error, not printing anything
+			std::cerr << "accept() failed on fd " << listenFd << ": " << strerror(errno) << std::endl;
+		}
+		return ;
 	}
 
-	std::cout << YELLOW << "EventLoop stopped" << RESET << std::endl;
+	if (!setNonBlocking(clientFd)) {
+		close(clientFd);
+		return ;
+	}
+
+	Connection newClient(clientFd); // pretty much sure there are other thing we can already fill in here
+
+	if (!addToEpoll(clientFd, EPOLLIN)) {
+		close(clientFd);
+		return ;
+	}
+
+	_connections[clientFd] = newClient;
+
+	std::cout << BLUE << "New connection fd[" << clientFd << "]" << RESET << std::endl;
 }
 
 // projection for signal handling
