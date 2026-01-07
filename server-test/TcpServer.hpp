@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <vector>
 #include <sys/epoll.h>  
+#include <map>
 
 class TcpServer {
     public:
@@ -50,7 +51,9 @@ class TcpServer {
 
         bool checkRequestSem();
         bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
+        bool checkHeaders(std::string headers);
         std::string _req;
+        std::map<std::string, std::string> _headers;
 
         void send400();
 };

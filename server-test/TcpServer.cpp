@@ -274,7 +274,7 @@ bool TcpServer::checkRequestSem() {
         std::cout << "error no header or final WS" << std::endl;
         return false;  
     }
-    headers = _req.substr(0, index);
+    headers = _req.substr(0, index + 1);
     _req = _req.substr(index + 4);
     printWithoutR("HEADERS", headers);
     printWithoutR("REMAINING REQUEST", _req);
@@ -320,7 +320,7 @@ bool TcpServer::checkRequestSem() {
 
     std::cout << "request line is ok" << std::endl;
 
-    if (!checkRequestLine(method, uri, http)) {
+    if (!checkRequestLine(method, uri, http) || !checkHeaders(headers)) {
         return false;
     }
     // std::stringstream ss(_req);
@@ -335,6 +335,60 @@ bool TcpServer::checkRequestSem() {
 
     // if (!checkRequestLine(method, uri, http))
     //     return false;
+    return true;
+}
+
+bool hasWS(std::string s) {
+    for (size_t i = 0; i < s.length(); i++) {
+        if (isspace(s[i]))
+            return true;
+    }
+    return false;
+}
+
+bool TcpServer::checkHeaders(std::string headers) {
+    _headers.clear();
+    std::stringstream ss(headers);
+    std::string line;
+    while (std::getline(ss, line)) {
+        if (line[line.length() - 1] != '\r') {
+            send400();
+            std::cout << "error with headers no \\r at the end" << std::endl;
+            return false;
+        }
+        line = line.substr(0, line.length() - 1);
+        size_t index = line.find(": ");
+        std::cout << "index : = " << index << std::endl;
+        std::cout << "HEADER = " << line << std::endl;
+        if (index == 0 || index == std::string::npos || index == line.length() - 2) {
+            send400();
+            std::cout << "error with headers no : or no header name or content" << std::endl;
+            return false;
+        }
+        std::string name = line.substr(0, index);
+        std::string content = line.substr(index + 2);
+        std::cout << "NAME, CONTENT FOR HEADER = " << name << ", " << content << std::endl;
+        if (hasWS(name) || hasWS(content)) {
+            send400();
+            std::cout << "error with headers whitespaces" << std::endl;
+            return false;  
+        }
+        if ((name == "Host" && _headers.find("Host") != _headers.end()) 
+                || (name == "User-Agent" && _headers.find("User-Agent") != _headers.end())
+                || (name == "Content-Length" && _headers.find("Content-Length") != _headers.end())) {
+            send400();
+            std::cout << "error with duplicate headers : " << name << std::endl;
+            return false;  
+        }
+        _headers[name] = content;
+    }
+
+    std::cout << "\nHEADER MAP\n" << std::endl;
+    std::map<std::string, std::string>::iterator it = _headers.begin();
+    for (; it != _headers.end(); it++) {
+        std::cout << "[" << it->first << ", " << it->second << "]" << std::endl;
+    }
+
     return true;
 }
 
