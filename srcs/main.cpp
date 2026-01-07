@@ -3,6 +3,7 @@
 
 #include "colors.h"
 #include "Config.hpp"
+#include "EventLoop.hpp"
 #include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
@@ -31,8 +32,8 @@ int	main(int ac, char **av) {
 		ServerManager	serverManager(config.getServers()); // -> will setup the informations needed for each servers in their own subclasses
 		serverManager.setupListenSockets();
 
-		// EventLoop	eventLoop(serverManager);
-		// eventLoop.init();
+		EventLoop	eventLoop(serverManager);
+		eventLoop.init(); // not checking the return value yet
 		// eventLoop.run();
 
 		/*
