@@ -90,8 +90,10 @@ bool	EventLoop::addToEpoll(int fd, uint32_t events) {
 	ev.data.fd = fd;
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) < 0) {
-		std::cerr << "epoll_ctl(ADD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
-		return (false);
+		if (errno != EEXIST) { // I think we want to skip this case as it doesn't cause any trouble (does it ?)
+			std::cerr << "epoll_ctl(ADD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+			return (false);
+		}
 	}
 
 	return (true);
@@ -115,8 +117,10 @@ bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 bool	EventLoop::removeFromEpoll(int fd) {
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0) {
-		std::cerr << "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << std::endl;
-		return (false);
+		if (errno != ENOENT) { // ENOENT means the fd is not registered to the epoll instance, I don't think we should care if it happens
+			std::cerr << "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+			return (false);
+		}
 	}
 
 	return (true);
