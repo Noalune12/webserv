@@ -1,5 +1,5 @@
+#include <cerrno>
 #include <cstring>
-#include <errno.h>
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
@@ -28,7 +28,7 @@ void	ServerManager::closeSockets(void) {
 	_socketToEndpoint.clear();
 }
 
-
+// void pour l'instant, return -1 si on veut eviter de rentrer dans la boucle evenementielle depuis le main
 void	ServerManager::setupListenSockets(void) {
 
 	// need to group all servers by listen ip:port -> needed for virtual hosting
@@ -203,4 +203,20 @@ static uint32_t	ipv4_str_to_int(const std::string &address)
 		iss >> dot;
 	}
 	return (htonl(res));
+}
+
+
+
+/* getter */
+
+std::vector<int>	ServerManager::getListenSocketFds(void) {
+
+	std::vector<int>	fds;
+
+	for (size_t i = 0; i < _endpoints.size(); ++i) {
+		if (_endpoints[i].socketFd >= 0) {// not sure if I have to exclude 0 here
+			fds.push_back(_endpoints[i].socketFd);
+		}
+	}
+	return (fds);
 }

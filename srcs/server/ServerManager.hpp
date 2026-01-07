@@ -41,6 +41,8 @@ class ServerManager
 		/* debug */
 		void	printEndpoints(void);
 
+		/* getters (to be completed if needed) */
+		std::vector<int>	getListenSocketFds(void);
 };
 
 #endif
