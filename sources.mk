@@ -43,7 +43,9 @@ override SUBD_TESTSRC			:= \
 SRC += $(addprefix $(SERVERDIR), $(addsuffix .cpp, $(SERVERSRC)))
 
 override SERVERSRC	:= \
-	Server
+	Connection \
+	EventLoop \
+	ServerManager
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 

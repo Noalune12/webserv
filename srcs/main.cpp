@@ -1,27 +1,52 @@
 #include <cstdlib>
 #include <iostream>
+#include <csignal>
 
-#include "Server.hpp"
+#include "colors.h"
+#include "Config.hpp"
+#include "EventLoop.hpp"
+#include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
+
+static EventLoop*	g_eventLoop = NULL;
+
+void	signalHandler(int signum) {
+
+	if (g_eventLoop) {
+		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
+	}
+	std::cout << std::endl << YELLOW << "Received signal " << signum << ", shutting down..." << RESET << std::endl;
+}
+
+// add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
+void	setupSignalHandlers(void) {
+	signal(SIGINT, signalHandler);
+}
 
 int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
-	// std::cout << configFile << std::endl;
-	// return (0);
-
-	// if (ac == 2) {
-	// 	configFile = av[1];
-	// }
-	// else {
-	// 	configFile = DEFAULT_CONFIGURATION_FILE;
-	// }
-
 
 	try
 	{
-		Server server(configFile); // calls the facade, once its build the configuration file is parsed etc
+		std::cout << BLUE "Loading configuration via Facade" RESET << std::endl;
+		Config	config(configFile);
+
+		std::cout << GREEN "Server setup" RESET << std::endl;
+
+		ServerManager	serverManager(config.getServers()); // -> will setup the informations needed for each servers in their own subclasses
+		serverManager.setupListenSockets();
+
+		EventLoop	eventLoop(serverManager);
+		eventLoop.init(); // not checking the return value yet
+
+		// ctrl+c only for now
+		g_eventLoop = &eventLoop;
+		setupSignalHandlers();
+
+		eventLoop.run();
+
 		/*
 			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
 			Faire en sorte que cette loop gere les events de facon asynchrone
@@ -35,8 +60,8 @@ int	main(int ac, char **av) {
 	}
 	catch(const std::exception& e)
 	{
+		std::cerr << "Server initialization failed: " << e.what() << std::endl;
 		return (EXIT_FAILURE);
 	}
-
 	return (EXIT_SUCCESS);
 }
