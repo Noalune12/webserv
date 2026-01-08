@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <sstream>
 
 #include "EventLoop.hpp"
 #include "colors.h"
@@ -79,6 +80,8 @@ void	EventLoop::run(void) {
 			// accept + client informations storage
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
+			else
+				handleClientTest(fd, ev);
 			// else if () {
 			// } // client ?
 			// else {
@@ -86,6 +89,35 @@ void	EventLoop::run(void) {
 		}
 	}
 	std::cout << YELLOW << "EventLoop stopped" << RESET << std::endl;
+}
+
+void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
+
+	if (ev & EPOLLIN) {
+		std::cout << "TEST: reading data from client socket" << std::endl;
+		char	buffer[1024];
+		std::memset(buffer, 0, 1024);
+		ssize_t	bytes = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+		if (bytes <= 0) {
+			if (bytes == -1) {
+				std::cout << "recv failed: " << strerror(errno) << std::endl;
+			} else {
+				std::cout << "removing client fd from epoll interest list" << std::endl;
+			}
+			removeFromEpoll(clientFd);
+			// close(clientFd);
+			std::cout << "did not close fd tho" << std::endl;
+			return ;
+		}
+		std::string req = buffer;
+		buffer[bytes] = '\0';
+		std::cout << "Message from fd[" << clientFd << "]:\n" << buffer << std::endl;
+		modifyEpoll(clientFd, EPOLLOUT);
+	} else {
+		send400(clientFd);
+		modifyEpoll(clientFd, EPOLLIN);
+	}
+
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -191,4 +223,31 @@ bool	EventLoop::setNonBlocking(int fd) {
 		return (false);
 
 	return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0);
+}
+
+
+void EventLoop::send400(int clientFd) {
+    // find if error page 400 in config file
+    std::string body =
+        "<html>\n"
+        "<head><title>400 Bad Request</title></head>\n"
+        "<body><h1>400 Bad Request</h1>\n"
+        "<p>Your request was malformed.</p>\n"
+        "</body>\n"
+        "</html>\n";
+
+    std::stringstream ss;
+    ss << body.size();
+    std::string bodySize = ss.str();
+
+    std::string response =
+        "HTTP/1.1 400 Bad Request\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: " + bodySize + "\r\n"
+        "Connection: close\r\n"
+        "\r\n" +
+        body;
+
+    send(clientFd, response.c_str(), response.size(), 0);
+
 }
