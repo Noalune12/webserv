@@ -118,6 +118,25 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 		modifyEpoll(clientFd, EPOLLIN);
 	}
 
+	// Connection&	client = _connections[clientFd];
+
+	// switch (ev)
+	// {
+	// 	case EPOLLIN:
+	// 		/* data in TCP available -> recv() -> can be any method, we'll treat them later */
+	// 		break;
+	// 	case EPOLLOUT:
+	// 		/* send response to client -> send() -> any HTTP response (200, 404, chunked...) */
+	// 		break;
+	// 	case (EPOLLHUP | EPOLLRDHUP):
+	// 		/* client disconnected -> closing fd */
+	// 		break;
+	// 	case EPOLLERR: // maybe I don't need another case here, it could come with the one above if the behavior only changes error logging
+	// 		/* socket error -> closing fd */
+	// 		break;
+	// 	default:
+	// 		break;
+	// }
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -133,7 +152,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 		return ;
 	}
 
-	if (!setNonBlocking(clientFd)) {
+	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1) {
 		close(clientFd);
 		return ;
 	}
@@ -215,15 +234,9 @@ void	EventLoop::closeConnection(int clientFd) {
 
 
 /* utils */
-bool	EventLoop::setNonBlocking(int fd) {
-
-	int	flags = fcntl(fd, F_GETFL, 0);
-
-	if (flags < 0)
-		return (false);
-
-	return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0);
-}
+// bool	EventLoop::setNonBlocking(int fd) {
+// 	return (fcntl(fd, F_SETFL, O_NONBLOCK) >= 0);
+// }
 
 
 void EventLoop::send400(int clientFd) {

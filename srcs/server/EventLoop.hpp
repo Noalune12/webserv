@@ -32,7 +32,7 @@ class EventLoop {
 		bool	removeFromEpoll(int fd);
 
 		void	closeConnection(int clientFd);
-		bool	setNonBlocking(int fd);
+		// bool	setNonBlocking(int fd);
 
 		bool	isRunning(void) const;
 		size_t	getConnectionCount(void) const;
