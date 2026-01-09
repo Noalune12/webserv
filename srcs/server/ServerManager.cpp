@@ -151,14 +151,14 @@ bool	ServerManager::configureSocket(int socketFd) {
 	}
 
 	// flag retrieval
-	int flags = fcntl(socketFd, F_GETFL, 0);
-	if (flags < 0) {
-		std::cerr << "fcntl(F_GETFL) failed: " << strerror(errno) << std::endl;
-		return (false);
-	}
+	// int flags = fcntl(socketFd, F_GETFL, 0);
+	// if (flags < 0) {
+	// 	std::cerr << "fcntl(F_GETFL) failed: " << strerror(errno) << std::endl;
+	// 	return (false);
+	// }
 
 	// adding O_NONBLOCK to list of existing flags
-	if (fcntl(socketFd, F_SETFL, flags | O_NONBLOCK) < 0) {
+	if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0) {
 		std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed: " << strerror(errno) << std::endl;
 		return (false);
 	}
