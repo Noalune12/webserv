@@ -23,9 +23,9 @@ class Connection {
 		std::string			_ip;
 		int					_port;
 		ConnectionState		_state;
-
 		std::string			_buffer;
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
+		bool				_keepAlive;
 		// bool				_chunked;
 
 	public:
