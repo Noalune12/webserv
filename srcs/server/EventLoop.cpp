@@ -61,14 +61,12 @@ void	EventLoop::run(void) {
 
 	while (_running) {
 		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 10000); // define for timeout ?
-
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
 			std::cerr << "epoll_wait() failed: " << strerror(errno) << std::endl;
 			break ;
 		}
-
 		// main loop, will dispatch the sockets to specific handlers
 		for (int i = 0; i < nEvents; ++i) {
 
@@ -91,6 +89,8 @@ void	EventLoop::run(void) {
 
 void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 
+	// Connection&	client = _connections[clientFd];
+
     if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
 		if (ev & EPOLLERR) {
 			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
@@ -101,18 +101,31 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 		}
         removeFromEpoll(clientFd);
         close(clientFd);
-        return;
+		_connections.erase(clientFd);
+        return ;
     }
 
     if (ev & EPOLLIN) {
         tempCall(clientFd);
+		modifyEpoll(clientFd, EPOLLOUT);
     }
 
     if (ev & EPOLLOUT) {
         send400(clientFd);
+		removeFromEpoll(clientFd);
+		close(clientFd);
+		_connections.erase(clientFd);
+		/* pour plus tard
+		if (_connections._keepAlive) {
+			_connections._state = READING_REQUEST;
+			modifyEpoll(clientFd, EPOLLIN);
+		} else {
+			removeFromEpoll(clientFd);
+			close(clientFd);
+			_connections.erase(clientFd);
+		} */
     }
 
-	// Connection&	client = _connections[clientFd];
 }
 
 void	EventLoop::tempCall(int clientFd) {
@@ -128,8 +141,8 @@ void	EventLoop::tempCall(int clientFd) {
 			} else {
 				std::cout << "removing client fd from epoll interest list" << std::endl;
 			}
-			removeFromEpoll(clientFd);
-			close(clientFd);
+			// removeFromEpoll(clientFd);
+			// close(clientFd);
 			std::cout << "did not close fd tho" << std::endl;
 			return ;
 		}
@@ -161,7 +174,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	getClientInfo(clientAddr, clientIp, clientPort);
 	Connection newClient(clientFd, clientIp, clientPort);
 
-	if (!addToEpoll(clientFd, EPOLLIN | EPOLLOUT)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
+	if (!addToEpoll(clientFd, EPOLLIN)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
 		close(clientFd);
 		return ;
 	}
@@ -254,6 +267,8 @@ void	EventLoop::closeConnection(int clientFd) {
 
 
 void EventLoop::send400(int clientFd) {
+	std::cout << GREEN "Sending 400 response to fd[" << clientFd << "]" RESET << std::endl;
+
     // find if error page 400 in config file
     std::string body =
         "<html>\n"
@@ -275,6 +290,6 @@ void EventLoop::send400(int clientFd) {
         "\r\n" +
         body;
 
-    send(clientFd, response.c_str(), response.size(), 0);
-
+	ssize_t sent = send(clientFd, response.c_str(), response.size(), 0);
+	std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
