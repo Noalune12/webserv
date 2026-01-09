@@ -11,7 +11,7 @@
 #include <sstream>
 
 #include "EventLoop.hpp"
-#include "colors.h"
+#include "colors.hpp"
 
 EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections() {}
 
@@ -57,10 +57,10 @@ void	EventLoop::run(void) {
 	_running = true;
 	struct epoll_event events[MAX_EVENTS];
 
-	std::cout << BLUE << "EventLoop running..." << RESET << std::endl;
+	std::cout << CYAN << "EventLoop running..." << RESET << std::endl;
 
 	while (_running) {
-		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 10000); // define for timeout ?
+		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, -1); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
@@ -121,29 +121,25 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 		 	closeConnection(clientFd);
 		} */
     }
-
 }
 
 void	EventLoop::tempCall(int clientFd) {
 		static int a = 0;
 		std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
-		char	buffer[1024];
-		std::memset(buffer, 0, 1024);
-		ssize_t	bytes = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-		if(bytes == -1) { std::cout << YELLOW "recv() failed: " << strerror(errno) << " " << errno << RESET  << std::endl; }
-		if (bytes <= 0) {
-			if (bytes == -1) {
-				std::cout << "recv failed: " << strerror(errno) << ENOTSOCK << std::endl;
-			} else {
-				std::cout << "removing client fd from epoll interest list" << std::endl;
+		char	buf[10];
+		std::memset(buf, 0, 10);
+		std::string buffer;
+		ssize_t	bytes;
+		while ((bytes = recv(clientFd, buf, sizeof(buf), 0)) > 0) { // not sure its completely done, not checking errno, only logging it
+			if (bytes <= 0) {
+				if (bytes == -1) {
+					std::cout << "recv failed: " << strerror(errno) << std::endl;
+				}
+				return ;
 			}
-			// removeFromEpoll(clientFd);
-			// close(clientFd);
-			std::cout << "did not close fd tho" << std::endl;
-			return ;
+			buffer += std::string(buf, bytes);
 		}
-		std::string req = buffer;
-		buffer[bytes] = '\0';
+		// std::string req = buffer;
 		std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 }
 
