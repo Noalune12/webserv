@@ -38,6 +38,9 @@ class EventLoop {
 		size_t	getConnectionCount(void) const;
 
 		void	acceptConnection(int listenFd);
+
+		void	getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port);
+
 		void	handleClientTest(int clientFd, uint32_t ev);
 
 		void	send400(int clientFd);

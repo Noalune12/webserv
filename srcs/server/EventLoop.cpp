@@ -83,9 +83,9 @@ void	EventLoop::run(void) {
 			else
 				handleClientTest(fd, ev);
 			// else if () {
-			// } // client ?
+				// } // cgi pipe ?
 			// else {
-			// } // cgi ?
+				// } // client ?
 		}
 	}
 	std::cout << YELLOW << "EventLoop stopped" << RESET << std::endl;
@@ -157,7 +157,10 @@ void	EventLoop::acceptConnection(int listenFd) {
 		return ;
 	}
 
-	Connection newClient(clientFd); // pretty much sure there are other thing we can already fill in here
+	std::string clientIp;
+	int			clientPort;
+	getClientInfo(clientAddr, clientIp, clientPort);
+	Connection newClient(clientFd, clientIp, clientPort);
 
 	if (!addToEpoll(clientFd, EPOLLIN)) {
 		close(clientFd);
@@ -165,8 +168,20 @@ void	EventLoop::acceptConnection(int listenFd) {
 	}
 
 	_connections[clientFd] = newClient;
+	std::cout << BLUE << "New connection from " << clientIp << ":" << clientPort << " on fd[" << clientFd << "]" << RESET << std::endl;
+}
 
-	std::cout << BLUE << "New connection fd[" << clientFd << "]" << RESET << std::endl;
+void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port) {
+
+	uint32_t ip_host = ntohl(addr.sin_addr.s_addr);
+	std::ostringstream oss;
+	for (size_t i = 0; i < 4; ++i) {
+		oss << ((ip_host >> (24 - (i * 8))) & 0xFF);
+		if (i < 3)
+			oss << ".";
+	}
+	ip = oss.str();
+	port = ntohs(addr.sin_port);
 }
 
 // projection for signal handling

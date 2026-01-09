@@ -20,14 +20,17 @@ class Connection {
 
 	private:
 		int					_clientFd;
+		std::string			_ip;
+		int					_port;
 		ConnectionState		_state;
 
 		std::string			_buffer;
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
+		// bool				_chunked;
 
 	public:
 		Connection(); // cannot compile without it and I don't understand why...
-		Connection(int clientFd);
+		Connection(int& clientFd, std::string& ip, int& port);
 		~Connection();
 };
 
