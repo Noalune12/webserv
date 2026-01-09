@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "colors.h"
+#include "colors.hpp"
 #include "ServerManager.hpp"
 
 static uint32_t	ipv4_str_to_int(const std::string &address);

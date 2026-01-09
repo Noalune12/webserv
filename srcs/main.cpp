@@ -2,7 +2,7 @@
 #include <iostream>
 #include <csignal>
 
-#include "colors.h"
+#include "colors.hpp"
 #include "Config.hpp"
 #include "EventLoop.hpp"
 #include "ServerManager.hpp"
