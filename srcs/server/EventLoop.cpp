@@ -75,8 +75,6 @@ void	EventLoop::run(void) {
 			int			fd = events[i].data.fd;
 			uint32_t	ev = events[i].events;
 
-			(void) ev;
-
 			// accept + client informations storage
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
@@ -93,50 +91,51 @@ void	EventLoop::run(void) {
 
 void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 
-	if (ev & EPOLLIN) {
-		std::cout << "TEST: reading data from client socket" << std::endl;
+    if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+		if (ev & EPOLLERR) {
+			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLHUP) {
+			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLRDHUP) {
+			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+		}
+        removeFromEpoll(clientFd);
+        close(clientFd);
+        return;
+    }
+
+    if (ev & EPOLLIN) {
+        tempCall(clientFd);
+    }
+
+    if (ev & EPOLLOUT) {
+        send400(clientFd);
+    }
+
+	// Connection&	client = _connections[clientFd];
+}
+
+void	EventLoop::tempCall(int clientFd) {
+		static int a = 0;
+		std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
 		char	buffer[1024];
 		std::memset(buffer, 0, 1024);
 		ssize_t	bytes = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
+		if(bytes == -1) { std::cout << YELLOW "recv() failed: " << strerror(errno) << " " << errno << RESET  << std::endl; }
 		if (bytes <= 0) {
 			if (bytes == -1) {
-				std::cout << "recv failed: " << strerror(errno) << std::endl;
+				std::cout << "recv failed: " << strerror(errno) << ENOTSOCK << std::endl;
 			} else {
 				std::cout << "removing client fd from epoll interest list" << std::endl;
 			}
 			removeFromEpoll(clientFd);
-			// close(clientFd);
+			close(clientFd);
 			std::cout << "did not close fd tho" << std::endl;
 			return ;
 		}
 		std::string req = buffer;
 		buffer[bytes] = '\0';
-		std::cout << "Message from fd[" << clientFd << "]:\n" << buffer << std::endl;
-		modifyEpoll(clientFd, EPOLLOUT);
-	} else {
-		send400(clientFd);
-		modifyEpoll(clientFd, EPOLLIN);
-	}
-
-	// Connection&	client = _connections[clientFd];
-
-	// switch (ev)
-	// {
-	// 	case EPOLLIN:
-	// 		/* data in TCP available -> recv() -> can be any method, we'll treat them later */
-	// 		break;
-	// 	case EPOLLOUT:
-	// 		/* send response to client -> send() -> any HTTP response (200, 404, chunked...) */
-	// 		break;
-	// 	case (EPOLLHUP | EPOLLRDHUP):
-	// 		/* client disconnected -> closing fd */
-	// 		break;
-	// 	case EPOLLERR: // maybe I don't need another case here, it could come with the one above if the behavior only changes error logging
-	// 		/* socket error -> closing fd */
-	// 		break;
-	// 	default:
-	// 		break;
-	// }
+		std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -162,7 +161,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	getClientInfo(clientAddr, clientIp, clientPort);
 	Connection newClient(clientFd, clientIp, clientPort);
 
-	if (!addToEpoll(clientFd, EPOLLIN)) {
+	if (!addToEpoll(clientFd, EPOLLIN | EPOLLOUT)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
 		close(clientFd);
 		return ;
 	}
