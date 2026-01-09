@@ -44,8 +44,9 @@ class EventLoop {
 		void	handleClientTest(int clientFd, uint32_t ev);
 
 		void	send400(int clientFd);
+		void	send505exemple(int clientFd);
 
 		void	tempCall(int clientFd);
-	};
+};
 
 #endif

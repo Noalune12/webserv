@@ -91,7 +91,7 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 
 	// Connection&	client = _connections[clientFd];
 
-    if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+    if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // remove the if/elseif below after we discussed about the issues I faced
 		if (ev & EPOLLERR) {
 			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
 		} else if (ev & EPOLLHUP) {
@@ -111,7 +111,8 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
     }
 
     if (ev & EPOLLOUT) {
-        send400(clientFd);
+        // send400(clientFd);
+		send505exemple(clientFd);
 		closeConnection(clientFd);
 		/* pour plus tard
 		if (_connections._keepAlive) {
@@ -283,6 +284,37 @@ void EventLoop::send400(int clientFd) {
         "\r\n" +
         body;
 
-	ssize_t sent = send(clientFd, response.c_str(), response.size(), 0);
+	ssize_t sent = send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
+	std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
+}
+
+
+void	EventLoop::send505exemple(int clientFd) {
+
+	std::string body =
+		"<html>\n"
+		"<html lang=\"en\">\n"
+		"<head>\n"
+		"<title>505 HTTP Version Not Supported</title>\n"
+		"</head>\n"
+		"<body>\n"
+		"<h1>505 HTTP Version Not Supported</h1>\n"
+		"<p>If this problem persists, please <a href=\"https://example.com/support\">contact support</a>.</p>\n"
+		"<p>Server logs contain details of this error with request ID: ABC-123.</p>\n"
+		"</body>\n"
+		"</html>\n";
+
+		std::stringstream	ss;
+		ss << body.size();
+		std::string bodySize = ss.str();
+
+	std::string res =
+		"HTTP/1.1 505 HTTP Version Not Supported\r\n"
+		"Content-Type: text/html;\r\n"
+		"Content-Length: " + bodySize + "\r\n"
+		"\r\n" +
+		body;
+
+	ssize_t sent = send(clientFd, res.c_str(), res.size(), 0);
 	std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
