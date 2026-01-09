@@ -112,17 +112,13 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 
     if (ev & EPOLLOUT) {
         send400(clientFd);
-		removeFromEpoll(clientFd);
-		close(clientFd);
-		_connections.erase(clientFd);
+		closeConnection(clientFd);
 		/* pour plus tard
 		if (_connections._keepAlive) {
 			_connections._state = READING_REQUEST;
 			modifyEpoll(clientFd, EPOLLIN);
 		} else {
-			removeFromEpoll(clientFd);
-			close(clientFd);
-			_connections.erase(clientFd);
+		 	closeConnection(clientFd);
 		} */
     }
 
@@ -255,8 +251,9 @@ bool	EventLoop::removeFromEpoll(int fd) {
 }
 
 void	EventLoop::closeConnection(int clientFd) {
-	// TODO
-	(void) clientFd;
+	removeFromEpoll(clientFd);
+	close(clientFd);
+	_connections.erase(clientFd);
 }
 
 
