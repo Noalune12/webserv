@@ -19,7 +19,8 @@ void	signalHandler(int signum) {
 		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
 	}
 
-	write(STDOUT_FILENO, "\033[2K\r", 5); // HACKERMAN A ENCORE FRAPPER
+	write(STDOUT_FILENO, "\033[2K\r", 5);
+
 	std::ostringstream oss;
 	oss << signum;
 	Logger::error("Received signal: " + oss.str());
