@@ -92,6 +92,29 @@ void	Logger::log(LogLevel level, const std::string& m) {
 }
 
 
+/**
+ * @brief logging HTTP requests/response, must be called after send()
+ * 
+ */
+void	Logger::accessLog(const std::string& ip, const std::string& method, const std::string& uri, const std::string& version, int status, size_t bodySize) {
+
+	if (!_enabled)
+		return ;
+
+	time_t		curr = time(NULL);
+	struct tm*	t = localtime(&curr);
+	char		buf[32];
+
+	strftime(buf, sizeof(buf), "[%d/%b/%Y:%H:%M:%S +0000]", t);
+
+	std::ostringstream oss;
+	oss << ip << " - - " << buf << " "
+		<< "\"" << method << " " << uri << " " << version << "\" "
+		<< status << " " << bodySize;
+
+	std::cout << oss.str() << std::endl;
+}
+
 void	Logger::debug(std::string m) {
 	log(DEBUG, m);
 }

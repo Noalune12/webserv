@@ -31,6 +31,7 @@ class Logger {
 		static void	setMinLevel(LogLevel level);
 
 		static void	log(LogLevel level, const std::string& m);
+		static void	accessLog(const std::string& ip, const std::string& method, const std::string& uri, const std::string& version, int status, size_t bodySize);
 
 		// shorcuts
 		static void	debug(std::string m);
