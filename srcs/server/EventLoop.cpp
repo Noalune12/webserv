@@ -114,8 +114,8 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
     }
 
     if (ev & EPOLLOUT) {
-        // send400(clientFd);
-		send505exemple(clientFd);
+        send400(clientFd);
+		// send505exemple(clientFd);
 		closeConnection(clientFd);
 		/* pour plus tard
 		if (_connections._keepAlive) {
@@ -293,6 +293,10 @@ void EventLoop::send400(int clientFd) {
         body;
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
+
+	Connection& client = _connections[clientFd];
+
+	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
 
