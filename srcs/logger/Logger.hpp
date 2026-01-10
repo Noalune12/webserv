@@ -17,6 +17,7 @@ class Logger {
 
 		Logger();
 
+		static std::string	formatTimestamp(void);
 		static std::string	matchLevelToString(LogLevel level);
 		static const char*	matchLevelToColor(LogLevel level);
 
@@ -29,7 +30,7 @@ class Logger {
 		static void	setColor(bool enable);
 		static void	setMinLevel(LogLevel level);
 
-		static void	test(void);
+		static void	log(LogLevel level, const std::string& m);
 };
 
 #endif

@@ -54,7 +54,7 @@ const char*	Logger::matchLevelToColor(LogLevel level) {
 
 	switch (level) {
 		case DEBUG:
-			return (GRAY);
+			return (GREEN);
 		case NOTICE:
 			return (CYAN);
 		case WARN:
@@ -66,7 +66,27 @@ const char*	Logger::matchLevelToColor(LogLevel level) {
 	}
 }
 
+std::string	Logger::formatTimestamp(void) {
 
-void	Logger::test(void) {
-	std::cout << GRAY "SOMETHING" RESET << std::endl;
+	time_t		curr = time(NULL);
+	struct tm*	t = localtime(&curr);
+	char		buf[20];
+
+	strftime(buf, sizeof(buf), "%Y/%m/%d %H:%M:%S", t);
+
+	return (std::string(buf));
+}
+
+void	Logger::log(LogLevel level, const std::string& m) {
+
+	if (!_enabled || level < _minLevel)
+		return ;
+
+	const char*	color = matchLevelToColor(level);
+	const char*	reset = _colored ? RESET : "";
+
+	std::cout << color
+		<< formatTimestamp() << " "
+		<< "[" << matchLevelToString(level) << "] "
+		<< m << reset << std::endl;
 }

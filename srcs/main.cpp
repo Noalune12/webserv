@@ -29,7 +29,10 @@ int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
 
-	Logger::test();
+	Logger::log(ERROR, "testing format");
+	Logger::log(WARN, "testing color");
+	Logger::log(NOTICE, "testing color");
+	Logger::log(DEBUG, "testing color");
 
 	try
 	{
