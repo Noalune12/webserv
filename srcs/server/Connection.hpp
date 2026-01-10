@@ -32,6 +32,10 @@ class Connection {
 		Connection(); // cannot compile without it and I don't understand why...
 		Connection(int& clientFd, std::string& ip, int& port);
 		~Connection();
+
+		/* getters */
+		const std::string&	getIP(void) const;
+
 };
 
 #endif

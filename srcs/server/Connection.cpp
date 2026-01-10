@@ -14,3 +14,7 @@ Connection::~Connection() {
 	(void) _keepAlive;
 	// /!\ do not close _clientFd, it should be managed by EventLopp
 }
+
+const std::string&	Connection::getIP(void) const {
+	return (_ip);
+}
