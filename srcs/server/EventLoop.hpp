@@ -9,7 +9,8 @@
 class EventLoop {
 
 	private:
-		static const int	MAX_EVENTS = 1024;	// to be define
+		static const int	MAX_EVENTS = 1024;		// to be define
+		static const time_t	CLIENT_TIMEOUT = 5;	// 5s, idk what is a good timeout value
 
 		int					_epollFd;		// epoll instance
 		bool				_running;		// Main loop control
@@ -47,6 +48,8 @@ class EventLoop {
 		void	send505exemple(int clientFd);
 
 		void	tempCall(int clientFd);
+
+		void	checkTimeouts(void);
 };
 
 #endif

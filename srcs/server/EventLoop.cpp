@@ -55,6 +55,30 @@ bool	EventLoop::init(void) {
 	return (true);
 }
 
+void	EventLoop::checkTimeouts(void) {
+
+	std::vector<int>	timedOut;
+
+	std::map<int, Connection>::iterator	it;
+	for (it = _connections.begin(); it != _connections.end(); ++it) {
+		if (it->second.isTimedOut(CLIENT_TIMEOUT)) {
+			timedOut.push_back(it->first);
+		}
+	}
+
+	for (size_t i = 0; i < timedOut.size(); ++i) {
+
+		int	clientFd = timedOut[i];
+
+		std::ostringstream	oss;
+		oss << "client #" << clientFd << " timeout, closing";
+		Logger::warn(oss.str());
+		// send408 -> timeout error
+		// sendTimeout(clientFd);
+		closeConnection(clientFd);
+	}
+}
+
 void	EventLoop::run(void) {
 
 	_running = true;
@@ -63,13 +87,16 @@ void	EventLoop::run(void) {
 	Logger::notice("eventLoop running...");
 
 	while (_running) {
-		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, -1); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
+		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 5000); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
 			Logger::error(std::string("epoll_wait() failed: ") + strerror(errno));
 			break ;
 		}
+
+		checkTimeouts();
+
 		// main loop, will dispatch the sockets to specific handlers
 		for (int i = 0; i < nEvents; ++i) {
 
@@ -92,7 +119,9 @@ void	EventLoop::run(void) {
 
 void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 
-	// Connection&	client = _connections[clientFd];
+	Connection&	client = _connections[clientFd];
+
+	client.updateLastActivity();
 
     if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // remove the if/elseif below after we discussed about the issues I faced
 		if (ev & EPOLLERR) {
@@ -114,9 +143,9 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
     }
 
     if (ev & EPOLLOUT) {
-        send400(clientFd);
-		// send505exemple(clientFd);
-		closeConnection(clientFd);
+        // send400(clientFd);
+		send505exemple(clientFd);
+		// closeConnection(clientFd);
 		/* pour plus tard
 		if (_connections._keepAlive) {
 			_connections._state = READING_REQUEST;
