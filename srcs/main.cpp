@@ -5,6 +5,7 @@
 #include "colors.hpp"
 #include "Config.hpp"
 #include "EventLoop.hpp"
+#include "Logger.hpp"
 #include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
@@ -27,6 +28,8 @@ void	setupSignalHandlers(void) {
 int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
+
+	Logger::test();
 
 	try
 	{

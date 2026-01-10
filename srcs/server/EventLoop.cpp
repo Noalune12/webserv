@@ -152,7 +152,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	int	clientFd = accept(listenFd, (struct sockaddr *)&clientAddr, &clientLen);
 	if (clientFd < 0) {
 		if (errno != EAGAIN && errno != EWOULDBLOCK) { // if one of those appear then we do not consider it an error, not printing anything
-			std::cerr << "accept() failed on fd " << listenFd << ": " << strerror(errno) << std::endl;
+			std::cerr << "accept() failed on fd[" << listenFd << "]: " << strerror(errno) << std::endl;
 		}
 		return ;
 	}
