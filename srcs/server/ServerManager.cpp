@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "colors.hpp"
+#include "Logger.hpp"
 #include "ServerManager.hpp"
 
 static uint32_t	ipv4_str_to_int(const std::string &address);
@@ -51,6 +52,10 @@ void	ServerManager::setupListenSockets(void) {
 		ep.socketFd = sockFd;
 		_socketToEndpoint[sockFd] = i;
 		oneSuccess = true;
+
+		std::ostringstream oss;
+		oss << "listening on " << ep.addr << ":" << ep.port;
+		Logger::notice(oss.str());
 	}
 
 	if (!oneSuccess) {
@@ -58,7 +63,7 @@ void	ServerManager::setupListenSockets(void) {
 		return ;
 	}
 	// debug
-	printEndpoints();
+	// printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later 
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {

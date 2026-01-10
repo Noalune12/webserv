@@ -22,9 +22,9 @@ void	signalHandler(int signum) {
 	write(STDOUT_FILENO, "\033[2K\r", 5);
 
 	std::ostringstream oss;
-	oss << signum;
-	Logger::error("Received signal: " + oss.str());
-	Logger::notice("Shutting down...");
+	oss << "signal " << signum << " received, exiting";
+	Logger::notice(oss.str());
+	Logger::notice("shutting down...");
 }
 
 // add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
@@ -38,7 +38,7 @@ int	main(int ac, char **av) {
 
 	try
 	{
-		Logger::notice("loading configuration file");
+		Logger::notice("loading configuration file from " + configFile);
 		Config	config(configFile);
 		Logger::notice("configuration loaded successfully");
 		Logger::notice("Server startup");

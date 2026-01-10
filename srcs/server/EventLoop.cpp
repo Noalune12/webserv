@@ -10,8 +10,9 @@
 #include <unistd.h>
 #include <sstream>
 
-#include "EventLoop.hpp"
 #include "colors.hpp"
+#include "EventLoop.hpp"
+#include "Logger.hpp"
 
 EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections() {}
 
@@ -32,9 +33,10 @@ EventLoop::~EventLoop() {
 
 bool	EventLoop::init(void) {
 
+	Logger::notice("using the \"epoll\" event method");
 	_epollFd = epoll_create(42); // parce que pourquoi pas (go mettre un esther egg)
 	if (_epollFd < 0) {
-		std::cerr << RED << "epoll_create() failed: " << strerror(errno) << RESET << std::endl;
+		Logger::error(std::string("epoll_create() failed:") + strerror(errno));
 		return (false);
 	}
 
@@ -47,8 +49,9 @@ bool	EventLoop::init(void) {
 			return (false);
 		}
 	}
-
-	std::cout << GREEN << "EventLoop initialized with " << listenFds.size() << " listen socket(s)" << RESET << std::endl;
+	std::ostringstream oss;
+	oss << "eventLoop initialized with " << listenFds.size() << " listen socket(s)";
+	Logger::debug(oss.str());
 	return (true);
 }
 
@@ -57,14 +60,14 @@ void	EventLoop::run(void) {
 	_running = true;
 	struct epoll_event events[MAX_EVENTS];
 
-	std::cout << CYAN << "EventLoop running..." << RESET << std::endl;
+	Logger::notice("eventLoop running...");
 
 	while (_running) {
 		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, -1); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
-			std::cerr << "epoll_wait() failed: " << strerror(errno) << std::endl;
+			Logger::error(std::string("epoll_wait() failed: ") + strerror(errno));
 			break ;
 		}
 		// main loop, will dispatch the sockets to specific handlers
@@ -84,7 +87,7 @@ void	EventLoop::run(void) {
 				// } // client ?
 		}
 	}
-	std::cout << YELLOW << "EventLoop stopped" << RESET << std::endl;
+	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
 }
 
 void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
@@ -125,8 +128,8 @@ void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 }
 
 void	EventLoop::tempCall(int clientFd) {
-		static int a = 0;
-		std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
+		// static int a = 0;
+		// std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
 		char	buf[10];
 		std::memset(buf, 0, 10);
 		std::string buffer;
@@ -141,7 +144,7 @@ void	EventLoop::tempCall(int clientFd) {
 			buffer += std::string(buf, bytes);
 		}
 		// std::string req = buffer;
-		std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
+		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -173,7 +176,10 @@ void	EventLoop::acceptConnection(int listenFd) {
 	}
 
 	_connections[clientFd] = newClient;
-	std::cout << BLUE << "New connection from " << clientIp << ":" << clientPort << " on fd[" << clientFd << "]" << RESET << std::endl;
+
+	std::ostringstream	oss;
+	oss << "new client #" << clientFd << " from " << clientIp << ":" << clientPort;
+	Logger::notice(oss.str());
 }
 
 void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port) {
@@ -189,7 +195,6 @@ void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& po
 	port = ntohs(addr.sin_port);
 }
 
-// projection for signal handling
 void	EventLoop::stop(void) {
 	_running = false;
 }
@@ -251,6 +256,9 @@ void	EventLoop::closeConnection(int clientFd) {
 	removeFromEpoll(clientFd);
 	close(clientFd);
 	_connections.erase(clientFd);
+	std::ostringstream	oss;
+	oss << "client #" << clientFd << " disconnected";
+	Logger::notice(oss.str());
 }
 
 
@@ -284,8 +292,8 @@ void EventLoop::send400(int clientFd) {
         "\r\n" +
         body;
 
-	ssize_t sent = send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
-	std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
+	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
+	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
 
 
@@ -315,6 +323,6 @@ void	EventLoop::send505exemple(int clientFd) {
 		"\r\n" +
 		body;
 
-	ssize_t sent = send(clientFd, res.c_str(), res.size(), 0);
-	std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
+	send(clientFd, res.c_str(), res.size(), 0);
+	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
