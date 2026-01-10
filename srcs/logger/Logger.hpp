@@ -31,6 +31,12 @@ class Logger {
 		static void	setMinLevel(LogLevel level);
 
 		static void	log(LogLevel level, const std::string& m);
+
+		// shorcuts
+		static void	debug(std::string m);
+		static void	notice(std::string m);
+		static void	warn(std::string m);
+		static void	error(std::string m);
 };
 
 #endif

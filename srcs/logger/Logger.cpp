@@ -90,3 +90,20 @@ void	Logger::log(LogLevel level, const std::string& m) {
 		<< "[" << matchLevelToString(level) << "] "
 		<< m << reset << std::endl;
 }
+
+
+void	Logger::debug(std::string m) {
+	log(DEBUG, m);
+}
+
+void	Logger::notice(std::string m) {
+	log(NOTICE, m);
+}
+
+void	Logger::warn(std::string m) {
+	log(WARN, m);
+}
+
+void	Logger::error(std::string m) {
+	log(ERROR, m);
+}
