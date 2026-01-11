@@ -39,7 +39,7 @@ class Connection {
 
 		/* getters */
 		const std::string&	getIP(void) const;
-		time_t				getLastActivity(void);
+		time_t				getLastActivity(void) const;
 
 };
 

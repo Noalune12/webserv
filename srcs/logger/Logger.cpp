@@ -94,7 +94,7 @@ void	Logger::log(LogLevel level, const std::string& m) {
 
 /**
  * @brief logging HTTP requests/response, must be called after send()
- * 
+ *
  */
 void	Logger::accessLog(const std::string& ip, const std::string& method, const std::string& uri, const std::string& version, int status, size_t bodySize) {
 

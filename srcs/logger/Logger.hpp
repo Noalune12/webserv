@@ -33,7 +33,7 @@ class Logger {
 		static void	log(LogLevel level, const std::string& m);
 		static void	accessLog(const std::string& ip, const std::string& method, const std::string& uri, const std::string& version, int status, size_t bodySize);
 
-		// shorcuts
+		// shortcuts
 		static void	debug(std::string m);
 		static void	notice(std::string m);
 		static void	warn(std::string m);

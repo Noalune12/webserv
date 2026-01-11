@@ -20,7 +20,7 @@ const std::string&	Connection::getIP(void) const {
 	return (_ip);
 }
 
-time_t	Connection::getLastActivity(void) {
+time_t	Connection::getLastActivity(void) const {
 	return (_lastActivity);
 }
 

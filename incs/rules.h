@@ -41,7 +41,7 @@
 enum {
 	GLOBAL_VALUE,
 	SERV_VALUE,
-	LOCATION_VALUE,
+	LOCATION_VALUE
 };
 
 #endif
