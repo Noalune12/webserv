@@ -28,6 +28,6 @@ void	Connection::updateLastActivity(void) {
 	_lastActivity = time(NULL);
 }
 
-bool	Connection::isTimedOut(time_t timeout) {
+bool	Connection::isTimedOut(time_t timeout) const {
 	return ((time(NULL) - _lastActivity) > timeout);
 }
