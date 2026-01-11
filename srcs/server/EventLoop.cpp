@@ -102,8 +102,7 @@ void	EventLoop::run(void) {
 
 	while (_running) {
 		int	timeout_sec = calculateEpollTimeout();
-		(void) timeout_sec;
-		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 5000); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
+		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, timeout_sec * 1000); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
