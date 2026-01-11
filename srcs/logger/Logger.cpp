@@ -1,8 +1,6 @@
 # include <cstddef>
 # include <ctime>
-# include <iostream>
 # include <sstream>
-# include <string>
 
 #include "colors.hpp"
 #include "Logger.hpp"

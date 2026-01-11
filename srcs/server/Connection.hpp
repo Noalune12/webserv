@@ -1,6 +1,7 @@
 #ifndef CONNECTION_HPP
 # define CONNECTION_HPP
 
+# include <ctime>
 # include <iostream>
 # include <sys/types.h>
 
