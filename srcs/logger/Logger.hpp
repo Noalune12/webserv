@@ -37,10 +37,10 @@ class Logger {
 		static void	accessLog(const std::string& ip, const std::string& method, const std::string& uri, const std::string& version, int status, size_t bodySize);
 
 		// shortcuts
-		static void	debug(std::string m);
-		static void	notice(std::string m);
-		static void	warn(std::string m);
-		static void	error(std::string m);
+		static void	debug(const std::string& m);
+		static void	notice(const std::string& m);
+		static void	warn(const std::string& m);
+		static void	error(const std::string& m);
 };
 
 #endif

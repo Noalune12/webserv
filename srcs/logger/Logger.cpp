@@ -112,18 +112,18 @@ void	Logger::accessLog(const std::string& ip, const std::string& method, const s
 	std::cout << oss.str() << std::endl;
 }
 
-void	Logger::debug(std::string m) {
+void	Logger::debug(const std::string& m) {
 	log(DEBUG, m);
 }
 
-void	Logger::notice(std::string m) {
+void	Logger::notice(const std::string& m) {
 	log(NOTICE, m);
 }
 
-void	Logger::warn(std::string m) {
+void	Logger::warn(const std::string& m) {
 	log(WARN, m);
 }
 
-void	Logger::error(std::string m) {
+void	Logger::error(const std::string& m) {
 	log(ERROR, m);
 }
