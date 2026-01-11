@@ -61,7 +61,10 @@ void	EventLoop::checkTimeouts(void) {
 
 	std::map<int, Connection>::iterator	it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
-		if (it->second.isTimedOut(CLIENT_TIMEOUT)) {
+		Connection& client = it->second;
+		int	active_timer = getActiveTimer(client.getState());
+
+		if (active_timer > 0 && client.isTimedOut(active_timer)) {
 			timedOut.push_back(it->first);
 		}
 	}
@@ -76,6 +79,21 @@ void	EventLoop::checkTimeouts(void) {
 		// send408 -> timeout error
 		// sendTimeout(clientFd);
 		closeConnection(clientFd);
+	}
+}
+
+int	EventLoop::getActiveTimer(ConnectionState s) {
+	switch (s) {
+		case IDLE:
+			return (0);
+		case READING_HEADERS:
+			return (1);
+		case READING_BODY:
+			return (2);
+		case SENDING_RESPONSE:
+			return (3);
+		default:
+			return (-1);
 	}
 }
 
@@ -122,7 +140,7 @@ void	EventLoop::run(void) {
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
 			else
-				handleClientTest(fd, ev);
+				handleClientEvent(fd, ev);
 			// else if () {
 				// } // cgi pipe ?
 			// else {
@@ -132,7 +150,7 @@ void	EventLoop::run(void) {
 	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
 }
 
-void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
+void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 	Connection&	client = _connections[clientFd];
 	(void) client;
@@ -212,6 +230,9 @@ void	EventLoop::acceptConnection(int listenFd) {
 	int			clientPort;
 	getClientInfo(clientAddr, clientIp, clientPort);
 	Connection newClient(clientFd, clientIp, clientPort);
+
+	newClient.setState(IDLE);
+	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
 
 	if (!addToEpoll(clientFd, EPOLLIN)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
 		close(clientFd);
