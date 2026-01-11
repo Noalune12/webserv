@@ -58,13 +58,15 @@ bool	EventLoop::init(void) {
 void	EventLoop::checkTimeouts(void) {
 
 	std::vector<int>	timedOut;
-
 	std::map<int, Connection>::iterator	it;
+
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
 		Connection& client = it->second;
+		if (it->second.getState() == CLOSED)
+			continue ;
 		int	active_timer = getActiveTimer(client.getState());
 
-		if (active_timer > 0 && client.isTimedOut(active_timer)) {
+		if (active_timer >= 0 && client.isTimedOut(active_timer)) {
 			timedOut.push_back(it->first);
 		}
 	}
@@ -98,15 +100,19 @@ int	EventLoop::getActiveTimer(ConnectionState s) {
 }
 
 int	EventLoop::calculateEpollTimeout(void) {
+
 	if (_connections.empty())
 		return (5);
 
 	int min_sec = 5;
-	std::map<int, Connection>::const_iterator	it;
+
+	std::map<int, Connection>::const_iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
-		long	rem = it->second.secondsToClosestTimeout();
-		if (rem < min_sec)
+
+		long rem = it->second.secondsToClosestTimeout();
+		if (rem < min_sec) {
 			min_sec = static_cast<int>(rem);
+		}
 	}
 	return (min_sec);
 }
@@ -120,7 +126,7 @@ void	EventLoop::run(void) {
 
 	while (_running) {
 		int	timeout_sec = calculateEpollTimeout();
-		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, timeout_sec * 1000); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
+		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, timeout_sec * 1000);
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
@@ -152,10 +158,14 @@ void	EventLoop::run(void) {
 
 void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
-	Connection&	client = _connections[clientFd];
-	(void) client;
+	std::map<int, Connection>::iterator it = _connections.find(clientFd);
 
-    if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // remove the if/elseif below after we discussed about the issues I faced
+	if (it == _connections.end())
+		return ;
+
+	Connection& client = _connections[clientFd];
+
+	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
 		if (ev & EPOLLERR) {
 			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
 		} else if (ev & EPOLLHUP) {
@@ -163,29 +173,80 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 		} else if (ev & EPOLLRDHUP) {
 			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
 		}
-        removeFromEpoll(clientFd);
-        close(clientFd);
-		_connections.erase(clientFd);
-        return ;
-    }
+		closeConnection(clientFd);
+		return;
+	}
 
-    if (ev & EPOLLIN) {
-        tempCall(clientFd);
-		modifyEpoll(clientFd, EPOLLOUT);
-    }
+	int timer_idx = getActiveTimer(client.getState());
+	if (timer_idx >= 0 && client.isTimedOut(timer_idx)) {
+		// sendTimeoutResponse(clientFd, client.getState());  // 408/504
+		closeConnection(clientFd);
+		return ;
+	}
 
-    if (ev & EPOLLOUT) {
-        // send400(clientFd);
-		send505exemple(clientFd);
-		// closeConnection(clientFd);
-		/* pour plus tard
-		if (_connections._keepAlive) {
-			_connections._state = READING_REQUEST;
+	switch (client.getState()) {
+
+		case IDLE:
+			client.setState(READING_HEADERS);
+			client.startTimer(1, CLIENT_TIMEOUT);
 			modifyEpoll(clientFd, EPOLLIN);
-		} else {
-		 	closeConnection(clientFd);
-		} */
-    }
+			Logger::debug("IDLE state");
+			break ;
+
+		case READING_HEADERS: // fallthrought ? not sure yet
+			if (ev & EPOLLIN) {
+				tempCall(clientFd);
+				client.setState(SENDING_RESPONSE); // will need to set READING_BODY first
+				client.startTimer(3, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
+				// // read + parse headers
+				// if (header complete) {
+				// 	client.setState(READING_BODY);
+				// 	client.startTimer(2, CLIENT_TIMEOUT);
+				// } else {
+				// 	// errors
+				// }
+			}
+			Logger::debug("READING_HEADERS state");
+			break ; // to remove if we fallthrought
+
+		case READING_BODY:
+			Logger::debug("READING_BODY state");
+			break ;
+
+		case CGI_RUNNING:
+			// if (ev & EPOLLIN) {
+			// 	// temp
+			// 	if () { // cgi done
+			// 		client.setState(SENDING_RESPONSE);
+			// 		modifyEpoll(clientFd, EPOLLOUT);
+			// 	} else {
+
+			// 	}
+			// }
+			break ;
+
+		case SENDING_RESPONSE:
+			if (ev & EPOLLOUT) {
+				send505exemple(clientFd);
+				client.setState(IDLE);
+				client.startTimer(0, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLIN);
+			// 	// send response
+			// 	if (sent) { // goes to response handling depending on requests parsing ?
+			// 		client.setState(IDLE);
+			// 		client.startTimer(0, CLIENT_TIMEOUT);
+			// 		modifyEpoll(clientFd, EPOLLIN);	// sets back to EPOLLIN to keep the sockets alive
+			// 	}
+			}
+			Logger::accessLog(client.getIP(), "method", "uri", "version", 666, 100); // temp, won't we called here
+			Logger::debug("SENDING_RESPONSE state");
+			break ;
+
+		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
+			closeConnection(clientFd);
+			break ;
+	}
 }
 
 void	EventLoop::tempCall(int clientFd) {
@@ -291,6 +352,9 @@ bool	EventLoop::addToEpoll(int fd, uint32_t events) {
 // works for EPOLLIN | EPOLLOUT, can also set them both at the same time (see if this we have the use -> discussed with lthan)
 bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 
+	if (_connections.find(fd) == _connections.end())
+		return (false);
+
 	struct epoll_event ev;
 	ev.events = events;
 	ev.data.fd = fd;
@@ -317,12 +381,18 @@ bool	EventLoop::removeFromEpoll(int fd) {
 }
 
 void	EventLoop::closeConnection(int clientFd) {
-	removeFromEpoll(clientFd);
-	close(clientFd);
-	_connections.erase(clientFd);
+
+	if (_connections.find(clientFd) == _connections.end())
+		return ;
+
 	std::ostringstream	oss;
 	oss << "client #" << clientFd << " disconnected";
+
+	removeFromEpoll(clientFd); // need to check the return value of this function depending on the cases
 	Logger::notice(oss.str());
+
+	close(clientFd);
+	_connections.erase(clientFd);
 }
 
 
