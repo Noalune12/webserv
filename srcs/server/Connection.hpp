@@ -6,8 +6,11 @@
 # include <sys/types.h>
 
 enum ConnectionState {
-	READING_REQUEST, // starting state ? keeping this state until chunked requests are completely read
-	PROCESSING,
+	IDLE,				// 0. starting state
+	READING_HEADERS,	// 1. keeping this state until chunked requests are completely read
+	READING_BODY,		// 2. nd state
+	CGI_RUNNING,		// 3. only if CGI
+	SENDING_RESPONSE,	// 4.
 	CLOSING
 };
 
@@ -24,23 +27,29 @@ class Connection {
 		std::string			_ip;
 		int					_port;
 		ConnectionState		_state;
+		time_t				_timers[5];
 		std::string			_buffer;
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
 		bool				_keepAlive;
 		// bool				_chunked;
-		time_t				_lastActivity;
 
 	public:
 		Connection(); // cannot compile without it and I don't understand why...
 		Connection(int& clientFd, std::string& ip, int& port);
 		~Connection();
 
-		void	updateLastActivity(void);
-		bool	isTimedOut(time_t timeout) const;
+		/* timeout related functions */
+		void	startTimer(int index, time_t duration);
+		bool	isTimedOut(int index) const;
+		long	secondsToClosestTimeout(void) const;
 
 		/* getters */
 		const std::string&	getIP(void) const;
-		time_t				getLastActivity(void) const;
+		ConnectionState		getState(void) const;
+
+		/* setters */
+		void				setState(ConnectionState s);
+
 
 };
 
