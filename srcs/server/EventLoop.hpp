@@ -50,6 +50,7 @@ class EventLoop {
 		void	tempCall(int clientFd);
 
 		void	checkTimeouts(void);
+		int		calculateEpollTimeout(void);
 };
 
 #endif

@@ -79,6 +79,20 @@ void	EventLoop::checkTimeouts(void) {
 	}
 }
 
+int	EventLoop::calculateEpollTimeout(void) {
+	if (_connections.empty())
+		return (5);
+
+	int min_sec = 5;
+	std::map<int, Connection>::const_iterator	it;
+	for (it = _connections.begin(); it != _connections.end(); ++it) {
+		long	rem = it->second.secondsToClosestTimeout();
+		if (rem < min_sec)
+			min_sec = static_cast<int>(rem);
+	}
+	return (min_sec);
+}
+
 void	EventLoop::run(void) {
 
 	_running = true;
@@ -87,6 +101,8 @@ void	EventLoop::run(void) {
 	Logger::notice("eventLoop running...");
 
 	while (_running) {
+		int	timeout_sec = calculateEpollTimeout();
+		(void) timeout_sec;
 		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 5000); // define for timeout (OUI) ? I'm not decided yet on the value here I need to think about it a bit deeper... But if we set it to -1 maybe we dont need a define
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
@@ -120,8 +136,7 @@ void	EventLoop::run(void) {
 void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
 
 	Connection&	client = _connections[clientFd];
-
-	client.updateLastActivity();
+	(void) client;
 
     if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // remove the if/elseif below after we discussed about the issues I faced
 		if (ev & EPOLLERR) {
