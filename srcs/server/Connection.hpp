@@ -1,6 +1,7 @@
 #ifndef CONNECTION_HPP
 # define CONNECTION_HPP
 
+# include <ctime>
 # include <iostream>
 # include <sys/types.h>
 
@@ -27,11 +28,20 @@ class Connection {
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
 		bool				_keepAlive;
 		// bool				_chunked;
+		time_t				_lastActivity;
 
 	public:
 		Connection(); // cannot compile without it and I don't understand why...
 		Connection(int& clientFd, std::string& ip, int& port);
 		~Connection();
+
+		void	updateLastActivity(void);
+		bool	isTimedOut(time_t timeout) const;
+
+		/* getters */
+		const std::string&	getIP(void) const;
+		time_t				getLastActivity(void) const;
+
 };
 
 #endif

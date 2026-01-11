@@ -1,10 +1,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <csignal>
+#include <sstream>
 
 #include "colors.hpp"
 #include "Config.hpp"
 #include "EventLoop.hpp"
+#include "Logger.hpp"
 #include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
@@ -16,7 +18,13 @@ void	signalHandler(int signum) {
 	if (g_eventLoop) {
 		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
 	}
-	std::cout << std::endl << YELLOW << "Received signal " << signum << ", shutting down..." << RESET << std::endl;
+
+	write(STDOUT_FILENO, "\033[2K\r", 5);
+
+	std::ostringstream oss;
+	oss << "signal " << signum << " received, exiting";
+	Logger::notice(oss.str());
+	Logger::notice("shutting down...");
 }
 
 // add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
@@ -30,10 +38,10 @@ int	main(int ac, char **av) {
 
 	try
 	{
-		std::cout << BLUE "Loading configuration via Facade" RESET << std::endl;
+		Logger::notice("loading configuration file from " + configFile);
 		Config	config(configFile);
-
-		std::cout << GREEN "Server setup" RESET << std::endl;
+		Logger::notice("configuration loaded successfully");
+		Logger::notice("Server startup");
 
 		ServerManager	serverManager(config.getServers()); // -> will setup the informations needed for each servers in their own subclasses
 		serverManager.setupListenSockets();
@@ -60,7 +68,7 @@ int	main(int ac, char **av) {
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << "Server initialization failed: " << e.what() << std::endl;
+		Logger::error(std::string("server initialization failed: ") + e.what());
 		return (EXIT_FAILURE);
 	}
 	return (EXIT_SUCCESS);
