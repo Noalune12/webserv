@@ -35,7 +35,7 @@ class Connection {
 		~Connection();
 
 		void	updateLastActivity(void);
-		bool	isTimedOut(time_t timeout);
+		bool	isTimedOut(time_t timeout) const;
 
 		/* getters */
 		const std::string&	getIP(void) const;
