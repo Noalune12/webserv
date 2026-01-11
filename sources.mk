@@ -58,7 +58,7 @@ override CONFIGSRC	:= \
 SRC += $(addprefix $(LOGGERDIR), $(addsuffix .cpp, $(LOGGERSRC)))
 
 override LOGGERSRC	:= \
-	Logger \
+	Logger
 
 SRC += $(addprefix $(READERDIR), $(addsuffix .cpp, $(READERSRC)))
 
