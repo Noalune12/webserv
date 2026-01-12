@@ -44,7 +44,7 @@ class EventLoop {
 
 		void	handleClientEvent(int clientFd, uint32_t ev);
 
-		void	send400(int clientFd);
+		void	sendError(int clientFd, int status);
 		void	send505exemple(int clientFd);
 		void	sendStatus(int clientFd, int status);
 

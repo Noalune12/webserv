@@ -22,6 +22,9 @@ class RequestParsing {
         void checkRequestSem(std::string request);
         bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
         bool checkHeaders(std::string headers);
+        std::string trimOws(const std::string& s);
+        std::string lowerString(const std::string& s);
+
 };
 
 

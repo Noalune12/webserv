@@ -3,14 +3,10 @@
 #include <iostream>
 #include <sstream>
 
-RequestParsing::RequestParsing(): err(false), status(0) {
-
-}
+RequestParsing::RequestParsing(): err(false), status(0) {}
 
 
-RequestParsing::~RequestParsing() {
-
-}
+RequestParsing::~RequestParsing() {}
 
 static void printWithoutR(std::string what, std::string line) {
     std::string l;
@@ -134,7 +130,7 @@ bool RequestParsing::checkHeaders(std::string headers) {
             return false;
         }
         line = line.substr(0, line.length() - 1);
-        size_t index = line.find(": ");
+        size_t index = line.find(":");
         // std::cout << "index : = " << index << std::endl;
         // std::cout << "HEADER = " << line << std::endl;
         if (index == 0 || index == std::string::npos || index == line.length() - 2) {
@@ -145,21 +141,27 @@ bool RequestParsing::checkHeaders(std::string headers) {
         }
         std::string name = line.substr(0, index);
         std::string content = line.substr(index + 2);
+        // skip whitespace afte :
+        name = lowerString(name);
+        content = trimOws(content);
+        if (name != "user-agent")
+            content = lowerString(content);
+        
         std::cout << "NAME, CONTENT FOR HEADER = " << name << ", " << content << std::endl;
-        if (hasWS(name) || hasWS(content)) {
-            err = true;
-            status = 400;
-            std::cout << "error with headers whitespaces" << std::endl;
-            return false;  
-        }
-        if ((name == "Host" && _headers.find("Host") != _headers.end()) 
-                || (name == "User-Agent" && _headers.find("User-Agent") != _headers.end())
-                || (name == "Content-Length" && _headers.find("Content-Length") != _headers.end())
-                || (name == "Transfer-Encoding" && _headers.find("Transfer-Encoding") != _headers.end())) {
+        if ((name == "host" && _headers.find("host") != _headers.end()) 
+                || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
+                || (name == "content-length" && _headers.find("content-length") != _headers.end())
+                || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())) {
             err = true;
             status = 400;
             std::cout << "error with duplicate headers : " << name << std::endl;
             return false;  
+        }
+        if (name == "host" && hasWS(content)) {
+            err = true;
+            status = 400;
+            std::cout << "error header : " << name << " has WS in its content" << std::endl;
+            return false;
         }
         _headers[name] = content;
     }
@@ -195,4 +197,29 @@ bool RequestParsing::checkRequestLine(std::string& method, std::string& uri, std
     _method = method;
     _uri = uri;
     return true;
+}
+
+std::string RequestParsing::trimOws(const std::string& s)
+{
+    std::string::size_type start = 0;
+    std::string::size_type end = s.size();
+
+    // trim leading spaces/tabs, what about other whitespaces
+    while (start < end && (s[start] == ' ' || s[start] == '\t'))
+        ++start;
+
+    // trim trailing spaces/tabs, what about other whitespaces
+    while (end > start && (s[end - 1] == ' ' || s[end - 1] == '\t'))
+        --end;
+
+    return s.substr(start, end - start);
+}
+
+std::string RequestParsing::lowerString(const std::string& s) {
+    std::string ret = s;
+    for (std::string::size_type i = 0; i < ret.size(); ++i)
+        ret[i] = static_cast<char>(
+            std::tolower(static_cast<unsigned char>(ret[i]))
+        );
+    return ret;
 }

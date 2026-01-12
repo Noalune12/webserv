@@ -219,6 +219,10 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 						// }
 						
 			}
+			if (client.getBuffer().empty()) { // to avoid EPOLLERR 
+				closeConnection(clientFd);
+				break ;
+			}
 			client.parseRequest();
 			Logger::debug("READING_HEADERS state");
 			break ; // to remove if we fallthrought
@@ -244,8 +248,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				// send505exemple(clientFd);
 
 				if (client.err == true) {
-					if (client.status == 400)
-						send400(clientFd);
+						sendError(clientFd, client.status);
 				} else {
 					sendStatus(clientFd, client.status);
 				}
@@ -313,7 +316,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	std::string clientIp;
 	int			clientPort;
 	getClientInfo(clientAddr, clientIp, clientPort);
-	Connection newClient(clientFd, clientIp, clientPort);
+	Connection newClient(clientFd, clientIp, clientPort, _serverManager.getServers());
 
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
@@ -425,24 +428,35 @@ void	EventLoop::closeConnection(int clientFd) {
 // }
 
 
-void EventLoop::send400(int clientFd) {
-	std::cout << GREEN "Sending 400 response to fd[" << clientFd << "]" RESET << std::endl;
+void EventLoop::sendError(int clientFd, int status) {
+	std::cout << GREEN "Sending " << status << " response to fd[" << clientFd << "]" RESET << std::endl;
 
-    // find if error page 400 in config file
+	std::string statusName;
+	if (status == 400)
+		statusName = "Bad Request";
+	if (status == 404)
+		statusName = "Not found";
+	if (status == 405)
+		statusName = "Method Not Allowed";
+
+	std::stringstream ss;
+    ss << status;
+	std::string statusReturn = ss.str();
+
+	std::cout << "STATUS NAME = " << statusName << std::endl;
     std::string body =
         "<html>\n"
-        "<head><title>400 Bad Request</title></head>\n"
-        "<body><h1>400 Bad Request</h1>\n"
-        "<p>Your request was malformed.</p>\n"
+        "<head><title>" + statusReturn + " " + statusName + "</title></head>\n"
+        "<body><h1>" + statusReturn + " " + statusName + "</h1>\n"
         "</body>\n"
         "</html>\n";
 
-    std::stringstream ss;
-    ss << body.size();
-    std::string bodySize = ss.str();
+    std::stringstream sss;
+    sss << body.size();
+    std::string bodySize = sss.str();
 
     std::string response =
-        "HTTP/1.1 400 Bad Request\r\n"
+        "HTTP/1.1 " + statusReturn + " " + statusName + "\r\n"
         "Content-Type: text/html\r\n"
         "Content-Length: " + bodySize + "\r\n"
         "\r\n" +

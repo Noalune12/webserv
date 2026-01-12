@@ -5,6 +5,8 @@
 # include <iostream>
 # include <sys/types.h>
 # include "RequestParsing.hpp"
+# include <vector>
+# include "ConfigInheritor.hpp"
 
 enum ConnectionState {
 	IDLE,				// 0. starting state
@@ -35,10 +37,11 @@ class Connection {
 		// bool				_chunked;
 
 		RequestParsing		reqParsing;
-		
+		std::vector<server>	_servers;
+
 	public:
 		Connection(); // cannot compile without it and I don't understand why...
-		Connection(int& clientFd, std::string& ip, int& port);
+		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers);
 		~Connection();
 		
 		/* timeout related functions */

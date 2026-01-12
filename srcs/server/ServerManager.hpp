@@ -44,6 +44,7 @@ class ServerManager
 
 		/* getters (to be completed if needed) */
 		std::vector<int>	getListenSocketFds(void);
+		std::vector<server>	getServers(void);
 };
 
 #endif

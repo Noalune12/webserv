@@ -228,3 +228,7 @@ std::vector<int>	ServerManager::getListenSocketFds(void) {
 	}
 	return (fds);
 }
+
+std::vector<server>	ServerManager::getServers(void) {
+	return _servers;
+}
