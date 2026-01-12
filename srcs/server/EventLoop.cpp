@@ -74,12 +74,14 @@ void	EventLoop::checkTimeouts(void) {
 	for (size_t i = 0; i < timedOut.size(); ++i) {
 
 		int	clientFd = timedOut[i];
-
+		// Connection& client = _connections[clientFd];
 		std::ostringstream	oss;
 		oss << "client #" << clientFd << " timeout, closing";
 		Logger::warn(oss.str());
 		// send408 -> timeout error
 		// sendTimeout(clientFd);
+		// send408(clientFd); // seems to be working when I force a sleep(5) instead of responding to the client.
+		// Logger::accessLog(client.getIP(), "408", "URI", "HTTP/1.1", 408, 169); // how to get client here ?
 		closeConnection(clientFd);
 	}
 }
@@ -147,10 +149,6 @@ void	EventLoop::run(void) {
 				acceptConnection(fd);
 			else
 				handleClientEvent(fd, ev);
-			// else if () {
-				// } // cgi pipe ?
-			// else {
-				// } // client ?
 		}
 	}
 	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
@@ -165,13 +163,12 @@ void printWithoutR(std::string what, std::string line) {
     std::cout << what <<" = \'" << l << "\' -" << std::endl;
 }
 
-void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
+void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 	std::map<int, Connection>::iterator it = _connections.find(clientFd);
 
 	if (it == _connections.end())
 		return ;
-
 
 	Connection& client = _connections[clientFd];
 
@@ -217,9 +214,9 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					// } else {
 						// 	// errors
 						// }
-						
+
 			}
-			if (client.getBuffer().empty()) { // to avoid EPOLLERR 
+			if (client.getBuffer().empty()) { // to avoid EPOLLERR
 				closeConnection(clientFd);
 				break ;
 			}
@@ -408,8 +405,9 @@ bool	EventLoop::removeFromEpoll(int fd) {
 
 void	EventLoop::closeConnection(int clientFd) {
 
-	if (_connections.find(clientFd) == _connections.end())
+	if (_connections.find(clientFd) == _connections.end()) {
 		return ;
+	}
 
 	std::ostringstream	oss;
 	oss << "client #" << clientFd << " disconnected";
