@@ -85,8 +85,10 @@ std::string Connection::getBuffer(void) const {
 }
 
 #include <sstream>
+#include <fstream>
 
 void Connection::parseRequest() {
+	htmlPage.clear();
 	reqParsing.checkRequestSem(_buffer);
 	err = reqParsing.err;
 	status = reqParsing.status;
@@ -169,7 +171,8 @@ void Connection::parseRequest() {
 	}
 
 	// method check
-	if (reqParsing._method == "GET" && l.methods.get == false) {
+	if ((reqParsing._method == "GET" && l.methods.get == false)
+			|| (reqParsing._method == "POST" && l.methods.post == false)) {
 		err = true;
 		status = 405;
 	    std::cout << "error not allowed method" << std::endl;
@@ -179,7 +182,39 @@ void Connection::parseRequest() {
 	// body check + content max body size
 
 	// get info
+	if (reqParsing._method == "GET") {
+		std::vector<std::string>::iterator itIndex = l.index.begin();
+		std::string root = l.root.substr(1, l.root.size());
+		for (; itIndex != l.index.end() ; itIndex++) {
+			std::string path = root + reqParsing._uri + *itIndex; // what if directory does not exist ...
+			
+			std::cout << "PATH = " << path << std::endl;
+			// check access
+			std::ifstream file(path.c_str());
+			if (!file) {
+				continue;
+			} else {
+				std::cout << "File found" << std::endl;
+				std::stringstream buffer;
+				buffer << file.rdbuf();
+				htmlPage = buffer.str();
+				// htmlPage.assign(
+				// 	(std::istreambuf_iterator<char>(file)),
+				// 	std::istreambuf_iterator<char>());
+				err = false;
+				status = 200;
+				return ;
+			}
+		}
 	
+		if (htmlPage.empty()) {
+			//verify error
+			err = true;
+			status = 403;
+			std::cout << "error no index found" << std::endl;
+			return ;
+		}
+	}
 
 	// if (reqParsing._method == "GET" && )
 	// check method is allowed and uri is defined

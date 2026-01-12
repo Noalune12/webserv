@@ -61,6 +61,7 @@ class Connection {
 		void parseRequest();
 		bool				err;
 		int					status;
+		std::string			htmlPage;
 };
 
 #endif

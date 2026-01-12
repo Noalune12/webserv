@@ -438,6 +438,8 @@ void EventLoop::sendError(int clientFd, int status) {
 		statusName = "Not found";
 	if (status == 405)
 		statusName = "Method Not Allowed";
+	if (status == 403)
+		statusName = "Forbidden";
 
 	std::stringstream ss;
     ss << status;
@@ -472,16 +474,22 @@ void EventLoop::sendError(int clientFd, int status) {
 
 void EventLoop::sendStatus(int clientFd, int status) {
 	std::cout << GREEN "Sending " << status << " response to fd[" << clientFd << "]" RESET << std::endl;
-    
+    Connection& client = _connections[clientFd];
+
 	std::stringstream ss;
     ss << status;
 	std::string statusReturn = ss.str();
 
-	std::string body =
-        "<html>\n"
-        "<head><title>" + statusReturn + "</title></head>\n"
-        "</body>\n"
-        "</html>\n";
+	std::string body;
+	// if (client.htmlPage.empty()) {
+	// 	body =
+	// 		"<html>\n"
+	// 		"<head><title>" + statusReturn + "</title></head>\n"
+	// 		"</body>\n"
+	// 		"</html>\n";
+	// } else {
+		body = client.htmlPage;
+	// }
 
     std::stringstream sss;
     sss << body.size();
@@ -500,7 +508,7 @@ void EventLoop::sendStatus(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-	Connection& client = _connections[clientFd];
+	// Connection& client = _connections[clientFd];
 
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
