@@ -4,6 +4,7 @@
 # include <ctime>
 # include <iostream>
 # include <sys/types.h>
+# include "RequestParsing.hpp"
 
 enum ConnectionState {
 	IDLE,				// 0. starting state
@@ -33,24 +34,30 @@ class Connection {
 		bool				_keepAlive;
 		// bool				_chunked;
 
+		RequestParsing		reqParsing;
+		
 	public:
 		Connection(); // cannot compile without it and I don't understand why...
 		Connection(int& clientFd, std::string& ip, int& port);
 		~Connection();
-
+		
 		/* timeout related functions */
 		void	startTimer(int index, time_t duration);
 		bool	isTimedOut(int index) const;
 		long	secondsToClosestTimeout(void) const;
-
+		
 		/* getters */
 		const std::string&	getIP(void) const;
 		ConnectionState		getState(void) const;
-
+		std::string			getBuffer(void) const;
+		
 		/* setters */
 		void				setState(ConnectionState s);
-
-
+		void				setBuffer(std::string request);
+		
+		void parseRequest();
+		bool				err;
+		int					status;
 };
 
 #endif

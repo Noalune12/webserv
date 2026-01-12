@@ -156,6 +156,15 @@ void	EventLoop::run(void) {
 	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
 }
 
+void printWithoutR(std::string what, std::string line) {
+    std::string l;
+    for (size_t i = 0; i < line.size(); i++) {
+        if (line[i] != '\r')
+            l.push_back(line[i]);
+    }
+    std::cout << what <<" = \'" << l << "\' -" << std::endl;
+}
+
 void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 	std::map<int, Connection>::iterator it = _connections.find(clientFd);
@@ -200,14 +209,17 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.setState(SENDING_RESPONSE); // will need to set READING_BODY first
 				client.startTimer(3, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
+				printWithoutR("Request", client.getBuffer());
 				// // read + parse headers
 				// if (header complete) {
-				// 	client.setState(READING_BODY);
-				// 	client.startTimer(2, CLIENT_TIMEOUT);
-				// } else {
-				// 	// errors
-				// }
+					// 	client.setState(READING_BODY);
+					// 	client.startTimer(2, CLIENT_TIMEOUT);
+					// } else {
+						// 	// errors
+						// }
+						
 			}
+			client.parseRequest();
 			Logger::debug("READING_HEADERS state");
 			break ; // to remove if we fallthrought
 
@@ -229,7 +241,14 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 		case SENDING_RESPONSE:
 			if (ev & EPOLLOUT) {
-				send505exemple(clientFd);
+				// send505exemple(clientFd);
+
+				if (client.err == true) {
+					if (client.status == 400)
+						send400(clientFd);
+				} else {
+					sendStatus(clientFd, client.status);
+				}
 				client.setState(IDLE);
 				client.startTimer(0, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLIN);
@@ -268,6 +287,9 @@ void	EventLoop::tempCall(int clientFd) {
 		}
 		// std::string req = buffer;
 		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
+		std::map<int, Connection>::iterator it = _connections.find(clientFd);
+		it->second.setBuffer(buffer);
+
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -423,7 +445,42 @@ void EventLoop::send400(int clientFd) {
         "HTTP/1.1 400 Bad Request\r\n"
         "Content-Type: text/html\r\n"
         "Content-Length: " + bodySize + "\r\n"
-        "Connection: close\r\n"
+        "\r\n" +
+        body;
+
+	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
+
+	Connection& client = _connections[clientFd];
+
+	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
+	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
+}
+
+void EventLoop::sendStatus(int clientFd, int status) {
+	std::cout << GREEN "Sending " << status << " response to fd[" << clientFd << "]" RESET << std::endl;
+    
+	std::stringstream ss;
+    ss << status;
+	std::string statusReturn = ss.str();
+
+	std::string body =
+        "<html>\n"
+        "<head><title>" + statusReturn + "</title></head>\n"
+        "</body>\n"
+        "</html>\n";
+
+    std::stringstream sss;
+    sss << body.size();
+    std::string bodySize = sss.str();
+
+	std::string res;
+	if (status == 200)
+		res = "OK";
+
+    std::string response =
+        "HTTP/1.1 " + statusReturn + " " + res + "\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: " + bodySize + "\r\n"
         "\r\n" +
         body;
 

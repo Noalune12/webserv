@@ -1,12 +1,12 @@
 #include "Connection.hpp"
 
-Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true) {
+Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), err(false), status(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, int& port) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true) {
+Connection::Connection(int& clientFd, std::string& ip, int& port) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), err(false), status(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -74,4 +74,23 @@ long	Connection::secondsToClosestTimeout() const {
 		return (rem);
 
 	return(min_rem);
+}
+
+void Connection::setBuffer(std::string request) {
+	_buffer = request;
+}
+
+std::string Connection::getBuffer(void) const {
+	return _buffer;
+}
+
+void Connection::parseRequest() {
+	reqParsing.checkRequestSem(_buffer);
+	err = reqParsing.err;
+	status = reqParsing.status;
+	// check method is allowed and uri is defined
+	// check if host is ok
+	// check is body if content len is ok
+	std::cout << err << " &&&&& " << status << std::endl;
+	_buffer.clear();
 }

@@ -238,7 +238,7 @@ void TcpServer::getRequest() {
     // std::cout << GREEN "\nMESSAGE SENT" RESET << std::endl;
 }
 
-void printWithoutR(std::string what, std::string line) {
+static void printWithoutR(std::string what, std::string line) {
     std::string l;
     for (size_t i = 0; i < line.size(); i++) {
         if (line[i] != '\r')

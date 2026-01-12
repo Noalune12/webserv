@@ -47,7 +47,8 @@ SRC += $(addprefix $(SERVERDIR), $(addsuffix .cpp, $(SERVERSRC)))
 override SERVERSRC	:= \
 	Connection \
 	EventLoop \
-	ServerManager
+	ServerManager \
+	RequestParsing
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
