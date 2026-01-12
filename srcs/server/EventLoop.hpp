@@ -9,7 +9,8 @@
 class EventLoop {
 
 	private:
-		static const int	MAX_EVENTS = 1024;	// to be define
+		static const int	MAX_EVENTS = 1024;		// to be define
+		static const time_t	CLIENT_TIMEOUT = 5;	// 5s, idk what is a good timeout value
 
 		int					_epollFd;		// epoll instance
 		bool				_running;		// Main loop control
@@ -32,15 +33,25 @@ class EventLoop {
 		bool	removeFromEpoll(int fd);
 
 		void	closeConnection(int clientFd);
-		bool	setNonBlocking(int fd);
+		// bool	setNonBlocking(int fd);
 
 		bool	isRunning(void) const;
 		size_t	getConnectionCount(void) const;
 
 		void	acceptConnection(int listenFd);
-		void	handleClientTest(int clientFd, uint32_t ev);
+
+		void	getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port);
+
+		void	handleClientEvent(int clientFd, uint32_t ev);
 
 		void	send400(int clientFd);
+		void	send505exemple(int clientFd);
+
+		void	tempCall(int clientFd);
+
+		void	checkTimeouts(void);
+		int		calculateEpollTimeout(void);
+		int		getActiveTimer(ConnectionState s);
 };
 
 #endif

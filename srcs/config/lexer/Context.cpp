@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "colors.h"
+#include "colors.hpp"
 #include "Utils.hpp"
 
 Context::Context(std::string name, std::string context): _name(name), _bindingsInfo(), _isIgnored(false) {

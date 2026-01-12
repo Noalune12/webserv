@@ -3,11 +3,10 @@
 #include <algorithm>
 #include <string>
 
-#include "colors.h"
+#include "colors.hpp"
 #include "FileReader.hpp"
 #include "Validator.hpp"
 
-#include "colors.h"
 
 // Config::Config() {}
 

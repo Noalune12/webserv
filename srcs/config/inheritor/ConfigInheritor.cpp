@@ -1,14 +1,14 @@
 #include "ConfigInheritor.hpp"
 #include "rules.h"
-#include <colors.h>
 
 #include <algorithm>
+#include "colors.hpp"
 #include <iostream>
 #include <sstream>
 
-ConfigInheritor::ConfigInheritor() {};
+ConfigInheritor::ConfigInheritor() {}
 
-ConfigInheritor::~ConfigInheritor() {};
+ConfigInheritor::~ConfigInheritor() {}
 
 void ConfigInheritor::inherit(Tokenizer& tokens) {
     getGlobalDir(tokens.getGlobalDirective());

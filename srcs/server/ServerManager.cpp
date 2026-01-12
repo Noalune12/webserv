@@ -7,7 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "colors.h"
+#include "colors.hpp"
+#include "Logger.hpp"
 #include "ServerManager.hpp"
 
 static uint32_t	ipv4_str_to_int(const std::string &address);
@@ -51,6 +52,10 @@ void	ServerManager::setupListenSockets(void) {
 		ep.socketFd = sockFd;
 		_socketToEndpoint[sockFd] = i;
 		oneSuccess = true;
+
+		std::ostringstream oss;
+		oss << "listening on " << ep.addr << ":" << ep.port;
+		Logger::notice(oss.str());
 	}
 
 	if (!oneSuccess) {
@@ -58,7 +63,7 @@ void	ServerManager::setupListenSockets(void) {
 		return ;
 	}
 	// debug
-	printEndpoints();
+	// printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later 
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
@@ -151,14 +156,14 @@ bool	ServerManager::configureSocket(int socketFd) {
 	}
 
 	// flag retrieval
-	int flags = fcntl(socketFd, F_GETFL, 0);
-	if (flags < 0) {
-		std::cerr << "fcntl(F_GETFL) failed: " << strerror(errno) << std::endl;
-		return (false);
-	}
+	// int flags = fcntl(socketFd, F_GETFL, 0);
+	// if (flags < 0) {
+	// 	std::cerr << "fcntl(F_GETFL) failed: " << strerror(errno) << std::endl;
+	// 	return (false);
+	// }
 
 	// adding O_NONBLOCK to list of existing flags
-	if (fcntl(socketFd, F_SETFL, flags | O_NONBLOCK) < 0) {
+	if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0) {
 		std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed: " << strerror(errno) << std::endl;
 		return (false);
 	}

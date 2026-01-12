@@ -10,8 +10,9 @@
 #include <unistd.h>
 #include <sstream>
 
+#include "colors.hpp"
 #include "EventLoop.hpp"
-#include "colors.h"
+#include "Logger.hpp"
 
 EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections() {}
 
@@ -32,9 +33,10 @@ EventLoop::~EventLoop() {
 
 bool	EventLoop::init(void) {
 
+	Logger::notice("using the \"epoll\" event method");
 	_epollFd = epoll_create(42); // parce que pourquoi pas (go mettre un esther egg)
 	if (_epollFd < 0) {
-		std::cerr << RED << "epoll_create() failed: " << strerror(errno) << RESET << std::endl;
+		Logger::error(std::string("epoll_create() failed:") + strerror(errno));
 		return (false);
 	}
 
@@ -47,9 +49,72 @@ bool	EventLoop::init(void) {
 			return (false);
 		}
 	}
-
-	std::cout << GREEN << "EventLoop initialized with " << listenFds.size() << " listen socket(s)" << RESET << std::endl;
+	std::ostringstream oss;
+	oss << "eventLoop initialized with " << listenFds.size() << " listen socket(s)";
+	Logger::debug(oss.str());
 	return (true);
+}
+
+void	EventLoop::checkTimeouts(void) {
+
+	std::vector<int>	timedOut;
+	std::map<int, Connection>::iterator	it;
+
+	for (it = _connections.begin(); it != _connections.end(); ++it) {
+		Connection& client = it->second;
+		if (it->second.getState() == CLOSED)
+			continue ;
+		int	active_timer = getActiveTimer(client.getState());
+
+		if (active_timer >= 0 && client.isTimedOut(active_timer)) {
+			timedOut.push_back(it->first);
+		}
+	}
+
+	for (size_t i = 0; i < timedOut.size(); ++i) {
+
+		int	clientFd = timedOut[i];
+
+		std::ostringstream	oss;
+		oss << "client #" << clientFd << " timeout, closing";
+		Logger::warn(oss.str());
+		// send408 -> timeout error
+		// sendTimeout(clientFd);
+		closeConnection(clientFd);
+	}
+}
+
+int	EventLoop::getActiveTimer(ConnectionState s) {
+	switch (s) {
+		case IDLE:
+			return (0);
+		case READING_HEADERS:
+			return (1);
+		case READING_BODY:
+			return (2);
+		case SENDING_RESPONSE:
+			return (3);
+		default:
+			return (-1);
+	}
+}
+
+int	EventLoop::calculateEpollTimeout(void) {
+
+	if (_connections.empty())
+		return (5);
+
+	int min_sec = 5;
+
+	std::map<int, Connection>::const_iterator it;
+	for (it = _connections.begin(); it != _connections.end(); ++it) {
+
+		long rem = it->second.secondsToClosestTimeout();
+		if (rem < min_sec) {
+			min_sec = static_cast<int>(rem);
+		}
+	}
+	return (min_sec);
 }
 
 void	EventLoop::run(void) {
@@ -57,17 +122,19 @@ void	EventLoop::run(void) {
 	_running = true;
 	struct epoll_event events[MAX_EVENTS];
 
-	std::cout << BLUE << "EventLoop running..." << RESET << std::endl;
+	Logger::notice("eventLoop running...");
 
 	while (_running) {
-		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, 10000); // define for timeout ?
-
+		int	timeout_sec = calculateEpollTimeout();
+		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, timeout_sec * 1000);
 		if (nEvents < 0) {
 			if (errno == EINTR) // errno error for signal interruption
 				continue ;
-			std::cerr << "epoll_wait() failed: " << strerror(errno) << std::endl;
+			Logger::error(std::string("epoll_wait() failed: ") + strerror(errno));
 			break ;
 		}
+
+		checkTimeouts();
 
 		// main loop, will dispatch the sockets to specific handlers
 		for (int i = 0; i < nEvents; ++i) {
@@ -75,49 +142,132 @@ void	EventLoop::run(void) {
 			int			fd = events[i].data.fd;
 			uint32_t	ev = events[i].events;
 
-			(void) ev;
-
 			// accept + client informations storage
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
 			else
-				handleClientTest(fd, ev);
+				handleClientEvent(fd, ev);
 			// else if () {
-			// } // client ?
+				// } // cgi pipe ?
 			// else {
-			// } // cgi ?
+				// } // client ?
 		}
 	}
-	std::cout << YELLOW << "EventLoop stopped" << RESET << std::endl;
+	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
 }
 
-void	EventLoop::handleClientTest(int clientFd, uint32_t ev) {
+void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
-	if (ev & EPOLLIN) {
-		std::cout << "TEST: reading data from client socket" << std::endl;
-		char	buffer[1024];
-		std::memset(buffer, 0, 1024);
-		ssize_t	bytes = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
-		if (bytes <= 0) {
-			if (bytes == -1) {
-				std::cout << "recv failed: " << strerror(errno) << std::endl;
-			} else {
-				std::cout << "removing client fd from epoll interest list" << std::endl;
-			}
-			removeFromEpoll(clientFd);
-			// close(clientFd);
-			std::cout << "did not close fd tho" << std::endl;
-			return ;
+	std::map<int, Connection>::iterator it = _connections.find(clientFd);
+
+	if (it == _connections.end())
+		return ;
+
+
+	Connection& client = _connections[clientFd];
+
+	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+		if (ev & EPOLLERR) {
+			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLHUP) {
+			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLRDHUP) {
+			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
 		}
-		std::string req = buffer;
-		buffer[bytes] = '\0';
-		std::cout << "Message from fd[" << clientFd << "]:\n" << buffer << std::endl;
-		modifyEpoll(clientFd, EPOLLOUT);
-	} else {
-		send400(clientFd);
-		modifyEpoll(clientFd, EPOLLIN);
+		closeConnection(clientFd);
+		return;
 	}
 
+	int timer_idx = getActiveTimer(client.getState());
+	if (timer_idx >= 0 && client.isTimedOut(timer_idx)) {
+		// sendTimeoutResponse(clientFd, client.getState());  // 408/504
+		closeConnection(clientFd);
+		return ;
+	}
+
+	switch (client.getState()) {
+
+		case IDLE:
+			client.setState(READING_HEADERS);
+			client.startTimer(1, CLIENT_TIMEOUT);
+			modifyEpoll(clientFd, EPOLLIN);
+			Logger::debug("IDLE state");
+			break ;
+
+		case READING_HEADERS: // fallthrought ? not sure yet
+			if (ev & EPOLLIN) {
+				tempCall(clientFd);
+				client.setState(SENDING_RESPONSE); // will need to set READING_BODY first
+				client.startTimer(3, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
+				// // read + parse headers
+				// if (header complete) {
+				// 	client.setState(READING_BODY);
+				// 	client.startTimer(2, CLIENT_TIMEOUT);
+				// } else {
+				// 	// errors
+				// }
+			}
+			Logger::debug("READING_HEADERS state");
+			break ; // to remove if we fallthrought
+
+		case READING_BODY:
+			Logger::debug("READING_BODY state");
+			break ;
+
+		case CGI_RUNNING:
+			// if (ev & EPOLLIN) {
+			// 	// temp
+			// 	if () { // cgi done
+			// 		client.setState(SENDING_RESPONSE);
+			// 		modifyEpoll(clientFd, EPOLLOUT);
+			// 	} else {
+
+			// 	}
+			// }
+			break ;
+
+		case SENDING_RESPONSE:
+			if (ev & EPOLLOUT) {
+				send505exemple(clientFd);
+				client.setState(IDLE);
+				client.startTimer(0, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLIN);
+			// 	// send response
+			// 	if (sent) { // goes to response handling depending on requests parsing ?
+			// 		client.setState(IDLE);
+			// 		client.startTimer(0, CLIENT_TIMEOUT);
+			// 		modifyEpoll(clientFd, EPOLLIN);	// sets back to EPOLLIN to keep the sockets alive
+			// 	}
+			}
+			Logger::accessLog(client.getIP(), "method", "uri", "version", 666, 100); // temp, won't we called here
+			Logger::debug("SENDING_RESPONSE state");
+			break ;
+
+		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
+			closeConnection(clientFd);
+			break ;
+	}
+}
+
+void	EventLoop::tempCall(int clientFd) {
+		// static int a = 0;
+		// std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
+		char	buf[10];
+		std::memset(buf, 0, 10);
+		std::string buffer;
+		ssize_t	bytes;
+		while ((bytes = recv(clientFd, buf, sizeof(buf), 0)) > 0) { // not sure its completely done, not checking errno, only logging it
+			if (bytes <= 0) {
+				if (bytes == -1) {
+					std::cout << "recv failed: " << strerror(errno) << std::endl;
+				}
+				return ;
+			}
+			buffer += std::string(buf, bytes);
+		}
+		// std::string req = buffer;
+		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -128,29 +278,49 @@ void	EventLoop::acceptConnection(int listenFd) {
 	int	clientFd = accept(listenFd, (struct sockaddr *)&clientAddr, &clientLen);
 	if (clientFd < 0) {
 		if (errno != EAGAIN && errno != EWOULDBLOCK) { // if one of those appear then we do not consider it an error, not printing anything
-			std::cerr << "accept() failed on fd " << listenFd << ": " << strerror(errno) << std::endl;
+			std::cerr << "accept() failed on fd[" << listenFd << "]: " << strerror(errno) << std::endl;
 		}
 		return ;
 	}
 
-	if (!setNonBlocking(clientFd)) {
+	if (fcntl(clientFd, F_SETFL, O_NONBLOCK) == -1) {
 		close(clientFd);
 		return ;
 	}
 
-	Connection newClient(clientFd); // pretty much sure there are other thing we can already fill in here
+	std::string clientIp;
+	int			clientPort;
+	getClientInfo(clientAddr, clientIp, clientPort);
+	Connection newClient(clientFd, clientIp, clientPort);
 
-	if (!addToEpoll(clientFd, EPOLLIN)) {
+	newClient.setState(IDLE);
+	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
+
+	if (!addToEpoll(clientFd, EPOLLIN)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
 		close(clientFd);
 		return ;
 	}
 
 	_connections[clientFd] = newClient;
 
-	std::cout << BLUE << "New connection fd[" << clientFd << "]" << RESET << std::endl;
+	std::ostringstream	oss;
+	oss << "new client #" << clientFd << " from " << clientIp << ":" << clientPort;
+	Logger::notice(oss.str());
 }
 
-// projection for signal handling
+void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port) {
+
+	uint32_t ip_host = ntohl(addr.sin_addr.s_addr);
+	std::ostringstream oss;
+	for (size_t i = 0; i < 4; ++i) {
+		oss << ((ip_host >> (24 - (i * 8))) & 0xFF);
+		if (i < 3)
+			oss << ".";
+	}
+	ip = oss.str();
+	port = ntohs(addr.sin_port);
+}
+
 void	EventLoop::stop(void) {
 	_running = false;
 }
@@ -183,6 +353,9 @@ bool	EventLoop::addToEpoll(int fd, uint32_t events) {
 // works for EPOLLIN | EPOLLOUT, can also set them both at the same time (see if this we have the use -> discussed with lthan)
 bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 
+	if (_connections.find(fd) == _connections.end())
+		return (false);
+
 	struct epoll_event ev;
 	ev.events = events;
 	ev.data.fd = fd;
@@ -209,24 +382,30 @@ bool	EventLoop::removeFromEpoll(int fd) {
 }
 
 void	EventLoop::closeConnection(int clientFd) {
-	// TODO
-	(void) clientFd;
+
+	if (_connections.find(clientFd) == _connections.end())
+		return ;
+
+	std::ostringstream	oss;
+	oss << "client #" << clientFd << " disconnected";
+
+	removeFromEpoll(clientFd); // need to check the return value of this function depending on the cases
+	Logger::notice(oss.str());
+
+	close(clientFd);
+	_connections.erase(clientFd);
 }
 
 
 /* utils */
-bool	EventLoop::setNonBlocking(int fd) {
-
-	int	flags = fcntl(fd, F_GETFL, 0);
-
-	if (flags < 0)
-		return (false);
-
-	return (fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0);
-}
+// bool	EventLoop::setNonBlocking(int fd) {
+// 	return (fcntl(fd, F_SETFL, O_NONBLOCK) >= 0);
+// }
 
 
 void EventLoop::send400(int clientFd) {
+	std::cout << GREEN "Sending 400 response to fd[" << clientFd << "]" RESET << std::endl;
+
     // find if error page 400 in config file
     std::string body =
         "<html>\n"
@@ -248,6 +427,41 @@ void EventLoop::send400(int clientFd) {
         "\r\n" +
         body;
 
-    send(clientFd, response.c_str(), response.size(), 0);
+	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
+	Connection& client = _connections[clientFd];
+
+	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
+	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
+}
+
+
+void	EventLoop::send505exemple(int clientFd) {
+
+	std::string body =
+		"<html>\n"
+		"<html lang=\"en\">\n"
+		"<head>\n"
+		"<title>505 HTTP Version Not Supported</title>\n"
+		"</head>\n"
+		"<body>\n"
+		"<h1>505 HTTP Version Not Supported</h1>\n"
+		"<p>If this problem persists, please <a href=\"https://example.com/support\">contact support</a>.</p>\n"
+		"<p>Server logs contain details of this error with request ID: ABC-123.</p>\n"
+		"</body>\n"
+		"</html>\n";
+
+		std::stringstream	ss;
+		ss << body.size();
+		std::string bodySize = ss.str();
+
+	std::string res =
+		"HTTP/1.1 505 HTTP Version Not Supported\r\n"
+		"Content-Type: text/html;\r\n"
+		"Content-Length: " + bodySize + "\r\n"
+		"\r\n" +
+		body;
+
+	send(clientFd, res.c_str(), res.size(), 0);
+	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
