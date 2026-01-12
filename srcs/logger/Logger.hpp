@@ -4,6 +4,9 @@
 # include <cstddef>
 # include <iostream>
 
+# define ENABLE true
+# define DISABLE false
+
 enum LogLevel {
 	DEBUG,
 	NOTICE,
