@@ -63,7 +63,7 @@ void	ServerManager::setupListenSockets(void) {
 		return ;
 	}
 	// debug
-	// printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later 
+	// printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
