@@ -12,10 +12,11 @@ class Request {
         std::string _headersStr;
         std::string _requestLine;
         std::vector<server>	_servers;
+        globalDir _globalDir;
     
     public:
         Request();
-        Request(std::vector<server>	_servers);
+        Request(std::vector<server>	_servers, globalDir globalDir);
         ~Request();
 
         bool err;

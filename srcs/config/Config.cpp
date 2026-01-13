@@ -51,3 +51,7 @@ const std::string&	Config::getFileContent(void) const {
 std::vector<server>&	Config::getServers(void) {
 	return (this->_conf.getServers());
 }
+
+globalDir& Config::getGlobalDir(void) {
+	return (this->_conf.getGlobalDir());
+}

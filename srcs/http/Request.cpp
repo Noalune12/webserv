@@ -6,7 +6,7 @@
 
 Request::Request(): err(false), status(0) {}
 
-Request::Request(std::vector<server> servers) : _servers(servers), err(false), status(0) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0) {}
 
 
 Request::~Request() {}
@@ -21,10 +21,10 @@ static void printWithoutR(std::string what, std::string line) {
 }
 
 void Request::checkRequestSem(std::string request) {
+    err = false;
     _req = request;
     if (_req.empty()) { // how to test
-        err = true;
-        status = 400;
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error empty request" << std::endl;
         return ;
     }
@@ -51,8 +51,9 @@ bool Request::extractRequestInfo() {
     // Get request line
     size_t index = _req.find("\r\n");
     if (index == std::string::npos || index == 0) {
-        err = true;
-        status = 400; // need global dir if 400 is defines of need to get the host as well ?
+        // err = true;
+        // status = 400; // need global dir if 400 is defines of need to get the host as well ?
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with request line" << std::endl;
         return false;  
     }
@@ -65,8 +66,7 @@ bool Request::extractRequestInfo() {
     // Get headers
     index = _req.find("\r\n\r\n");
     if (index == std::string::npos || index == 0) {
-        err = true;
-        status = 400;
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error no header or final WS" << std::endl;
         return false;  
     }
@@ -86,8 +86,7 @@ bool Request::extractRequestInfo() {
     // method
     size_t index = _requestLine.find(' ');
     if (index == std::string::npos || index == 0) {
-        err = true;
-        status = 400;
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with request line" << std::endl;
         return false;
     }
@@ -99,8 +98,7 @@ bool Request::extractRequestInfo() {
     // uri
     index = remain.find(' ');
     if (index == std::string::npos || index == 0) {
-        err = true;
-        status = 400;
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with request line" << std::endl;
         return false;
     }
@@ -111,8 +109,7 @@ bool Request::extractRequestInfo() {
 
     //http
     if (remain.empty()) {
-        err = true;
-        status = 400;
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with request line" << std::endl;
         return false;
     }
@@ -140,8 +137,7 @@ bool Request::checkHeaders() {
     std::string line;
     while (std::getline(ss, line)) {
         if (line[line.length() - 1] != '\r') {
-            err = true;
-            status = 400;
+            findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with headers no \\r at the end" << std::endl;
             return false;
         }
@@ -150,8 +146,7 @@ bool Request::checkHeaders() {
         // std::cout << "index : = " << index << std::endl;
         // std::cout << "HEADER = " << line << std::endl;
         if (index == 0 || index == std::string::npos || index == line.length() - 2) {
-            err = true;
-            status = 400;
+            findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with headers no : or no header name or content" << std::endl;
             return false;
         }
@@ -168,14 +163,12 @@ bool Request::checkHeaders() {
                 || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
                 || (name == "content-length" && _headers.find("content-length") != _headers.end())
                 || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())) {
-            err = true;
-            status = 400;
+            findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with duplicate headers : " << name << std::endl;
             return false;  
         }
         if (name == "host" && hasWS(content)) {
-            err = true;
-            status = 400;
+            findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error header : " << name << " has WS in its content" << std::endl;
             return false;
         }
@@ -192,21 +185,21 @@ bool Request::checkHeaders() {
 }
 
 bool Request::checkRequestLine(std::string& method, std::string& uri, std::string& http) {
-    if (method != "GET" && method != "POST" && method != "DELETE") { //what if method is not accepted
-        err = true;
-        status = 400;
+    if (method != "GET" && method != "POST" && method != "DELETE"
+            && method != "HEAD" && method != "OPTIONS"
+            && method != "TRACE" && method != "PUT"
+            && method != "PATCH" && method != "CONNECT") {
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with method" << std::endl;
         return false;
     }
-    if (uri[0] != '/') { //what if uri is not defined
-        err = true;
-        status = 400;
+    if (uri[0] != '/') { 
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with uri" << std::endl;
         return false;
     }
     if (http != "HTTP/1.1") {
-        err = true;
-        status = 400;
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with http" << std::endl;
         return false;
     }
@@ -245,8 +238,7 @@ void Request::checkRequestContent() {
     // Host check
 	std::map<std::string, std::string>::iterator it = _headers.find("host");
 	if (it == _headers.end()) {
-		err = true;
-		status = 400;
+		findErrorPage(400, "/", _globalDir.errPage);
 	    std::cout << "error no host in headers " << std::endl;
 		return ;
 	}
@@ -254,8 +246,7 @@ void Request::checkRequestContent() {
 	location l;
 	size_t sep = it->second.find(":");
 	if (sep == 0 || sep == it->second.size() - 1) {
-		err = true;
-		status = 400;
+		findErrorPage(400, "/", _globalDir.errPage);
 	    std::cout << "error host has : at the start or the end" << std::endl;
 		return ;
 	}
@@ -291,8 +282,7 @@ void Request::checkRequestContent() {
 	}
 
 	if (itServer == _servers.end()) {
-		err = true;
-		status = 400;
+		findErrorPage(400, "/", _globalDir.errPage);
 	    std::cout << "error no compatible server found" << std::endl;
 		return ;
 	}
@@ -316,7 +306,10 @@ void Request::checkRequestContent() {
 	// method check
 	if ((_method == "GET" && l.methods.get == false)
 			|| (_method == "POST" && l.methods.post == false)
-            || (_method == "DELETE" && l.methods.del == false)) {
+            || (_method == "DELETE" && l.methods.del == false)
+            || _method == "HEAD" || _method == "OPTIONS"
+            || _method == "TRACE" || _method == "PUT"
+            || _method == "PATCH" || _method == "CONNECT") {
         findErrorPage(405, itLocation->root, itLocation->errPage);
 	    std::cout << "error not allowed method" << std::endl;
 		return ;
@@ -368,11 +361,13 @@ void Request::findErrorPage(int code, std::string root, std::map<int, std::strin
     htmlPage.clear();
     err = true;
     status = code;
-    root = root.substr(1, root.size()); // what if no root ? if starts with \ need to check ?
+    // root = root.substr(1, root.size()); // what if no root ? if starts with \ need to check ?
     std::map<int, std::string>::iterator itErr = errPage.find(code);
     if (itErr == errPage.end())
         return;
     std::string path = root + itErr->second;
+    if (path[0] == '/')
+        path = path.substr(1, path.size());
     std::cout << "PATH = " << path << std::endl;
 			std::ifstream file(path.c_str());
 			if (!file) {

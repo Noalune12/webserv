@@ -316,7 +316,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	std::string clientIp;
 	int			clientPort;
 	getClientInfo(clientAddr, clientIp, clientPort);
-	Connection newClient(clientFd, clientIp, clientPort, _serverManager.getServers());
+	Connection newClient(clientFd, clientIp, clientPort, _serverManager.getServers(), _serverManager.getGlobalDir());
 
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);

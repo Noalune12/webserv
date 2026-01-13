@@ -13,7 +13,7 @@
 
 static uint32_t	ipv4_str_to_int(const std::string &address);
 
-ServerManager::ServerManager(std::vector<server>& servers) : _servers(servers), _endpoints(), _socketToEndpoint() {}
+ServerManager::ServerManager(std::vector<server>& servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), _endpoints(), _socketToEndpoint() {}
 
 ServerManager::~ServerManager() {
 	closeSockets(); // exit properly, might want to put that somewhere else tho
@@ -232,3 +232,8 @@ std::vector<int>	ServerManager::getListenSocketFds(void) {
 std::vector<server>	ServerManager::getServers(void) {
 	return _servers;
 }
+
+globalDir ServerManager::getGlobalDir(void) {
+	return _globalDir;
+}
+

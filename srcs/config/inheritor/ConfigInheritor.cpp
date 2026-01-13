@@ -505,3 +505,5 @@ void ConfigInheritor::printContent() const {
 }
 
 std::vector<server>&    ConfigInheritor::getServers(void) { return (_server); }
+globalDir&              ConfigInheritor::getGlobalDir(void) { return (_globalDir); }
+
