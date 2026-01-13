@@ -198,7 +198,20 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
         std::cout << "error with uri" << std::endl;
         return false;
     }
-    if (http != "HTTP/1.1") {
+    size_t index = http.find ("HTTP/");
+    if (index != 0) {
+        findErrorPage(400, "/", _globalDir.errPage);
+        std::cout << "error with http index is not 0" << std::endl;
+        return false;
+    }
+    std::string version = http.substr(index + 5, http.length());
+    std::cout << "VERSION = " << version << std::endl;
+    if (version == "2" || version == "3") {
+        findErrorPage(505, "/", _globalDir.errPage);
+        std::cout << "error with http not the real version" << std::endl;
+        return false;
+    }
+    if (version != "1.1" && version != "1.0") {
         findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with http" << std::endl;
         return false;

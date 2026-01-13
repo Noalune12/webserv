@@ -441,6 +441,8 @@ void EventLoop::sendError(int clientFd, int status) {
 		statusName = "Method Not Allowed";
 	if (status == 403)
 		statusName = "Forbidden";
+	if (status == 505)
+		statusName = "HTTP Version Not Supported";
 
 	std::stringstream ss;
     ss << status;
