@@ -33,8 +33,6 @@ override MAIN			:= \
 	main
 
 
-
-
 SRC += $(addprefix $(SUBD_TESTDIR), $(addsuffix .cpp, $(SUBD_TESTSRC)))
 
 override SUBD_TESTSRC			:= \
@@ -47,8 +45,12 @@ SRC += $(addprefix $(SERVERDIR), $(addsuffix .cpp, $(SERVERSRC)))
 override SERVERSRC	:= \
 	Connection \
 	EventLoop \
-	ServerManager \
-	RequestParsing
+	ServerManager
+
+SRC += $(addprefix $(HTTPDIR), $(addsuffix .cpp, $(HTTPSRC)))
+
+override HTTPSRC	:= \
+	Request
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 

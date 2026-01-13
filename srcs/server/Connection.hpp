@@ -4,7 +4,7 @@
 # include <ctime>
 # include <iostream>
 # include <sys/types.h>
-# include "RequestParsing.hpp"
+# include "Request.hpp"
 # include <vector>
 # include "ConfigInheritor.hpp"
 
@@ -36,10 +36,9 @@ class Connection {
 		bool				_keepAlive;
 		// bool				_chunked;
 
-		RequestParsing		reqParsing;
 		std::vector<server>	_servers;
-
-	public:
+		
+		public:
 		Connection(); // cannot compile without it and I don't understand why...
 		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers);
 		~Connection();
@@ -59,9 +58,10 @@ class Connection {
 		void				setBuffer(std::string request);
 		
 		void parseRequest();
-		bool				err;
-		int					status;
-		std::string			htmlPage;
+		// bool				err;
+		// int					status;
+		Request				_request;
+		// std::string			htmlPage;
 };
 
 #endif

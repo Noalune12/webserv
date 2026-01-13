@@ -247,10 +247,10 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			if (ev & EPOLLOUT) {
 				// send505exemple(clientFd);
 
-				if (client.err == true) {
-						sendError(clientFd, client.status);
+				if (client._request.err == true) {
+						sendError(clientFd, client._request.status);
 				} else {
-					sendStatus(clientFd, client.status);
+					sendStatus(clientFd, client._request.status);
 				}
 				client.setState(IDLE);
 				client.startTimer(0, CLIENT_TIMEOUT);
@@ -488,7 +488,7 @@ void EventLoop::sendStatus(int clientFd, int status) {
 	// 		"</body>\n"
 	// 		"</html>\n";
 	// } else {
-		body = client.htmlPage;
+		body = client._request.htmlPage;
 	// }
 
     std::stringstream sss;
