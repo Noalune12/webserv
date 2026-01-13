@@ -430,6 +430,7 @@ void	EventLoop::closeConnection(int clientFd) {
 
 void EventLoop::sendError(int clientFd, int status) {
 	std::cout << GREEN "Sending " << status << " response to fd[" << clientFd << "]" RESET << std::endl;
+	Connection& client = _connections[clientFd];
 
 	std::string statusName;
 	if (status == 400)
@@ -444,14 +445,17 @@ void EventLoop::sendError(int clientFd, int status) {
 	std::stringstream ss;
     ss << status;
 	std::string statusReturn = ss.str();
-
-	std::cout << "STATUS NAME = " << statusName << std::endl;
-    std::string body =
-        "<html>\n"
-        "<head><title>" + statusReturn + " " + statusName + "</title></head>\n"
-        "<body><h1>" + statusReturn + " " + statusName + "</h1>\n"
-        "</body>\n"
-        "</html>\n";
+	std::string body;
+	if (client._request.htmlPage.empty()) {
+		body =
+			"<html>\n"
+			"<head><title>" + statusReturn + " " + statusName + "</title></head>\n"
+			"<body><h1>" + statusReturn + " " + statusName + "</h1>\n"
+			"</body>\n"
+			"</html>\n";
+	} else {
+		body = client._request.htmlPage;
+	}
 
     std::stringstream sss;
     sss << body.size();
@@ -466,7 +470,6 @@ void EventLoop::sendError(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-	Connection& client = _connections[clientFd];
 
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;

@@ -28,50 +28,71 @@ void Request::checkRequestSem(std::string request) {
         std::cout << "error empty request" << std::endl;
         return ;
     }
+    std::string method, uri, http;
 
+    if (!extractRequestInfo() || !extractRequestLineInfo(method, uri, http)
+            || !checkRequestLine(method, uri, http) || !checkHeaders())
+        return ;
+
+    // there can only be one host, content-length and user-agent
+    // if transfer-encoding: chunked no content-length -> body finish with \r\n\r\n and then next request
+    // compare body with content-length
+
+    status = 200;
+}
+
+bool Request::extractRequestInfo() {
     // extracts request line, headers and body
-    std::string requestLine, headers;
+    // std::string requestLine, headers;
+    _headersStr.clear();
+    _requestLine.clear();
+    _body.clear();
+
+    // Get request line
     size_t index = _req.find("\r\n");
     if (index == std::string::npos || index == 0) {
         err = true;
-        status = 400;
+        status = 400; // need global dir if 400 is defines of need to get the host as well ?
         std::cout << "error with request line" << std::endl;
-        return ;  
+        return false;  
     }
     std::cout << "INDEX of r n = " << index << std::endl;
-    requestLine = _req.substr(0, index);
+    _requestLine = _req.substr(0, index);
     _req = _req.substr(index + 2);
-    printWithoutR("REQUEST LINE", requestLine);
+    printWithoutR("REQUEST LINE", _requestLine);
     printWithoutR("REMAINING REQUEST", _req);
 
+    // Get headers
     index = _req.find("\r\n\r\n");
     if (index == std::string::npos || index == 0) {
         err = true;
         status = 400;
         std::cout << "error no header or final WS" << std::endl;
-        return ;  
+        return false;  
     }
-    headers = _req.substr(0, index + 1);
+    _headersStr = _req.substr(0, index + 1);
     _req = _req.substr(index + 4);
-    printWithoutR("HEADERS", headers);
+    printWithoutR("HEADERS", _headersStr);
     printWithoutR("REMAINING REQUEST", _req);
 
+    // Get Body
     _body = _req;
     printWithoutR("BODY", _body);
+    return true;
+}
 
-    // ANALYSE REQUEST LINE
-    std::string method, uri, http, host;
 
+ bool Request::extractRequestLineInfo(std::string& method, std::string& uri, std::string& http) {
     // method
-    index = requestLine.find(' ');
+    size_t index = _requestLine.find(' ');
     if (index == std::string::npos || index == 0) {
         err = true;
         status = 400;
         std::cout << "error with request line" << std::endl;
-        return ;
+        return false;
     }
-    method = requestLine.substr(0, index);
-    std::string remain = requestLine.substr(index + 1, requestLine.length());
+    method = _requestLine.substr(0, index);
+    std::string remain = _requestLine.substr(index + 1, _requestLine.length());
     printWithoutR("METHOD", method);
     printWithoutR("REMAIN", remain);
 
@@ -81,7 +102,7 @@ void Request::checkRequestSem(std::string request) {
         err = true;
         status = 400;
         std::cout << "error with request line" << std::endl;
-        return ;
+        return false;
     }
     uri = remain.substr(0, index);
     remain = remain.substr(index + 1, remain.length());
@@ -93,23 +114,13 @@ void Request::checkRequestSem(std::string request) {
         err = true;
         status = 400;
         std::cout << "error with request line" << std::endl;
-        return ;
+        return false;
     }
     http = remain;
     printWithoutR("HTTP", http);
+    return true;
 
-    std::cout << "request line is ok" << std::endl;
-
-    if (!checkRequestLine(method, uri, http) || !checkHeaders(headers)) {
-        return ;
-    }
-
-    // there can only be one host, content-length and user-agent
-    // if transfer-encoding: chunked no content-length -> body finish with \r\n\r\n and then next request
-    // compare body with content-length
-
-    status = 200;
-}
+ }
 
 bool hasWS(std::string s) {
     for (size_t i = 0; i < s.length(); i++) {
@@ -119,11 +130,13 @@ bool hasWS(std::string s) {
     return false;
 }
 
+
+
 //if body -> check content-length is same
 
-bool Request::checkHeaders(std::string headers) {
+bool Request::checkHeaders() {
     _headers.clear();
-    std::stringstream ss(headers);
+    std::stringstream ss(_headersStr);
     std::string line;
     while (std::getline(ss, line)) {
         if (line[line.length() - 1] != '\r') {
@@ -295,17 +308,16 @@ void Request::checkRequestContent() {
 	}
 
 	if (itLocation == s.loc.end()) {
-		err = true;
-		status = 404;
+        findErrorPage(404, itServer->root, itServer->errPage);
 	    std::cout << "error no location found" << std::endl;
 		return ;
 	}
 
 	// method check
 	if ((_method == "GET" && l.methods.get == false)
-			|| (_method == "POST" && l.methods.post == false)) {
-		err = true;
-		status = 405;
+			|| (_method == "POST" && l.methods.post == false)
+            || (_method == "DELETE" && l.methods.del == false)) {
+        findErrorPage(405, itLocation->root, itLocation->errPage);
 	    std::cout << "error not allowed method" << std::endl;
 		return ;
 	}
@@ -315,7 +327,7 @@ void Request::checkRequestContent() {
 	// get info
 	if (_method == "GET") {
 		std::vector<std::string>::iterator itIndex = l.index.begin();
-		std::string root = l.root.substr(1, l.root.size());
+		std::string root = l.root.substr(1, l.root.size()); // what if no root ? if starts with \ need to check ?
 		for (; itIndex != l.index.end() ; itIndex++) {
 			std::string path = root + _uri + *itIndex; // what if directory does not exist ...
 			
@@ -340,8 +352,7 @@ void Request::checkRequestContent() {
 	
 		if (htmlPage.empty()) {
 			//verify error
-			err = true;
-			status = 403;
+            findErrorPage(403, itLocation->root, itLocation->errPage);
 			std::cout << "error no index found" << std::endl;
 			return ;
 		}
@@ -351,4 +362,25 @@ void Request::checkRequestContent() {
 	// check method is allowed and uri is defined
 	// check if host is ok
 	// check is body if content len is ok
+}
+
+void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
+    htmlPage.clear();
+    err = true;
+    status = code;
+    root = root.substr(1, root.size()); // what if no root ? if starts with \ need to check ?
+    std::map<int, std::string>::iterator itErr = errPage.find(code);
+    if (itErr == errPage.end())
+        return;
+    std::string path = root + itErr->second;
+    std::cout << "PATH = " << path << std::endl;
+			std::ifstream file(path.c_str());
+			if (!file) {
+				return;
+			} else {
+				std::cout << "File found" << std::endl;
+				std::stringstream buffer;
+				buffer << file.rdbuf();
+				htmlPage = buffer.str();
+			}
 }

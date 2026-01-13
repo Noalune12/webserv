@@ -9,6 +9,8 @@
 class Request {
     private:
         std::string _req;
+        std::string _headersStr;
+        std::string _requestLine;
         std::vector<server>	_servers;
     
     public:
@@ -25,11 +27,14 @@ class Request {
         std::string			htmlPage;
 
         void checkRequestSem(std::string request);
+        bool extractRequestInfo();
+        bool extractRequestLineInfo(std::string& method, std::string& uri, std::string& http);
         bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
-        bool checkHeaders(std::string headers);
+        bool checkHeaders();
         void checkRequestContent();
         std::string trimOws(const std::string& s);
         std::string lowerString(const std::string& s);
+        void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
 
 };
 
