@@ -1,30 +1,14 @@
 # TODO (ordered ?)
 
-- [x] creer un fichier default.conf avec toutes les spec que nous gerrerons (des directives seront rajoutées/supprimées au fur et a mesure du temps)
-- [x] creer un dossier avec differents fichiers de config qui fonctionne/fonctionne pas pour une potentielle github action
-- [x] trouver une structure cool
-- [x] creer les dossiers/fichiers de la structure
-- [x] github actions config file + siege (plus tard)?
 - [ ] github action implementing siege
 - [ ] detailler choix pour chaque directive
 
 
-[CONFIGURATION FILE STRUCTURE](https://nginx.org/en/docs/beginners_guide.html#conf_structure) (useful to create accepted and rejected configuration files)
-
-[another link, looks a bit more detailed](https://devdocs.io/nginx/beginners_guide#conf_structure)
-
-[Common nginx syntax errors](https://www.digitalocean.com/community/tutorials/common-nginx-syntax-errors)
-
-
-Si t'as un peu de temps tu peux me dire ce qui te convient le plus stp (dans l'idée je me pose ces questions dans le but de savoir a quel point on décide de faire un parsing compliqué):
-dans nos fichier de config il y a plusieurs possibilités:
-https://github.com/AzehLM/webserv/blob/main/docs/configuration-file.md#exemple-complet-de-configuration-location
-soit on accepte que des context server (context = block) comme sur l'exemple au dessus.
-- avec du coup toutes les directives obligatoirement a l'intérieur et on a pas
 
 
 
-Validator rules:
+
+# Configuration file directives
 
 ### error_page:
 ```
@@ -44,12 +28,12 @@ Syntax:	client_max_body_size size;
 Default: client_max_body_size 1m;
 Context: global, server, location
 ```
-Sets the maximum allowed size of the client request body. If the size in a request exceeds the configured value, the `413` (Request Entity Too Large) error is returned to the client. Different size unity can be accepted (k, K, m, M, g, G). Example:
+Sets the maximum allowed size of the client request body. If the size in a request exceeds the configured value, the `413` (Content Too Large) error is returned to the client. Different size unity can be accepted (k, K, m, M, g, G). Example:
 ```
 client_max_body_size 10M;
 client_max_body_size 1g;
 ```
-Note: Need to define maximum size we allow, if the value is higher to our max we either reject the config file or set it to de Default setting.
+Note: Define maximum size allowed, if the value is higher than our max we either reject the config file or set it to the default setting.
 
 ### server:
 ```
@@ -87,12 +71,12 @@ server {
 	server_name example.com;
 }
 ```
-Note: Nginx has a regex captures that we won't handle, just like regular expressions creating variables that could be later used in other directives.
+Note: Nginx has a regex captures that we dont't handle, just like regular expressions creating variables that could be later used in other directives.
 
 ### root
 ```
 Syntax: root path;
-Default: root html;
+Default: root /var/www/html;
 Context: server, location
 ```
 Sets the root directory for requests. Example:
@@ -193,3 +177,21 @@ location /cgi-test {
 	cgi_ext .py;
 }
 ```
+
+# Configuration error management
+
+As we globaly decided to follow nginx behavior, we also tried to mimic at our best its configuration file error management.
+To do that, we followed this article about [common nginx syntax errors](https://www.digitalocean.com/community/tutorials/common-nginx-syntax-errors).
+
+This was not enough so during the logic implementation we had a `nginx` Docker container instance opened to manualy modify the `/etc/nginx/conf.d/default.conf` and check the specific error message.
+
+> checking with the `nginx -t` commands return either 0 with a `test is successful` or 1 with a specific message detailing the error.
+
+We are then loging the errors in the `/var/log/error.log` just like nginx does in the `stderr`.
+
+Our logs are not perfect, the way we designed the parsing and the validation part - and the data structures we used - could not allow us to have all the informations that nginx provides, but we have the main informations and we're happy with it.
+
+
+### nginx documentation reference used
+
+[NGINX configuration file structure](https://nginx.org/en/docs/beginners_guide.html#conf_structure)
