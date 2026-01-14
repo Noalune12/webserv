@@ -225,9 +225,11 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			}
 			client.parseRequest();
 			Logger::debug("READING_HEADERS state");
+			// if chunked change state to READING_BODY
 			break ; // to remove if we fallthrought
 
 		case READING_BODY:
+			// read until 0/r/n/r/n --> parse the body with the information gathered at the request parsing
 			Logger::debug("READING_BODY state");
 			break ;
 
