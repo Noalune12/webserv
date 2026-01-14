@@ -2,7 +2,6 @@
 
 [nginx beginner's guide](https://nginx.org/en/docs/beginners_guide.html#conf_structure)
 
-[HTTP Headers (not sure it is meant for HTTP/1.1)](https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html)
 
 [Understanding the Nginx Configuration File Structure and Contexts](https://mangohost.net/blog/understanding-the-nginx-configuration-file-structure-and-contexts/)
 
@@ -32,9 +31,8 @@ Les contexts clefs:
 - **Main context**: Le scope global qui contient les directives affectant l'entierete du server web
 - **Events context**: Gère les paramètres de traitement de connexion
 - **HTTP context**: Contient tous les parametres de configuration HTTP
-- **Server context**: Definis les settings propres aux server**s** ainsi que les **virtual host** (on verra si on fait ca)
+- **Server context**: Definis les settings propres aux server**s** ainsi que les **virtual host**
 - **Location context**: Contexts specific a des locations (redirections) a l'interieur d'un bloc server
-- **Upstream context**: Definis les groupes de servers pour l'equilibrage des charges (pas compris ca encore)
 
 Exemple d'un fichier de config Nginx basique:
 
@@ -69,62 +67,10 @@ http {
             proxy_pass http://backend;
         }
     }
-
-    # Upstream context
-    upstream backend {
-        server 192.168.1.10:8080;
-        server 192.168.1.11:8080;
-    }
 }
 ```
 
 ## Main context configuration detailed
-
-### user
-
-- `user`: Cette directive spécifie l'utilisateur système sous lequel les `working processes` d'Nginx s'exécuteront. Essentielle pour la gestion des privilèges, hors contexte spécifique, elle est nécessaire à la sécurisation des opérations du serveur web.
-  - Après que Nginx (ou le webserver) soit lancé (souvent avec des droits root pour set les privilèges tel que les ports (80, 443...)) on change les privilèges via cette spécification pour que les `worker children` n'ai pas tous ces droits, minimisant les risques si ces process soient compromis.
-  - Dans l'ensemble c'est de bonne pratique de spécifier le `user` pour éviter les vulnérabilités
-  - Par défaut, si cette directive n'est pas spécifiée, Nginx use un user par défaut (`nobody`, `nginx`, `www-data`) ou autre n'ayant qu'un minimum de droits (juste assez pour lire les fichiers html et/ou lire/écrire dans des fichiers de logs)
-  - **Si le `user` spécifié, il faut le créer** avec des droits appropriés
-
-⚠️ **De ce que le sujet demande, je ne pense pas que ce soit nécessaire de gérer/créer nous meme un/des user. Ca a l'air de complexifier pas mal le projet**
-
-### worker_processes
-
-- `worker_processes`: Spécifie au server le nombre d'`operating system processes` qu'Nginx doit créer pour les connexions entrantes.
-  - Il est recommandé de le set au nombre de CPU disponible, `auto` permet de mettre en place cette configuration de facon automatique.
-  - Chaque worker est `single-threaded`, ils gèrent parallèlement les requêtes entre eux en se divisant les connexions.
-  - **Relation avec worker_connections**: Le nombre total de connexions que peut gérer Nginx est égal a la multiplication du nombre de `worker_processes` et du nombre de `worker_connections`.
-
-⚠️ **Meme chose que pour user, le sujet ne demande pas spéficiquement de gérer ce context. Dans l'idée on peut le set a un que la directive soit présente ou non, au moment ou j'écris ca je n'ai pas regardé si on nous autorise les fonctions nécessaire à l'identification du nombre de CPU disponible**
-
-
-### pid
-
-- `pid`: **Je ferrai plus tard si nécessaire, meme chose je n'ai pas l'impression qu'on nous donne les outils nécessaire à la gestion de cette directive**
-
-### include
-
-- `include`: Meme chose que pour pid, je pense pas que ce soit demandé, on nous demande de gérer un fichier de conf, je m'attend a ce que tout soit dedans. Mais comme pour les logs d'erreurs ca peut etre stylé de gerer ca. Au final c'est que du parsing et j'ai pas l'impression que ce soit si dur
-
-
-## Events context setup detailed
-
-### worker_connections
-
-- `worker_connections`: Spécifie le nombre maximum de connexions simultanées que peut ouvrir un worker process (définis dans `worker_processes`). Si le serveur gère un grand nombre de connexions concurrentes, on peut atteindre cette limite, causant l'abandon des nouvelles connexions
-  - Ce paramètre est crucial à la gestion du nombre de clients servis en simultanée.
-
-### use
-
-- `use`: Spécifie la méthode de gestion des événements I/O à utiliser (select, poll, epoll, kqueue, etc.). Par défaut, nginx sélectionne automatiquement la méthode la plus efficace disponible sur le système
-  - Pour notre projet: le sujet mentionne qu'on peut utiliser poll(), select(), kqueue() ou epoll()
-  - Ce paramètre détermine comment le serveur va multiplexer les I/O
-  - Sers à rien pour notre, je vois pas un monde ou on décide de multiplier notre codebase pour répondre à cette directive, ca fait pas sens.
-
----
-# Séparation avec le dessus, on gere pas ca
 
 ## Server context setup detailed
 
@@ -262,7 +208,6 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
     1. Retourne le code de statut spécifié
     2. Ajoute un header `Location:` avec la nouvelle URL
     3. Ne traite pas le reste de la configuration de cette location
-  - J'ai pas compris ce que demande le sujet ici pour etre honnete, j'ai vu des redirection mais de la à gérer les différents code je suis pas persuadé que ce soit demandé
 
 ### alias vs root dans location
 
@@ -401,88 +346,5 @@ server {
     cgi_ext .py;                       # Extension to trigger CGI
     index api.html;                    # Default file for this route
   }
-}
-```
-
-```nginxconf
-# cat default.conf
-server {
-    listen       80;
-    server_name  localhost;
-
-    #access_log  /var/log/nginx/host.access.log  main;
-
-    location / {
-        root   /usr/share/nginx/html;
-        index  index.html index.htm;
-    }
-
-    #error_page  404              /404.html;
-
-    # redirect server error pages to the static page /50x.html
-    #
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
-    }
-
-    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-    #
-    #location ~ \.php$ {
-    #    proxy_pass   http://127.0.0.1;
-    #}
-
-    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-    #
-    #location ~ \.php$ {
-    #    root           html;
-    #    fastcgi_pass   127.0.0.1:9000;
-    #    fastcgi_index  index.php;
-    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-    #    include        fastcgi_params;
-    #}
-
-    # deny access to .htaccess files, if Apache's document root
-    # concurs with nginx's one
-    #
-    #location ~ /\.ht {
-    #    deny  all;
-    #}
-}
-```
-
-```nginxconf
-# cat nginx.conf
-
-user  nginx;
-worker_processes  auto;
-
-error_log  /var/log/nginx/error.log notice;
-pid        /run/nginx.pid;
-
-
-events {
-    worker_connections  1024;
-}
-
-
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
-
-    access_log  /var/log/nginx/access.log  main;
-
-    sendfile        on;
-    #tcp_nopush     on;
-
-    keepalive_timeout  65;
-
-    #gzip  on;
-
-    include /etc/nginx/conf.d/*.conf;
 }
 ```
