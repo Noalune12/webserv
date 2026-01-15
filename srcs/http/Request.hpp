@@ -16,7 +16,7 @@ class Request {
     
     public:
         Request();
-        Request(std::vector<server>	_servers, globalDir globalDir);
+        Request(std::vector<server>	servers, globalDir globalDir);
         ~Request();
 
         bool err;
@@ -24,6 +24,7 @@ class Request {
         bool chunkRemaining;
         std::string _method;
         std::string _uri;
+        // _http
         std::string _body;
         std::map<std::string, std::string> _headers;
         std::string			htmlPage;

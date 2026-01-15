@@ -342,15 +342,18 @@ void Request::checkRequestContent() {
         // get line (1st bytes then compare with size of second -> sep are \r\n, chunked is finished if 0/r/n/r/n what if there are remaining stuff)
         std::stringstream ss(_body);
         std::string line;
-        bool isEnd = false;
+        bool isEnd = false, isSize = true;
+        // first check that we have the end and remove it with compare
         while (std::getline(ss, line)) {
+            if (isSize == true) {
 
+            }
         }
         if (isEnd == false) 
             chunkRemaining = true;
     } else if (it == _headers.end()) {
         if (itLocation->bodySize < _body.size()) {
-            findErrorPage(400, itLocation->root, itLocation->errPage);
+            findErrorPage(413, itLocation->root, itLocation->errPage);
             std::cout << "error body is higher that client max body size" << std::endl;
             return ;   
         }
@@ -358,12 +361,12 @@ void Request::checkRequestContent() {
         // find content length
         
         it = _headers.find("content-length");
-        std::cout << "CONTENT LENGTH = " << it->second << std::endl;
         if (it == _headers.end() && !_body.empty()) {
             findErrorPage(400, itLocation->root, itLocation->errPage);
             std::cout << "error no content length but existing body" << std::endl;
             return ;
         } else if (it != _headers.end()) {
+            std::cout << "CONTENT LENGTH = " << it->second << std::endl;
             std::stringstream ss;
             ss << _body.size();
             std::string bodySize = ss.str();
@@ -380,7 +383,7 @@ void Request::checkRequestContent() {
 	// get info
 	if (_method == "GET") {
 		std::vector<std::string>::iterator itIndex = l.index.begin();
-		std::string root = l.root.substr(0, l.root.size()); // what if no root ? if starts with / need to check ?
+		std::string root = l.root; // what if no root ? if starts with / need to check ?
 		for (; itIndex != l.index.end() ; itIndex++) {
 			std::string path = root + _uri + *itIndex; // what if directory does not exist ...
 			if (path[0] == '/')
@@ -405,17 +408,11 @@ void Request::checkRequestContent() {
 		}
 	
 		if (htmlPage.empty()) {
-			//verify error
             findErrorPage(403, itLocation->root, itLocation->errPage);
 			std::cout << "error no index found" << std::endl;
 			return ;
 		}
 	}
-
-	// if (_method == "GET" && )
-	// check method is allowed and uri is defined
-	// check if host is ok
-	// check is body if content len is ok
 }
 
 void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
@@ -440,3 +437,11 @@ void Request::findErrorPage(int code, std::string root, std::map<int, std::strin
 				htmlPage = buffer.str();
 			}
 }
+
+
+// GET /api 
+
+// location /api {
+//     root /var/www/html/api;
+//     index a.html b.html;
+// }
