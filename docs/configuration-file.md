@@ -1,40 +1,41 @@
-# Nginx/web-servers configuration file documentation links
+# Configuration file learning documentation/notes
+
+## Nginx/web-servers configuration file used links
 
 [nginx beginner's guide](https://nginx.org/en/docs/beginners_guide.html#conf_structure)
 
-
 [Understanding the Nginx Configuration File Structure and Contexts](https://mangohost.net/blog/understanding-the-nginx-configuration-file-structure-and-contexts/)
-
-[Nginx common configuration video](https://www.youtube.com/watch?v=MP3Wm9dtHSQ)
-
-[Comprendre directives nginx](https://www.nicelydev.com/nginx/comprendre-nginx-conf)
 
 ### Nginx configuration structure:
 
-Les fichiers de conf de Nginx suivent une hierarchie de blocs stucturels (terme technique: `context`) contenant des `directives`. Un `context` peut etre redefinis par `scope`.
-Chaque `context` definis des `directives` mais ils peuvent egalement preciser comment ils en heritent des `contexts parents`.
+The Nginx configuration file is organized as a hierarchy of structural blocks (`contexts`) containing `directives`.
+A `context` may be redefined depending on its scope.
+Each `context` defines `directives` and can also specify how `directives` are inherited from parent `context`s.
+
 
 Ex:
 ```nginxconf
-http {                           # Context parent
-    gzip on;                     # Directive héritée par tous les contexts enfants
+http {                           # Parent context
+    gzip on;                     # Directive inherited by every context children
 
-    server {                     # Context enfant (scope spécifique)
-        listen 80;               # Directive propre à ce server
-        gzip_comp_level 6;       # Redéfinit/précise le comportement de gzip
+    server {                     # Child context (scope specific)
+        listen 80;               # Directive specific to this server
+        gzip_comp_level 6;       # Redefinition of gzip global directive
     }
 }
 ```
 
-Les contexts clefs:
+Key contexts:
 
-- **Main context**: Le scope global qui contient les directives affectant l'entierete du server web
-- **Events context**: Gère les paramètres de traitement de connexion
-- **HTTP context**: Contient tous les parametres de configuration HTTP
-- **Server context**: Definis les settings propres aux server**s** ainsi que les **virtual host**
-- **Location context**: Contexts specific a des locations (redirections) a l'interieur d'un bloc server
+- **Main context**: The global scope that has the directives affecting the entierty of the web server.
+- **Even context**: Manage the connecting parameters
+- **HTTP context**: Has the HTTP configuration parameters
+- **Server context**: Defines the settings of the server**s** as well as the **virtual hosts**
+- **Location context**: Contexts that specify the locations (redirections) inside of a server block
 
-Exemple d'un fichier de config Nginx basique:
+> Note that in webserv, we only manage to work with HTTP and lower contexts.
+
+Example of a basic Nginx config file:
 
 ```nginxconf
 # Main context - global directives
@@ -70,95 +71,87 @@ http {
 }
 ```
 
-## Main context configuration detailed
-
 ## Server context setup detailed
 
 ### listen
 
-- `listen`: Définit l'adresse IP et le port sur lesquels le serveur va écouter les connexions entrantes
-  - Syntaxe: `listen [address:]port [default_server];`
-  - Exemples:
-    - `listen 80;` - écoute sur le port 80 sur toutes les interfaces
-    - `listen 127.0.0.1:8080;` - écoute uniquement sur localhost port 8080
-    - `listen 192.168.1.10:443;` - écoute sur une IP spécifique
-  - **Important pour le sujet**: Le sujet demande de pouvoir définir plusieurs paires interface:port pour servir plusieurs sites web
-  - Un serveur peut avoir plusieurs directives `listen` pour écouter sur plusieurs ports/interfaces
-  - Le paramètre `default_server` indique quel bloc server utiliser par défaut si aucun server_name ne correspond
+- `listen`: defines the IP address and port on which the server will listen the incoming connections.
+  - Syntax: `listen [address:]port;`
+  - Examples:
+    - `listen 80;` - listen to the 80 port on every interfaces
+    - `listen 127.0.0.1:8080;` - listen only on localhost on port 8080
+    - `listen 192.168.1.10:443` - listen on a specific IP address.
+  - **Subject specification**: The sujects asks to be able to define multiple pairs of interface/port to serve several web servers.
+  - A server can have multiple `listen` directives to listen on multiple interfaces/ports.
 
 ### server_name
 
-- `server_name`: Définit le(s) nom(s) de domaine associé(s) à ce bloc server (utilisé pour le virtual hosting (implementé en HTML/1.1 si je dis pas de betises, à vérifier))
-  - Syntaxe: `server_name name1 [name2 ...];`
-  - Exemples:
+- `server_name`: defines the domain name(s) associated to the server block (used for virtual hosting, which has been implemented in the HTML/1.1 version of the protocol).
+  - Syntax: `server_name name1 [name2 ...];`
+  - Examples:
     - `server_name example.com;`
-    - `server_name example.com www.example.com;`
-  - Le serveur utilise le header HTTP `Host:` de la requête pour déterminer quel bloc server utiliser
-  - Si aucun server_name ne correspond, le serveur marqué `default_server` est utilisé
-  - **Note du sujet**: Le virtual hosting est considéré hors scope mais autorisé si on veut l'implémenter
+    - `server_name example1.com example2.com;`
+  - Le server uses the HTTP header `Host:` of the request to identify which server block to use.
+  - If no `server_name` marches, the `default_server` or default `server_name` will be used.
+  - **Subject** says the virtual hosting is out of the scope of this project but we decided to implement it.
 
 ### error_page
 
-- `error_page`: Définit des pages d'erreur personnalisées pour des codes d'état HTTP spécifiques
-  - Syntaxe: `error_page code [code...] [=response_code] uri;`
-  - Exemples:
-    - `error_page 404 /404.html;` - affiche /404.html pour les erreurs 404
-    - `error_page 500 502 503 504 /50x.html;` - même page pour plusieurs codes
-    - `error_page 404 =200 /empty.gif;` - change le code de réponse
-  - **Important pour le sujet**: Le serveur doit avoir des pages d'erreur par défaut si aucune n'est fournie
-  - Les URIs spécifiés sont relatifs à la directive `root` du contexte
-  - Si le fichier d'erreur n'existe pas, nginx utilise sa propre page d'erreur par défaut (nous on en aura, mais je sais pas si ils ont l'autorisation de delete nos fichiers, à prendre en compte)
+- `error_page`: defines the custom error pages to use for specific HTTP codes states.
+  - Syntax: `error_page code [code ...] [=response_code] uri;`
+  - Examples:
+    - `error_page 404 /404.html;` - respond the /404.html file for the 404 errors.
+    - `error_page 500 502 503 504 /50x.html;` - same page for several error codes.
+  - **Subject important note**: The server has to provides default error pages if none is given by the server.
+  - The specified URIs are relatives to the `root` directive of the current `context`
+  - If the error file doens't exists, nginx uses its own default error page
   - [nginx doc](https://nginx.org/en/docs/http/ngx_http_core_module.html#error_page)
 
 ### client_max_body_size
 
-- `client_max_body_size`: Définit la taille maximale autorisée du corps de la requête client (request body)
-  - Syntaxe: `client_max_body_size size;`
-  - Exemples:
-    - `client_max_body_size 1M;` - limite à 1 mégaoctet
-    - `client_max_body_size 10m;` - limite à 10 mégaoctets
-  - Il nous est demandé de pouvoir configurer cette limite
-  - Si une requête dépasse cette limite, le serveur retourne une erreur **413** (Request Entity Too Large)
-  - Cette directive est cruciale pour:
-    - Protéger le serveur contre les attaques par upload massif et gérer l'upload de fichiers volumineux de manière contrôlée
-  - La valeur par défaut dans nginx est 1M, à nous de choisir ce qu'on met
-  - **Unités acceptées**: k ou K (kilobytes), m ou M (megabytes), g ou G (gigabytes)
-  - **Détail d'implémentation**: Le serveur doit vérifier le header `Content-Length` de la requête avant de commencer à lire le body. Si le Content-Length dépasse la limite, rejeter immédiatement la requête avec un 413
+- `client_max_body_size`: defines the size max a body of a client request can be
+  - Syntax: `client_max_body_size size;`
+    - Examples:
+    - `client_max_body_size 1M;` - limits to 1 megaoctet
+    - `client_max_body_size 10m;` - limits to 10 mégaoctets
+  - If a requests has a body size bigger than the max, the server returns a **413** (Content Too Large) error
+  - This directive is crucial to protect the server from attacks by massive uploads and to manage voluminous files upload in a controled way.
+  - The default value of nginx is 1M
+  - **Implementation detail**: the server has to check the header `Content-Lenght` of the request before starting to read the body, if the `Content-Lenght` is above the limit then it gets immediatly rejected and sends a **413**.
 
 ### root
 
-- `root`: Définit le répertoire racine pour les requêtes dans ce contexte
-  - Syntaxe: `root path;`
-  - Exemples:
+- `root`: defines the root repertory for the requests in the current context.
+  - Syntax: `root path;`
+  - Examples:
     - `root /var/www/html;`
     - `root /usr/share/nginx/html;`
-  - Le chemin final sera construit en ajoutant l'URI de la requête au chemin root
-  - Exemple: si `root /var/www;` et requête pour `/images/photo.jpg`, le serveur cherchera `/var/www/images/photo.jpg`
-  - **Important pour le sujet**: Peut être défini au niveau `server` (par défaut) ou `location` (pour override)
-  - Cette directive est **héritée**: si définie dans `server` mais pas dans `location`, la valeur du `server` est utilisée
+  - The final path will be built by adding the URI of the request to the root path
+  - Example: if `root /var/www;` and request for `/images/photo.jpg`, the server will look for `/var/www/images/photo.jpg`
+  - **Important information**: This can be defines at the `server` level (by default) or overrided in `location`
+  - This directive is inherited in `location` if not defined in those scopes then we use the `server` content `root` directive value.
 
 ### index
 
-- `index`: Définit le(s) fichier(s) à servir par défaut quand une requête pointe vers un répertoire
-  - Syntaxe: `index file1 [file2 ...];`
-  - Exemples:
+- `index`: defines the files used by default when a requests points to a repertory
+  - Syntax: `index file1 [file2 ...];`
+  - Examples:
     - `index index.html;`
     - `index index.html index.htm default.html;`
-    - `index api.html;` (dans un contexte location spécifique)
-  - Le serveur teste les fichiers dans l'ordre spécifié et sert le premier qui existe
-  - Si aucun fichier index n'existe et que `autoindex` est activé, une liste du répertoire est générée
-  - Si aucun fichier index n'existe et que `autoindex` est désactivé, une erreur 403 (Forbidden) est retournée
-  - **Important pour le sujet**: Explicitement demandé comme directive configurable, mais un doute si on doit gérer autoindex, aucune idée de la compléxité que ca rajoute
+    - `index api.html;`
+  - The server tests the files in the specified order and serves the first that exists.
+  - If no index file exists and the `autoindex` directive is `on`, a liste of the repertory is generated
+  - If no index file exists and the `autoindex` directive is `off`, a **403** (Forbidden) is returned
+  - **Subjects asks** explicitly to handle `index` and `autoindex`
 
-## Location context setup detailed
-
-Le contexte `location` permet de définir des règles spécifiques pour certaines URIs ou patterns d'URIs. C'est le cœur de la configuration des routes dans le serveur.
 
 ### location (bloc)
 
-- `location`: Définit une configuration pour une URI ou un pattern d'URI spécifique
-  - Syntaxe: `location [modifier] uri { ... }`
-  - Exemples:
+The `location` context allows to defines rules specific to URIs or URIs patterns. This is the heart of the configuration of the routes of a server.
+
+- `location`: defines a configuration bloc for an URI
+  - Syntax: `location uri { ... };`
+  - Example:
 ```nginxconf
     location / {
         root /var/www/html;
@@ -173,108 +166,103 @@ Le contexte `location` permet de définir des règles spécifiques pour certaine
         autoindex on;
     }
 ```
-  - **Note du sujet**: Pas besoin de gérer les regex, seulement les matchs de préfixes exacts
-  - Le serveur choisit le location avec le préfixe le plus long qui correspond à l'URI
-  - Exemple: pour `/api/users`, si on a `location /` et `location /api`, c'est `/api` qui sera utilisé
+  - **Subject note**: Not handling regex, only the prefix matching
+  - The server chooses the location with the longest prefix corresponding the to URI
+  - Example: for `/api/users`, if we have a `location /` and `location /api` its the `/api` that is choosen
 
-### allow_methods (ou limit_except)
+### allow_methods
 
-- `allow_methods`: Définit les méthodes HTTP autorisées pour cette location
-  - Syntaxe: `allow_methods METHOD1 [METHOD2 ...];`
-  - Exemples:
+- `allow_methods`: defines the autorised HTTP methods in the location
+  - Syntax: `allow_methods METHOD1 [METHOD2 ...];`
+  - Examples:
     - `allow_methods GET POST;`
     - `allow_methods GET POST DELETE;`
     - `allow_methods GET;` (read-only)
-  - **Important pour le sujet**: Explicitement demandé - au minimum GET, POST, DELETE doivent être supportés
-  - Si une méthode non autorisée est utilisée, le serveur retourne 405 (Method Not Allowed)
-  - La réponse 405 doit inclure un header `Allow:` listant les méthodes autorisées
-  - Note: Dans nginx standard, cette fonctionnalité utilise `limit_except`, mais pour notre projet on peut simplifier avec `allow_methods`
+  - **Subject note**: Explicitly asked to support at least `GET | POST | DELETE`
+  - If a method unautorised is used, the server returns a **405** Method Not Allowed
+  - The **405** responses has to include the `Allow:` header, listing the autorised methods.
+
 
 ### return (redirections)
 
-- `return`: Configure une redirection HTTP pour cette location
-  - Syntaxe: `return code [text|URL];`
-  - Exemples:
-    - `return 301 /new-location;` - redirection permanente
-    - `return 302 /temporary;` - redirection temporaire
-    - `return 301 https://example.com$request_uri;` - redirection vers un autre domaine
-  - Codes de redirection communs:
-    - 301: Moved Permanently (redirection permanente)
-    - 302: Found (redirection temporaire)
+- `return`: defines a HTTP redirection to a specified location
+  - Syntax: `return [code] [text|URL];`
+  - Examples:
+    - `return 301 /new-location;` - permanent redirection
+    - `return 302 /temporary;` - temporary redirection
+    - `return 301 https://example.com$request_uri;` - redirection to another domain
+  - Common redirection codes:
+    - 301: Moved Permanently
+    - 302: Found
     - 303: See Other
     - 307: Temporary Redirect
     - 308: Permanent Redirect
-  - Quand une redirection est définie, le serveur:
-    1. Retourne le code de statut spécifié
-    2. Ajoute un header `Location:` avec la nouvelle URL
-    3. Ne traite pas le reste de la configuration de cette location
+  - When a redirection is defined, the server:
+    1. Returns the status code spécified
+    2. Adds a `Location:` header with the new URL
+    3. Does not process the rest of the configuration for this location
 
-### alias vs root dans location
+### alias vs root in location
 
-- Différence importante entre `root` et `alias` dans un contexte location:
-  - `root`: Ajoute le chemin de la location au chemin root
+- `root`: adds a path to the root location
+  - Important différences between `root` and `alias` in a `location` context
 ```nginxconf
     location /images {
         root /data;
     }
-    # URI: /images/photo.jpg → Fichier: /data/images/photo.jpg
+    # URI: /images/photo.jpg → File: /data/images/photo.jpg
 ```
-  - `alias`: Remplace le chemin de la location par le chemin alias
+  - `alias`: Replaces the path of the `location` by the `alias` path
 ```nginxconf
     location /images {
         alias /data/photos;
     }
-    # URI: /images/photo.jpg → Fichier: /data/photos/photo.jpg
+    # URI: /images/photo.jpg → File: /data/photos/photo.jpg
 ```
-  - **Pour le sujet**: L'exemple donné (`/kapouet` → `/tmp/www`) correspond au comportement de `alias`
-  - Si on utilise `root`, il faudrait que `/kapouet` pointe vers un répertoire qui contient lui-même un dossier `kapouet`
+  - **Subject**: The example in the subject (`/kapouet` → `/tmp/www`) shows the `alias` behavior.
 
 ### autoindex
 
-- `autoindex`: Active ou désactive la génération automatique de listings de répertoires
-  - Syntaxe: `autoindex on|off;`
-  - Défaut: `autoindex off;`
-  - Exemples:
+- `autoindex`: Actives or deactivates the automatique generation of a repertory listing
+  - Syntax: `autoindex on|off;`
+  - Example:
 ```nginxconf
     location /downloads {
         root /var/www;
         autoindex on;
     }
 ```
-  - Quand activé et qu'un répertoire est demandé sans fichier index:
-    - Le serveur génère une page HTML listant les fichiers et sous-répertoires
-    - Chaque entrée est un lien cliquable
-  - Quand désactivé et qu'un répertoire est demandé sans fichier index:
-    - Le serveur retourne une erreur 403 (Forbidden)
-  - Format typique d'un [listing](http://188.165.227.112/portail/)
+  - When `on` and with a repertory without `index`:
+    - The server generate an HTML page listing the files and sub-repertories
+    - Each entry is a clickable link
+  - When `off` and a repertory is asks without an `index` file:
+    - The server returns a **403** (Forbidden)
+  - Typical format of a [listing](http://188.165.227.112/portail/) with `autoindex`
 
-### upload_to (ou client_body_temp_path)
+### upload_to
 
-- `upload_to`: Définit le répertoire où les fichiers uploadés par les clients seront stockés
-  - Syntaxe: `upload_to path;`
-  - Exemples:
+- `upload_to`: defines the repertory where the clients uploaded files will be stocked
+  - Syntax: `upload_to path;`
+  - Example:
     - `upload_to /var/www/uploads;`
     - `upload_to /tmp/uploads;`
-  - Cette directive doit être combinée avec:
-    - **Une méthode POST**
-    - Un `client_max_body_size` approprié pour accepter les fichiers
-  - Considérations d'implémentation:
-    - Vérifier que le répertoire existe et est accessible en écriture
-    - Gérer les noms de fichiers en conflit (écrasement ou renommage)
-    - Nettoyer les uploads partiels en cas d'erreur
-    - Valider les types de fichiers si nécessaire (sécurité)
-  - Le serveur doit gérer les uploads avec `Content-Type: multipart/form-data` ou `application/octet-stream`
-  - **Détail d'implémentation**:
-    - Pour les requêtes POST avec multipart/form-data, parser les boundaries
-    - Extraire le nom du fichier du header `Content-Disposition`
-    - Écrire les données reçues dans le fichier de destination
-    - Retourner 201 (Created) en cas de succès, avec un header Location pointant vers la ressource créée
+  - This directives ask to be combined with:
+    - the `POST` method
+    - an appropriate `client_max_body_size` to accept files
+  - Implementation considerations:
+    - Check if the repertory exists and is accessible for writing (rights check)
+    - Handle filenames conflicts (overwriting or renaming)
+    - Cleans up the temporary upload in case of errors
+    - Validates the types of file (if necessary)
+  - The server has to handle upload with the `Context-Type: multipart/form-data` or `application/octet-stream`
+  - **Implementation details**:
+    - For the requests with `POST` with `multipart/form-data`, boundaries parsing is necessary
+    - Extracting of the filename with the `Content-Disposition:` header
+    - Write the data received in the destination file.
+    - Return 201 (Created) in case of success, with a `Location:` header pointing to the created ressource
 
-## [tdameros documentation for the webserv configuration file](https://github.com/tdameros/42-webserv/blob/main/docs/config_file.md)
+### Complete example of the different location configuration
 
-> A prendre comme référence, il reprend le format de la doc de Nginx et limite les directives a celle sont requises par le sujet (nos fichiers de configs de test sont basé sur la hiérarchies décrite dans sa doc).
-
-### Exemple complet de configuration location
 ```nginxconf
 server {
     listen 8080;
@@ -283,27 +271,27 @@ server {
     index index.html;
     client_max_body_size 10M;
 
-    # Route par défaut - site statique
+    # Default route, static website
     location / {
         allow_methods GET;
         autoindex off;
     }
 
-    # API avec plusieurs méthodes (sur les webserv que j'ai évalué c'était souvent la page d'accueil, avec toutes les méthodes testable)
+    # API with several methods
     location /api {
         allow_methods GET POST DELETE;
         root /var/www/api;
         index api.html;
     }
 
-    # Zone de téléchargement avec listing
+    # Downloading route with autoindex listing
     location /downloads {
         allow_methods GET;
         root /var/www;
         autoindex on;
     }
 
-    # Upload de fichiers
+    # Upload route
     location /upload {
         allow_methods POST;
         upload_to /var/www/uploads;
@@ -315,7 +303,7 @@ server {
         return 301 /new-page;
     }
 
-    # Exemple avec alias
+    # Example with alias
     location /docs {
         alias /usr/share/documentation;
         allow_methods GET;
@@ -324,7 +312,7 @@ server {
 }
 ```
 
-## DUMP CONFIGURATION FILES, WILL TREAT LATER
+## Dump configuration, with every directives handled by our webserv and quick explaination of behaviors
 
 ```nginxconf
 server {
