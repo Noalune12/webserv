@@ -21,6 +21,7 @@ class Request {
 
         bool err;
         int status;
+        bool chunkRemaining;
         std::string _method;
         std::string _uri;
         std::string _body;

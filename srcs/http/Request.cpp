@@ -4,9 +4,9 @@
 #include <sstream>
 #include <fstream>
 
-Request::Request(): err(false), status(0) {}
+Request::Request(): err(false), status(0), chunkRemaining(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false) {}
 
 
 Request::~Request() {}
@@ -248,6 +248,8 @@ std::string Request::lowerString(const std::string& s) {
 
 
 void Request::checkRequestContent() {
+
+    std::cout << "\nCHECK REQUEST CONTENT\n" << std::endl;
     // Host check
 	std::map<std::string, std::string>::iterator it = _headers.find("host");
 	if (it == _headers.end()) {
@@ -329,14 +331,60 @@ void Request::checkRequestContent() {
 	}
 
 	// body check + content max body size
+    // find transfer encoding
+    it = _headers.find("transfer-encoding");
+    if (it != _headers.end() && it->second != "chunked") {
+        findErrorPage(400, itLocation->root, itLocation->errPage);
+        std::cout << "error transfer encoding not well defined" << std::endl;
+        return ;
+    } else if (it != _headers.end() && it->second == "chunked") {
+        std::cout << "PARSE CHUNKED BODY HERE" << std::endl;
+        // get line (1st bytes then compare with size of second -> sep are \r\n, chunked is finished if 0/r/n/r/n what if there are remaining stuff)
+        std::stringstream ss(_body);
+        std::string line;
+        bool isEnd = false;
+        while (std::getline(ss, line)) {
+
+        }
+        if (isEnd == false) 
+            chunkRemaining = true;
+    } else if (it == _headers.end()) {
+        if (itLocation->bodySize < _body.size()) {
+            findErrorPage(400, itLocation->root, itLocation->errPage);
+            std::cout << "error body is higher that client max body size" << std::endl;
+            return ;   
+        }
+
+        // find content length
+        
+        it = _headers.find("content-length");
+        std::cout << "CONTENT LENGTH = " << it->second << std::endl;
+        if (it == _headers.end() && !_body.empty()) {
+            findErrorPage(400, itLocation->root, itLocation->errPage);
+            std::cout << "error no content length but existing body" << std::endl;
+            return ;
+        } else if (it != _headers.end()) {
+            std::stringstream ss;
+            ss << _body.size();
+            std::string bodySize = ss.str();
+            std::cout << "BODY SIZE = " << bodySize << std::endl;
+            if (it->second != bodySize) {
+                findErrorPage(400, itLocation->root, itLocation->errPage);
+                std::cout << "error  content length is not equal to existing body size" << std::endl;
+                return ;
+            }
+        }
+    }
+    // if method is POST but no body => 400
 
 	// get info
 	if (_method == "GET") {
 		std::vector<std::string>::iterator itIndex = l.index.begin();
-		std::string root = l.root.substr(1, l.root.size()); // what if no root ? if starts with \ need to check ?
+		std::string root = l.root.substr(0, l.root.size()); // what if no root ? if starts with / need to check ?
 		for (; itIndex != l.index.end() ; itIndex++) {
 			std::string path = root + _uri + *itIndex; // what if directory does not exist ...
-			
+			if (path[0] == '/')
+                path = path.substr(1, path.size());
 			std::cout << "PATH = " << path << std::endl;
 			// check access
 			std::ifstream file(path.c_str());
