@@ -1,8 +1,8 @@
 # Facade / Singleton
 
-![facade](assets/facade-pattern.png)
-
 ## Facade
+
+<img src="assets/facade-pattern.png" alt="facade" width="800" />
 
 Structural design pattern that provides an interface offering simplified access to a complete set of classes.
 
@@ -57,6 +57,9 @@ Server::Server(const std::string& configPath) {
 ```
 
 ## Singleton
+
+<img src="assets/singleton.png" alt="singleton" width="800" />
+
 
 A singleton **guarantees the uniqueness of an instance for a class**. It provides a global access point to our instance.
 
