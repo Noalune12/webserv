@@ -1,5 +1,7 @@
 # Facade / Singleton
 
+![facade](assets/facade-pattern.png)
+
 ## Facade
 
 Structural design pattern that provides an interface offering simplified access to a complete set of classes.
