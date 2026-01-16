@@ -106,8 +106,6 @@ We chose `epoll()` over `poll()` for the following reasons:
 
 Since the project targets Linux environments and scalability matters for an HTTP server, `epoll()` was the natural choice.
 
-⚠️ The subject mentions `poll()` but explicitly allows equivalent functions like `epoll()`.
-
 ## Core Components
 
 ### EventLoop Class
