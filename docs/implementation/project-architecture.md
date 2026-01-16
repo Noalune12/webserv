@@ -2,11 +2,11 @@
 
 ## Facade
 
-Structural design pattern that provides an interface offering simplified access to a complet set of classes.
+Structural design pattern that provides an interface offering simplified access to a complete set of classes.
 
-A facade is a class that provides a simple interface to a complex subsystem of **moving parts**. The goal is to limit possible interactions with the facade, since it it the subsystem that possess these functionalities.
+A facade is a class that provides a simple interface to a complex subsystem of **moving parts**. The goal is to limit possible interactions with the facade, since it is the subsystem that possesses these functionalities.
 
-In our Webserv, we could only expose a `parseConfig(path)` method instead of interacting directly with the lexer, parser and multiple configuration objects. This facade reads the file, validate directives and return a ready-to-use struct for socket creation and routes building, without revealing the internal complexity.
+In our Webserv, we could only expose a `parseConfig(path)` method instead of interacting directly with the lexer, parser and multiple configuration objects. This facade reads the file, validates directives and returns a ready-to-use struct for socket creation and routes building, without revealing the internal complexity.
 
 ```cpp
 // Instead of:
@@ -21,13 +21,13 @@ server.start();
 ```
 
 
-- A facade provides a convenient access to the various parts of the subsystem's functionalities.
-- The classes of the subsystem are not aware of the existence of the facade. **They operate and interacts directly within their own system**
-- The goal is to encapsulte their external functionnalities and hide them from the rest of the code
+- A facade provides convenient access to the various parts of the subsystem's functionalities.
+- The classes of the subsystem are not aware of the existence of the facade. **They operate and interact directly within their own system**
+- The goal is to encapsulate their external functionalities and hide them from the rest of the code
 
-#### Applications examples
+#### Application examples
 
-- **Use a facade is the needs are to architecture a subsystem into multiple layers (exactly our case)**
+- **Use a facade when you need to architect a subsystem into multiple layers (exactly our case)**
 
 ```cpp
 // The Facade server hides the whole internal complexity
@@ -48,7 +48,7 @@ class Server {
 - Force communication to subsystems via the front panel.
 ```cpp
 Server::Server(const std::string& configPath) {
-    // The facade orchestrate the initialiaztion of every subsystems
+    // The facade orchestrates the initialization of every subsystem
     Config config = _parser.parse(configPath);
     ...
 }
@@ -56,15 +56,15 @@ Server::Server(const std::string& configPath) {
 
 ## Singleton
 
-A singleton **guarentees the uniqueness of an instance for a class**. It provides a global access to point to our instance.
+A singleton **guarantees the uniqueness of an instance for a class**. It provides a global access point to our instance.
 
-Its implementation is simple, our facade class, to become a singleton needs a **default private constructor** with a static creating method. The static method will act has a constructor.
+Its implementation is simple: our facade class, to become a singleton, needs a **default private constructor** with a static creation method. The static method will act as a constructor.
 ```cpp
 class Server {
     private:
         Server(const std::string& configPath);  // private constructor
-        Server(const Server&);                  // Forbbids copy
-        Server& operator=(const Server&);       // Forbbids copy assignment
+        Server(const Server&);                  // Forbids copy
+        Server& operator=(const Server&);       // Forbids copy assignment
 
     public:
         static Server& getInstance(const std::string& configPath);
@@ -80,6 +80,6 @@ srv.start();
 Server& srv2 = Server::getInstance(); // same object as srv
 ```
 
-⚠️ **Both of these design patterns goes together sometimes. We did not implement the singleton as we architectured a bit differently the data structures inside of our subsystem.**
+⚠️ **Both of these design patterns go together sometimes. We did not implement the singleton as we architected the data structures inside of our subsystem a bit differently.**
 
 [Singleton documentation](https://refactoring.guru/design-patterns/singleton)
