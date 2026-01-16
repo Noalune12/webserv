@@ -1,56 +1,54 @@
-# Façade / Singleton
+# Facade / Singleton
 
-## Façade
+## Facade
 
-Patron de conception structurel qui procure une interface offrant un accès simplifié à un ensemble complexe de classes (dans notre contexte).
+Structural design pattern that provides an interface offering simplified access to a complet set of classes.
 
-Une façade est une classe qui procure une interface simple vers un sous-système complexe de **parties mobiles**. Le but est de limiter les interactions possibles avec la façade, car ce sont les sous-systèmes qui possèdent ces fonctionnalités.
+A facade is a class that provides a simple interface to a complex subsystem of **moving parts**. The goal is to limit possible interactions with the facade, since it it the subsystem that possess these functionalities.
 
-Par exemple, dans Webserv, on pourrait n'exposer qu'une méthode parseConfig(chemin) au lieu d'interagir avec le lexer, le parser et les multiples objets de configuration. Cette façade lit le fichier, valide les directives et retourne une structure prête à l'emploi pour lancer les sockets et routes, sans révéler la complexité interne.
+In our Webserv, we could only expose a `parseConfig(path)` method instead of interacting directly with the lexer, parser and multiple configuration objects. This facade reads the file, validate directives and return a ready-to-use struct for socket creation and routes building, without revealing the internal complexity.
 
 ```cpp
-// Au lieu de faire:
+// Instead of:
 Lexer lexer("/path/to/webserv.conf");
 Parser parser(lexer.tokenize());
 Config config = parser.parse();
 SocketManager sm(config);
 
-// On fait simplement:
+// We have:
 Server server("/path/to/webserv.conf");
 server.start();
 ```
 
-- Une façade procure un accès pratique aux différentes parties des fonctionnalités du sous-système.
-- Les classes du sous-système ne sont pas conscientes de l'existence de la façade. **Elle opèrent et interagissent directement à l'intérieur de leur propre système**.
 
-- Le but est d'encapsuler les fonctionnalités externes et de les cacher du reste du code.
-- On se contentera de modifier l'implémentation des méthodes de la façade.
+- A facade provides a convenient access to the various parts of the subsystem's functionalities.
+- The classes of the subsystem are not aware of the existence of the facade. **They operate and interacts directly within their own system**
+- The goal is to encapsulte their external functionnalities and hide them from the rest of the code
 
-#### Possibilités d'application
+#### Applications examples
 
-- Utiliser une façade si besoin d'une interface limitée mais directe à un sous-système complexe.
-- **Utiliser une façade si besoin de structurer un sous-système en plusieurs couches (notre utilisation)**
+- **Use a facade is the needs are to architecture a subsystem into multiple layers (exactly our case)**
 
 ```cpp
-// La façade Server masque toute la complexité interne:
+// The Facade server hides the whole internal complexity
 class Server {
-  private:
-      ConfigParser _parser;      // Sous-système parsing
-      SocketManager _sockets;    // Sous-système réseau
-      RequestHandler _handler;   // Sous-système HTTP
-      CGIExecutor _cgi;         // Sous-système CGI
-  public:
-      void start();  // Interface simple pour l'utilisateur
+    private:
+        ConfigParser    _parser;    // parsing subsystem
+        SocketManager   _sockets;   // network subsystem
+        RequestHandler  _rhandler;  // HTTP subsystem
+        CGIExecutor     _cgi;       // CGI subsystem
+    public:
+        void    start();            // Easy to use interface
 };
 ```
 
-#### Mise en oeuvre
+#### Implementation
 
-- Déclarer et implétementer une interface en tant que façade regidigeant les appels du code aux sous-objects appropriés. Elle est également responsable de l'initialisation des sous-systèmes et de gérer leurs cycles de vie.
-- Obliger la communication aux sous-systèmes en passant par la façade.
+- Declare and implement an interface as a facade that regulates code calls to the appropriate sub-objects. It is also responsible for initializing subsystems and managing their lifecycles
+- Force communication to subsystems via the front panel.
 ```cpp
 Server::Server(const std::string& configPath) {
-    // La façade orchestre l'initialisation de tous les sous-systèmes
+    // The facade orchestrate the initialiaztion of every subsystems
     Config config = _parser.parse(configPath);
     ...
 }
@@ -58,31 +56,30 @@ Server::Server(const std::string& configPath) {
 
 ## Singleton
 
-Le singleton, par définition **garantit l'unicité d'une instance pour une classe**. Il fournit également un point d'accès global à notre instance.
+A singleton **guarentees the uniqueness of an instance for a class**. It provides a global access to point to our instance.
 
-Sa mise en place est très simple, notre classe façade, qui est un singleton aura un constructeur par **défaut privé** avec une méthode de création statique qui se comportera comme un constructeur.
+Its implementation is simple, our facade class, to become a singleton needs a **default private constructor** with a static creating method. The static method will act has a constructor.
 ```cpp
 class Server {
-  private:
-      Server(const std::string& configPath);  // Constructeur privé
-      Server(const Server&);                  // Interdit la copie
-      Server& operator=(const Server&);       // Interdit l'assignation
+    private:
+        Server(const std::string& configPath);  // private constructor
+        Server(const Server&);                  // Forbbids copy
+        Server& operator=(const Server&);       // Forbbids copy assignment
 
-  public:
-      static Server& getInstance(const std::string& configPath);
+    public:
+        static Server& getInstance(const std::string& configPath);
 };
 ```
-
-Si notre code a accès à la classe du singleton, alors il pourra appeler sa méthode statique qui à chaque appel retournera toujours le même objet.
+If our code has access to the singleton class, then it will be able to call its static method which will always return the same object on each call.
 ```cpp
-// Dans main.cpp:
+// in main.cpp
 Server& srv = Server::getInstance("/path/to/webserv.conf");
 srv.start();
 
-// Ailleurs dans le code, on récupère la même instance:
-Server& srv2 = Server::getInstance();  // Même objet que srv
+// elsewhere, we get the same instance
+Server& srv2 = Server::getInstance(); // same object as srv
 ```
 
-⚠️ **Les deux vont souvent ensemble, maintenant je pense pas que ce soit totalement nécessaire vu qu'on construit un projet fini. On peut garder l'idée de coté mais j'ai un doute sur la nécessité de mettre ça en place**
+⚠️ **Both of these design patterns goes together sometimes. We did not implement the singleton as we architectured a bit differently the data structures inside of our subsystem.**
 
-et si jamais: [doc singleton (FR)](https://refactoring.guru/fr/design-patterns/singleton)
+[Singleton documentation](https://refactoring.guru/design-patterns/singleton)
