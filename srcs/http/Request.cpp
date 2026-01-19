@@ -22,6 +22,14 @@ static void printWithoutR(std::string what, std::string line) {
     std::cout << what <<" = \'" << l << "\' -" << std::endl;
 }
 
+void Request::clearPreviousRequest() {
+    htmlPage.clear();
+    _headersStr.clear();
+    _requestLine.clear();
+    _body.clear();
+    _headers.clear();
+}
+
 void Request::checkRequestSem(std::string request) {
     err = false;
     _req = request;
@@ -46,9 +54,6 @@ void Request::checkRequestSem(std::string request) {
 bool Request::extractRequestInfo() {
     // extracts request line, headers and body
     // std::string requestLine, headers;
-    _headersStr.clear();
-    _requestLine.clear();
-    _body.clear();
 
     // Get request line
     size_t index = _req.find("\r\n");
@@ -134,7 +139,6 @@ bool hasWS(std::string s) {
 //if body -> check content-length is same
 
 bool Request::checkHeaders() {
-    _headers.clear();
     std::stringstream ss(_headersStr);
     std::string line;
     while (std::getline(ss, line)) {
@@ -259,8 +263,6 @@ void Request::checkRequestContent() {
 	    std::cout << "error no host in headers " << std::endl;
 		return ;
 	}
-	server s;
-	location l;
 	size_t sep = it->second.find(":");
 	if (sep == 0 || sep == it->second.size() - 1) {
 		findErrorPage(400, "/", _globalDir.errPage);
@@ -289,7 +291,7 @@ void Request::checkRequestContent() {
 			if (itListen->port == port && (itListen->ip == name || itListen->ip == "0.0.0.0")) {
 				// what about servername and virtual hosting
 				std::cout << "server found with " << itListen->port << ", " << itListen->ip << std::endl;
-				s = *itServer;
+				_reqServer = *itServer;
 				serverFound = true;
 				break;
 			}
@@ -305,29 +307,29 @@ void Request::checkRequestContent() {
 	}
 
 	// uri check
-	std::vector<location>::iterator itLocation = s.loc.begin();
-	for (; itLocation != s.loc.end(); itLocation++) {
+	std::vector<location>::iterator itLocation = _reqServer.loc.begin();
+	for (; itLocation != _reqServer.loc.end(); itLocation++) {
 		if (_uri == itLocation->path) {
 			std::cout << "location found at " << itLocation->path << std::endl;
-			l = *itLocation;
+			_reqLocation = *itLocation;
 			break;
 		}
 	}
 
-	if (itLocation == s.loc.end()) {
-        findErrorPage(404, itServer->root, itServer->errPage);
+	if (itLocation == _reqServer.loc.end()) {
+        findErrorPage(404, _reqServer.root, _reqServer.errPage);
 	    std::cout << "error no location found" << std::endl;
 		return ;
 	}
 
 	// method check
-	if ((_method == "GET" && l.methods.get == false)
-			|| (_method == "POST" && l.methods.post == false)
-            || (_method == "DELETE" && l.methods.del == false)
+	if ((_method == "GET" && _reqLocation.methods.get == false)
+			|| (_method == "POST" && _reqLocation.methods.post == false)
+            || (_method == "DELETE" && _reqLocation.methods.del == false)
             || _method == "HEAD" || _method == "OPTIONS"
             || _method == "TRACE" || _method == "PUT"
             || _method == "PATCH" || _method == "CONNECT") {
-        findErrorPage(405, itLocation->root, itLocation->errPage);
+        findErrorPage(405, _reqLocation.root, _reqLocation.errPage);
 	    std::cout << "error not allowed method" << std::endl;
 		return ;
 	}
@@ -336,7 +338,7 @@ void Request::checkRequestContent() {
     // find transfer encoding
     it = _headers.find("transfer-encoding");
     if (it != _headers.end() && it->second != "chunked") {
-        findErrorPage(400, itLocation->root, itLocation->errPage);
+        findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
         std::cout << "error transfer encoding not well defined" << std::endl;
         return ;
     } else if (it != _headers.end() && it->second == "chunked") {
@@ -360,7 +362,7 @@ void Request::checkRequestContent() {
         //         _body.compare(_body.size() - 2, 2, "\r\n") == 0) {
         //         _body = _body.substr(0, _body.size() - 2);
         // } else {
-        //     findErrorPage(400, itLocation->root, itLocation->errPage);
+        //     findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
         //     std::cout << "error with chunked body = body is not well ended" << std::endl;
         //     return ;
         // }
@@ -375,8 +377,8 @@ void Request::checkRequestContent() {
 
         //     // compare with max body size
 
-        //     if (itLocation->bodySize < chunkContent.size()) {
-        //         findErrorPage(413, itLocation->root, itLocation->errPage);
+        //     if (_reqLocation.bodySize < chunkContent.size()) {
+        //         findErrorPage(413, _reqLocation.root, _reqLocation.errPage);
         //         std::cout << "error body is higher that client max body size" << std::endl;
         //         return ;   
         //     }
@@ -387,7 +389,7 @@ void Request::checkRequestContent() {
         //         std::string hex;
         //         size_t index = line.find('\r');
         //         if (index == 0 || index == std::string::npos) {
-        //             findErrorPage(400, itLocation->root, itLocation->errPage);
+        //             findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
         //             std::cout << "error with chunked body = \\r not found or at index 0" << std::endl;
         //             return ;
         //         }
@@ -397,7 +399,7 @@ void Request::checkRequestContent() {
         //         if (end == hex.c_str()
         //                 || *end != '\0'
         //                 || chunkSize < 0) { // what if overflow 
-        //             findErrorPage(400, itLocation->root, itLocation->errPage);
+        //             findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
         //             std::cout << "error with chunked body = erreur with hexa conversion" << std::endl;
         //             return ;
         //         }
@@ -417,7 +419,7 @@ void Request::checkRequestContent() {
         //             temp += line;
         //             std::cout << "TEMP JUST BEFORE CHECK = \'" << temp << "\'" << std::endl; 
         //             if (temp.size() != chunkSize) {
-        //                 findErrorPage(400, itLocation->root, itLocation->errPage);
+        //                 findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
         //                 std::cout << "error with chunked body = not the right size" << std::endl;
         //                 return ;
         //             }
@@ -438,8 +440,8 @@ void Request::checkRequestContent() {
         //         // partChunk + chunkContent
             
     } else if (it == _headers.end()) {
-        if (itLocation->bodySize < _body.size()) {
-            findErrorPage(413, itLocation->root, itLocation->errPage);
+        if (_reqLocation.bodySize < _body.size()) {
+            findErrorPage(413, _reqLocation.root, _reqLocation.errPage);
             std::cout << "error body is higher that client max body size" << std::endl;
             return ;   
         }
@@ -448,7 +450,7 @@ void Request::checkRequestContent() {
         
         it = _headers.find("content-length");
         if (it == _headers.end() && !_body.empty()) {
-            findErrorPage(400, itLocation->root, itLocation->errPage);
+            findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
             std::cout << "error no content length but existing body" << std::endl;
             return ;
         } else if (it != _headers.end()) {
@@ -458,7 +460,7 @@ void Request::checkRequestContent() {
             std::string bodySize = ss.str();
             std::cout << "BODY SIZE = " << bodySize << std::endl;
             if (it->second != bodySize) {
-                findErrorPage(400, itLocation->root, itLocation->errPage);
+                findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
                 std::cout << "error  content length is not equal to existing body size" << std::endl;
                 return ;
             }
@@ -469,9 +471,9 @@ void Request::checkRequestContent() {
 
 	// get info
 	if (_method == "GET") {
-		std::vector<std::string>::iterator itIndex = l.index.begin();
-		std::string root = l.root; // what if no root ? if starts with / need to check ?
-		for (; itIndex != l.index.end() ; itIndex++) {
+		std::vector<std::string>::iterator itIndex = _reqLocation.index.begin();
+		std::string root = _reqLocation.root; // what if no root ? if starts with / need to check ?
+		for (; itIndex != _reqLocation.index.end() ; itIndex++) {
 			std::string path = root + _uri + *itIndex; // what if directory does not exist ...
 			if (path[0] == '/')
                 path = path.substr(1, path.size());
@@ -495,7 +497,7 @@ void Request::checkRequestContent() {
 		}
 	
 		if (htmlPage.empty()) {
-            findErrorPage(403, itLocation->root, itLocation->errPage);
+            findErrorPage(403, _reqLocation.root, _reqLocation.errPage);
 			std::cout << "error no index found" << std::endl;
 			return ;
 		}
@@ -503,7 +505,6 @@ void Request::checkRequestContent() {
 }
 
 void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
-    htmlPage.clear();
     err = true;
     status = code;
     // root = root.substr(1, root.size()); // what if no root ? if starts with \ need to check ?
@@ -523,6 +524,10 @@ void Request::findErrorPage(int code, std::string root, std::map<int, std::strin
 				buffer << file.rdbuf();
 				htmlPage = buffer.str();
 			}
+}
+
+void Request::parseChunk() {
+    std::cout << "PARSE CHUNK = " << _body << std::endl;
 }
 
 

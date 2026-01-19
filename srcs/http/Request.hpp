@@ -13,6 +13,11 @@ class Request {
         std::string _requestLine;
         std::vector<server>	_servers;
         globalDir _globalDir;
+        server _reqServer;
+	    location _reqLocation;
+
+        // int _chunkSize;
+        // std::string _remainingChunk;
     
     public:
         Request();
@@ -39,7 +44,8 @@ class Request {
         std::string lowerString(const std::string& s);
         void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
         void isChunkEnd();
-
+        void clearPreviousRequest();
+        void parseChunk();
 };
 
 

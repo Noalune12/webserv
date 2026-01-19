@@ -85,7 +85,7 @@ std::string Connection::getBuffer(void) const {
 }
 
 void Connection::parseRequest() {
-	_request.htmlPage.clear();
+	_request.clearPreviousRequest();
 	_request.checkRequestSem(_buffer);
 	if (_request.err == true)
 		return ;

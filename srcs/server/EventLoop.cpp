@@ -241,11 +241,12 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				tempCall(clientFd);
 				client._request._body += client.getBuffer();
 				client.startTimer(2, CLIENT_TIMEOUT);
-				printWithoutR("Body", client.getBuffer());		
+				// printWithoutR("Body", client.getBuffer());		
 			}
-			client._request.isChunkEnd();
+			client._request.isChunkEnd(); // to change -> need to parse the body as it comes
+			client._request.parseChunk();
 			if (client._request.chunkRemaining == false) {
-				client.setState(SENDING_RESPONSE); // will need to set READING_BODY first
+				client.setState(SENDING_RESPONSE);
 				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT); 
 			}
