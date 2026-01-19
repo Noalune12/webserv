@@ -38,6 +38,7 @@ class Request {
         std::string trimOws(const std::string& s);
         std::string lowerString(const std::string& s);
         void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
+        void isChunkEnd();
 
 };
 

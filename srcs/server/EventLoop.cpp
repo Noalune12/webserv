@@ -224,12 +224,32 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				break ;
 			}
 			client.parseRequest();
+
+			if (client._request.chunkRemaining == true) {
+				client.setState(READING_BODY);
+				client.startTimer(2, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLIN); 
+			}
+
 			Logger::debug("READING_HEADERS state");
 			// if chunked change state to READING_BODY
 			break ; // to remove if we fallthrought
 
 		case READING_BODY:
 			// read until 0/r/n/r/n --> parse the body with the information gathered at the request parsing
+			if (ev & EPOLLIN) {
+				tempCall(clientFd);
+				client._request._body += client.getBuffer();
+				client.startTimer(2, CLIENT_TIMEOUT);
+				printWithoutR("Body", client.getBuffer());		
+			}
+			client._request.isChunkEnd();
+			if (client._request.chunkRemaining == false) {
+				client.setState(SENDING_RESPONSE); // will need to set READING_BODY first
+				client.startTimer(4, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT); 
+			}
+			
 			Logger::debug("READING_BODY state");
 			break ;
 
@@ -294,7 +314,6 @@ void	EventLoop::tempCall(int clientFd) {
 		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 		std::map<int, Connection>::iterator it = _connections.find(clientFd);
 		it->second.setBuffer(buffer);
-
 }
 
 void	EventLoop::acceptConnection(int listenFd) {

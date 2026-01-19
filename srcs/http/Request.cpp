@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <cstdlib>
+#include <climits>
 
 Request::Request(): err(false), status(0), chunkRemaining(false) {}
 
@@ -54,7 +56,7 @@ bool Request::extractRequestInfo() {
         // err = true;
         // status = 400; // need global dir if 400 is defines of need to get the host as well ?
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line" << std::endl;
+        std::cout << "error with request line : not finished with rn" << std::endl;
         return false;  
     }
     std::cout << "INDEX of r n = " << index << std::endl;
@@ -87,7 +89,7 @@ bool Request::extractRequestInfo() {
     size_t index = _requestLine.find(' ');
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line" << std::endl;
+        std::cout << "error with request line: method" << std::endl;
         return false;
     }
     method = _requestLine.substr(0, index);
@@ -99,7 +101,7 @@ bool Request::extractRequestInfo() {
     index = remain.find(' ');
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line" << std::endl;
+        std::cout << "error with request line: uri" << std::endl;
         return false;
     }
     uri = remain.substr(0, index);
@@ -110,7 +112,7 @@ bool Request::extractRequestInfo() {
     //http
     if (remain.empty()) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line" << std::endl;
+        std::cout << "error with request line: http" << std::endl;
         return false;
     }
     http = remain;
@@ -340,17 +342,101 @@ void Request::checkRequestContent() {
     } else if (it != _headers.end() && it->second == "chunked") {
         std::cout << "PARSE CHUNKED BODY HERE" << std::endl;
         // get line (1st bytes then compare with size of second -> sep are \r\n, chunked is finished if 0/r/n/r/n what if there are remaining stuff)
-        std::stringstream ss(_body);
-        std::string line;
-        bool isEnd = false, isSize = true;
-        // first check that we have the end and remove it with compare
-        while (std::getline(ss, line)) {
-            if (isSize == true) {
 
-            }
-        }
-        if (isEnd == false) 
+        // bool isSize = true;
+        // first check that we have the end and remove it with compare
+        if (_body.size() >= 5 &&
+                _body.compare(_body.size() - 5, 5, "0\r\n\r\n") == 0) {
+                chunkRemaining = false;
+                _body = _body.substr(0, _body.size() - 5);
+                // CHUNK PARSER
+        } else {
             chunkRemaining = true;
+        }
+
+
+        // add a check if last line does not hace a \n
+        // if (_body.size() >= 2 &&
+        //         _body.compare(_body.size() - 2, 2, "\r\n") == 0) {
+        //         _body = _body.substr(0, _body.size() - 2);
+        // } else {
+        //     findErrorPage(400, itLocation->root, itLocation->errPage);
+        //     std::cout << "error with chunked body = body is not well ended" << std::endl;
+        //     return ;
+        // }
+        // std::stringstream ss(_body);
+        // std::string line;
+        // std::cout << "CHUNKED BODY = \'" << _body << "\'" << std::endl;
+        // double chunkSize;
+        // std::string chunkContent, temp;
+        // while (std::getline(ss, line)) {
+
+        //     std::cout << "LINE = " << line << std::endl;
+
+        //     // compare with max body size
+
+        //     if (itLocation->bodySize < chunkContent.size()) {
+        //         findErrorPage(413, itLocation->root, itLocation->errPage);
+        //         std::cout << "error body is higher that client max body size" << std::endl;
+        //         return ;   
+        //     }
+
+        //     if (isSize == true) {
+        //         // convert hexa to int
+        //         char* end = NULL;
+        //         std::string hex;
+        //         size_t index = line.find('\r');
+        //         if (index == 0 || index == std::string::npos) {
+        //             findErrorPage(400, itLocation->root, itLocation->errPage);
+        //             std::cout << "error with chunked body = \\r not found or at index 0" << std::endl;
+        //             return ;
+        //         }
+        //         hex = line.substr(0, index);
+        //         chunkSize = strtol(hex.c_str(), &end, 16);
+
+        //         if (end == hex.c_str()
+        //                 || *end != '\0'
+        //                 || chunkSize < 0) { // what if overflow 
+        //             findErrorPage(400, itLocation->root, itLocation->errPage);
+        //             std::cout << "error with chunked body = erreur with hexa conversion" << std::endl;
+        //             return ;
+        //         }
+        //         std::cout << "CHUNK SIZE = " << chunkSize << std::endl;
+        //         isSize = false;
+        //     } else {
+        //         // get _body until \r
+        //         size_t index = line.find('\r');
+        //         if (index == std::string::npos) {
+        //             temp += line;
+        //             temp += '\n';
+        //             std::cout << "TEMP = \'" << temp << "\'" << std::endl; 
+        //             continue;
+        //         } else {
+        //             // compare with actual size
+        //             line = line.substr(0, index);
+        //             temp += line;
+        //             std::cout << "TEMP JUST BEFORE CHECK = \'" << temp << "\'" << std::endl; 
+        //             if (temp.size() != chunkSize) {
+        //                 findErrorPage(400, itLocation->root, itLocation->errPage);
+        //                 std::cout << "error with chunked body = not the right size" << std::endl;
+        //                 return ;
+        //             }
+        //             chunkContent += temp;
+        //             std::cout << "CHUNK = \'" << chunkContent << "\'" << std::endl; 
+        //             isSize = true;
+        //             temp.clear();
+        //         }
+        //     }
+        // }
+        // _body = chunkContent; 
+        // // change logic get the hexa octets
+        // // check if ending or if I will receie several chunk
+        // // parse chunk in a loop (to define)
+        //     // get size
+        //     // read size octet
+        //     // if I was supposed to get the whole chunks or save size if I will receive more
+        //         // partChunk + chunkContent
+            
     } else if (it == _headers.end()) {
         if (itLocation->bodySize < _body.size()) {
             findErrorPage(413, itLocation->root, itLocation->errPage);
@@ -379,6 +465,7 @@ void Request::checkRequestContent() {
         }
     }
     // if method is POST but no body => 400
+    // regarding content type -> parse the body ?
 
 	// get info
 	if (_method == "GET") {
@@ -439,9 +526,13 @@ void Request::findErrorPage(int code, std::string root, std::map<int, std::strin
 }
 
 
-// GET /api 
-
-// location /api {
-//     root /var/www/html/api;
-//     index a.html b.html;
-// }
+void Request::isChunkEnd() {
+    if (_body.size() >= 5 &&
+            _body.compare(_body.size() - 5, 5, "0\r\n\r\n") == 0) {
+            std::cout << "CHECKING END OF CHUNK = " << _body << std::endl;;
+            chunkRemaining = false;
+            _body = _body.substr(0, _body.size() - 5);
+    } else {
+        chunkRemaining = true;
+    }
+}
