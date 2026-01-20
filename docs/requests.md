@@ -23,6 +23,7 @@
 3. message body
   - needed for POST
   - ignored for GET
+  - if a body is present but content-type is note supported -> 415
 
 # GET
 
