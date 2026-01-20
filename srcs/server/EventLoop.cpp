@@ -239,13 +239,13 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			// read until 0/r/n/r/n --> parse the body with the information gathered at the request parsing
 			if (ev & EPOLLIN) {
 				tempCall(clientFd);
-				client._request._body += client.getBuffer();
+				client._request._chunk += client.getBuffer();
 				client.startTimer(2, CLIENT_TIMEOUT);
 				// printWithoutR("Body", client.getBuffer());		
 			}
-			client._request.isChunkEnd(); // to change -> need to parse the body as it comes
+			// client._request.isChunkEnd(); // to change -> need to parse the body as it comes
 			client._request.parseChunk();
-			if (client._request.chunkRemaining == false) {
+			if (client._request.chunkRemaining == false || client._request.err == true) {
 				client.setState(SENDING_RESPONSE);
 				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT); 

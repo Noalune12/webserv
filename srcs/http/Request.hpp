@@ -6,6 +6,14 @@
 # include <string>
 # include "ConfigInheritor.hpp"
 
+enum ChunckState {
+    GETTING_FIRST_SIZE,
+    GETTING_SIZE,
+    READING_BYTES,
+    IS_END,
+};
+
+
 class Request {
     private:
         std::string _req;
@@ -16,9 +24,10 @@ class Request {
         server _reqServer;
 	    location _reqLocation;
 
-        // int _chunkSize;
+        double _chunkSize;
         // std::string _remainingChunk;
-    
+        int _chunkState;
+
     public:
         Request();
         Request(std::vector<server>	servers, globalDir globalDir);
@@ -33,6 +42,7 @@ class Request {
         std::string _body;
         std::map<std::string, std::string> _headers;
         std::string			htmlPage;
+        std::string _chunk;
 
         void checkRequestSem(std::string request);
         bool extractRequestInfo();
