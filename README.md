@@ -63,3 +63,4 @@ make
 ## AI Usage
 
 AI was generally used to learn concepts such as I/O multiplexing, implement CI/CD tasks, generate config test files, correct grammar and spelling in documentation, learn basic HTML/CSS to hand-make these beautiful index pages and default error pages as well as a tool to debug code while building this webserv.
+Also **GitHub Copilot** built-in functionalities were used for code review during PRs.
