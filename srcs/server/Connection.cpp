@@ -1,12 +1,12 @@
 #include "Connection.hpp"
 
-Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), err(false), status(0) {
+Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), err(false), status(0) {
+Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -84,140 +84,17 @@ std::string Connection::getBuffer(void) const {
 	return _buffer;
 }
 
-#include <sstream>
-#include <fstream>
-
 void Connection::parseRequest() {
-	htmlPage.clear();
-	reqParsing.checkRequestSem(_buffer);
-	err = reqParsing.err;
-	status = reqParsing.status;
+	_request.htmlPage.clear();
+	_request.checkRequestSem(_buffer);
+	if (_request.err == true)
+		return ;
+	_request.checkRequestContent();
+	// err = _request.err;
+	// status = _request.status;
 
-	std::cout << err << " &&&&& " << status << std::endl;
+	std::cout << _request.err << " &&&&& " << _request.status << std::endl;
 	_buffer.clear();
 
-	if (err == true)
-		return ;
-	// Host check
-	std::map<std::string, std::string>::iterator it = reqParsing._headers.find("host");
-	if (it == reqParsing._headers.end()) {
-		err = true;
-		status = 400;
-	    std::cout << "error no host in headers " << std::endl;
-		return ;
-	}
-	server s;
-	location l;
-	size_t sep = it->second.find(":");
-	if (sep == 0 || sep == it->second.size() - 1) {
-		err = true;
-		status = 400;
-	    std::cout << "error host has : at the start or the end" << std::endl;
-		return ;
-	}
-	std::string name;
-	int port;
-	if (sep == std::string::npos) {
-		name = it->second;
-		port = 8080;
-	} else {
-		name = it->second.substr(0, sep);
-		std::string temp = it->second.substr(sep + 1, it->second.size());
-		std::stringstream ss(temp);
-		ss >> port; // what if overflow
-	}
-	if (name == "localhost") {
-		name = "127.0.0.1";
-	}
-	std::vector<server>::iterator itServer = _servers.begin();
-	bool serverFound = false;
-	for (; itServer != _servers.end(); itServer++) {
-		std::vector<listenDirective>::iterator itListen = itServer->lis.begin();
-		for (; itListen != itServer->lis.end(); itListen++) {
-			if (itListen->port == port && (itListen->ip == name || itListen->ip == "0.0.0.0")) {
-				// what about servername and virtual hosting
-				std::cout << "server found with " << itListen->port << ", " << itListen->ip << std::endl;
-				s = *itServer;
-				serverFound = true;
-				break;
-			}
-		}
-		if (serverFound)
-			break ;
-	}
 
-	if (itServer == _servers.end()) {
-		err = true;
-		status = 400;
-	    std::cout << "error no compatible server found" << std::endl;
-		return ;
-	}
-
-	// uri check
-	std::vector<location>::iterator itLocation = s.loc.begin();
-	for (; itLocation != s.loc.end(); itLocation++) {
-		if (reqParsing._uri == itLocation->path) {
-			std::cout << "location found at " << itLocation->path << std::endl;
-			l = *itLocation;
-			break;
-		}
-	}
-
-	if (itLocation == s.loc.end()) {
-		err = true;
-		status = 404;
-	    std::cout << "error no location found" << std::endl;
-		return ;
-	}
-
-	// method check
-	if ((reqParsing._method == "GET" && l.methods.get == false)
-			|| (reqParsing._method == "POST" && l.methods.post == false)) {
-		err = true;
-		status = 405;
-	    std::cout << "error not allowed method" << std::endl;
-		return ;
-	}
-
-	// body check + content max body size
-
-	// get info
-	if (reqParsing._method == "GET") {
-		std::vector<std::string>::iterator itIndex = l.index.begin();
-		std::string root = l.root.substr(1, l.root.size());
-		for (; itIndex != l.index.end() ; itIndex++) {
-			std::string path = root + reqParsing._uri + *itIndex; // what if directory does not exist ...
-			
-			std::cout << "PATH = " << path << std::endl;
-			// check access
-			std::ifstream file(path.c_str());
-			if (!file) {
-				continue;
-			} else {
-				std::cout << "File found" << std::endl;
-				std::stringstream buffer;
-				buffer << file.rdbuf();
-				htmlPage = buffer.str();
-				// htmlPage.assign(
-				// 	(std::istreambuf_iterator<char>(file)),
-				// 	std::istreambuf_iterator<char>());
-				err = false;
-				status = 200;
-				return ;
-			}
-		}
-	
-		if (htmlPage.empty()) {
-			//verify error
-			err = true;
-			status = 403;
-			std::cout << "error no index found" << std::endl;
-			return ;
-		}
-	}
-
-	// if (reqParsing._method == "GET" && )
-	// check method is allowed and uri is defined
-	// check if host is ok
-	// check is body if content len is ok
 }
