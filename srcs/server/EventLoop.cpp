@@ -76,6 +76,11 @@ void	EventLoop::checkTimeouts(void) {
 		int	clientFd = timedOut[i];
 
 		std::ostringstream	oss;
+		Connection& client = _connections[clientFd];
+		if (client.getState() == READING_BODY) {
+			modifyEpoll(clientFd, EPOLLOUT);
+			sendError(clientFd, 400); // send a response
+		}
 		oss << "client #" << clientFd << " timeout, closing";
 		Logger::warn(oss.str());
 		// send408 -> timeout error
@@ -125,6 +130,7 @@ void	EventLoop::run(void) {
 	Logger::notice("eventLoop running...");
 
 	while (_running) {
+		std::cout << "RUNNING LOOP" << std::endl;
 		int	timeout_sec = calculateEpollTimeout();
 		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, timeout_sec * 1000);
 		if (nEvents < 0) {
@@ -145,8 +151,9 @@ void	EventLoop::run(void) {
 			// accept + client informations storage
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
-			else
+			else {
 				handleClientEvent(fd, ev);
+			}
 			// else if () {
 				// } // cgi pipe ?
 			// else {
@@ -227,23 +234,20 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 			if (client._request.chunkRemaining == true) {
 				client.setState(READING_BODY);
-				client.startTimer(2, CLIENT_TIMEOUT);
+				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				modifyEpoll(clientFd, EPOLLIN); 
 			}
 
 			Logger::debug("READING_HEADERS state");
-			// if chunked change state to READING_BODY
 			break ; // to remove if we fallthrought
 
 		case READING_BODY:
-			// read until 0/r/n/r/n --> parse the body with the information gathered at the request parsing
 			if (ev & EPOLLIN) {
 				tempCall(clientFd);
 				client._request._chunk += client.getBuffer();
-				client.startTimer(2, CLIENT_TIMEOUT);
+				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				// printWithoutR("Body", client.getBuffer());		
 			}
-			// client._request.isChunkEnd(); // to change -> need to parse the body as it comes
 			client._request.parseChunk();
 			if (client._request.chunkRemaining == false || client._request.err == true) {
 				client.setState(SENDING_RESPONSE);

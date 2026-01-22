@@ -585,7 +585,7 @@ void Request::parseChunk() {
             std::cout << "READING BYTES\n" << std::endl;
 
             // get size bytes
-            if (_chunk.size() >= _chunkSize + 2) {
+            if ((_chunk.size() >= _chunkSize + 2)) {
                 _body += _chunk.substr(0, _chunkSize);
                 _chunk = _chunk.substr(_chunkSize, _chunk.size());
                 std::cout << "CHUNK = " << _chunk << " VS BODY = " << _body << std::endl;
@@ -599,6 +599,7 @@ void Request::parseChunk() {
                 if (_chunkSize == 0 && _chunk == "\r\n") {
                     _chunkState = IS_END;
                     chunkRemaining = false;
+                    return ;
                 } else if (_chunkSize == 0) {
                     findErrorPage(400, _reqLocation.root, _reqLocation.errPage);
                     std::cout << "error with chunked body = end not well formated" << std::endl;
@@ -649,6 +650,7 @@ void Request::parseChunk() {
             std::cout << "CHUNK = " << _chunk << std::endl;
         }
     }
+    // what if I receive a not well formated line at the end -> loop is waiting until client deconnection
 }
 
 
