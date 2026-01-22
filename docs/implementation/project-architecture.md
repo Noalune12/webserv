@@ -1,56 +1,56 @@
-# Façade / Singleton
+# Facade / Singleton
 
-## Façade
+## Facade
 
-Patron de conception structurel qui procure une interface offrant un accès simplifié à un ensemble complexe de classes (dans notre contexte).
+<img src="assets/facade-pattern.png" alt="facade" width="800" />
 
-Une façade est une classe qui procure une interface simple vers un sous-système complexe de **parties mobiles**. Le but est de limiter les interactions possibles avec la façade, car ce sont les sous-systèmes qui possèdent ces fonctionnalités.
+Structural design pattern that provides an interface offering simplified access to a complete set of classes.
 
-Par exemple, dans Webserv, on pourrait n'exposer qu'une méthode parseConfig(chemin) au lieu d'interagir avec le lexer, le parser et les multiples objets de configuration. Cette façade lit le fichier, valide les directives et retourne une structure prête à l'emploi pour lancer les sockets et routes, sans révéler la complexité interne.
+A facade is a class that provides a simple interface to a complex subsystem of **moving parts**. The goal is to limit possible interactions with the facade, since it is the subsystem that possesses these functionalities.
+
+In our Webserv, we could only expose a `parseConfig(path)` method instead of interacting directly with the lexer, parser and multiple configuration objects. This facade reads the file, validates directives and returns a ready-to-use struct for socket creation and routes building, without revealing the internal complexity.
 
 ```cpp
-// Au lieu de faire:
+// Instead of:
 Lexer lexer("/path/to/webserv.conf");
 Parser parser(lexer.tokenize());
 Config config = parser.parse();
 SocketManager sm(config);
 
-// On fait simplement:
+// We have:
 Server server("/path/to/webserv.conf");
 server.start();
 ```
 
-- Une façade procure un accès pratique aux différentes parties des fonctionnalités du sous-système.
-- Les classes du sous-système ne sont pas conscientes de l'existence de la façade. **Elle opèrent et interagissent directement à l'intérieur de leur propre système**.
 
-- Le but est d'encapsuler les fonctionnalités externes et de les cacher du reste du code.
-- On se contentera de modifier l'implémentation des méthodes de la façade.
+- A facade provides convenient access to the various parts of the subsystem's functionalities.
+- The classes of the subsystem are not aware of the existence of the facade. **They operate and interact directly within their own system**
+- The goal is to encapsulate their external functionalities and hide them from the rest of the code
 
-#### Possibilités d'application
+#### Application examples
 
-- Utiliser une façade si besoin d'une interface limitée mais directe à un sous-système complexe.
-- **Utiliser une façade si besoin de structurer un sous-système en plusieurs couches (notre utilisation)**
+- **Use a facade when you need to architect a subsystem into multiple layers (exactly our case)**
 
 ```cpp
-// La façade Server masque toute la complexité interne:
+// The Facade server hides the whole internal complexity
 class Server {
-  private:
-      ConfigParser _parser;      // Sous-système parsing
-      SocketManager _sockets;    // Sous-système réseau
-      RequestHandler _handler;   // Sous-système HTTP
-      CGIExecutor _cgi;         // Sous-système CGI
-  public:
-      void start();  // Interface simple pour l'utilisateur
+    private:
+        ConfigParser    _parser;    // parsing subsystem
+        SocketManager   _sockets;   // network subsystem
+        RequestHandler  _rhandler;  // HTTP subsystem
+        CGIExecutor     _cgi;       // CGI subsystem
+    public:
+        void    start();            // Easy to use interface
 };
 ```
 
-#### Mise en oeuvre
+#### Implementation
 
-- Déclarer et implétementer une interface en tant que façade regidigeant les appels du code aux sous-objects appropriés. Elle est également responsable de l'initialisation des sous-systèmes et de gérer leurs cycles de vie.
-- Obliger la communication aux sous-systèmes en passant par la façade.
+- Declare and implement an interface as a facade that regulates code calls to the appropriate sub-objects. It is also responsible for initializing subsystems and managing their lifecycles
+- Force communication to subsystems via the front panel.
 ```cpp
 Server::Server(const std::string& configPath) {
-    // La façade orchestre l'initialisation de tous les sous-systèmes
+    // The facade orchestrates the initialization of every subsystem
     Config config = _parser.parse(configPath);
     ...
 }
@@ -58,31 +58,131 @@ Server::Server(const std::string& configPath) {
 
 ## Singleton
 
-Le singleton, par définition **garantit l'unicité d'une instance pour une classe**. Il fournit également un point d'accès global à notre instance.
+<img src="assets/singleton.png" alt="singleton" width="800" />
 
-Sa mise en place est très simple, notre classe façade, qui est un singleton aura un constructeur par **défaut privé** avec une méthode de création statique qui se comportera comme un constructeur.
+
+A singleton **guarantees the uniqueness of an instance for a class**. It provides a global access point to our instance.
+
+Its implementation is simple: our facade class, to become a singleton, needs a **default private constructor** with a static creation method. The static method will act as a constructor.
 ```cpp
 class Server {
-  private:
-      Server(const std::string& configPath);  // Constructeur privé
-      Server(const Server&);                  // Interdit la copie
-      Server& operator=(const Server&);       // Interdit l'assignation
+    private:
+        Server(const std::string& configPath);  // private constructor
+        Server(const Server&);                  // Forbids copy
+        Server& operator=(const Server&);       // Forbids copy assignment
 
-  public:
-      static Server& getInstance(const std::string& configPath);
+    public:
+        static Server& getInstance(const std::string& configPath);
 };
 ```
-
-Si notre code a accès à la classe du singleton, alors il pourra appeler sa méthode statique qui à chaque appel retournera toujours le même objet.
+If our code has access to the singleton class, then it will be able to call its static method which will always return the same object on each call.
 ```cpp
-// Dans main.cpp:
+// in main.cpp
 Server& srv = Server::getInstance("/path/to/webserv.conf");
 srv.start();
 
-// Ailleurs dans le code, on récupère la même instance:
-Server& srv2 = Server::getInstance();  // Même objet que srv
+// elsewhere, we get the same instance
+Server& srv2 = Server::getInstance(); // same object as srv
 ```
 
-⚠️ **Les deux vont souvent ensemble, maintenant je pense pas que ce soit totalement nécessaire vu qu'on construit un projet fini. On peut garder l'idée de coté mais j'ai un doute sur la nécessité de mettre ça en place**
+⚠️ **Both of these design patterns go together sometimes. We did not implement the singleton as we architected the data structures inside of our subsystem a bit differently.**
 
-et si jamais: [doc singleton (FR)](https://refactoring.guru/fr/design-patterns/singleton)
+[Singleton documentation](https://refactoring.guru/design-patterns/singleton)
+
+# Event-Driven I/O Loop
+
+<img src="assets/epoll-user-space.png" alt="epoll-user-space" width="800" />
+
+## Technical Choice: epoll over poll
+
+We chose `epoll()` over `poll()` for the following reasons:
+
+| Aspect | poll() | epoll() |
+|--------|--------|---------|
+| Complexity | O(n) - kernel scans all fds | O(1) - kernel maintains ready list |
+| State | Stateless, rebuild pollfd array each call | Stateful, kernel remembers interest list |
+| Scalability | Degrades with connection count | Constant performance regardless of scale |
+| Portability | POSIX standard | Linux-specific |
+
+Since the project targets Linux environments and scalability matters for an HTTP server, `epoll()` was the natural choice.
+
+## Core Components
+
+### EventLoop Class
+
+The `EventLoop` is the heart of our server, implementing the Reactor pattern. It owns the epoll instance and manages all client connections.
+```cpp
+class EventLoop {
+    private:
+        int                         _epollFd;       // epoll instance
+        bool                        _running;       // main loop control
+        ServerManager&              _serverManager; // listen sockets + vhosts
+        std::map<int, Connection>   _connections;   // fd -> Connection mapping
+
+    public:
+        void run(void);  // main event loop
+        // epoll operations
+        bool addToEpoll(int fd, uint32_t events);
+        bool modifyEpoll(int fd, uint32_t events);
+        bool removeFromEpoll(int fd);
+};
+```
+
+### Connection State Machine
+
+Each client connection is tracked through a state machine, allowing proper timeout management and request processing:
+```cpp
+enum ConnectionState {
+    IDLE,               // waiting for new request (keep-alive)
+    READING_HEADERS,    // receiving HTTP headers
+    READING_BODY,       // receiving request body
+    CGI_RUNNING,        // waiting for CGI process
+    SENDING_RESPONSE,   // writing response to client
+    CLOSED
+};
+```
+
+Each state has its own timer index, enabling fine-grained timeout control (different timeouts for idle connections vs. active transfers).
+
+## Implementation Flow
+
+### Initialization
+
+The epoll instance is created once at startup via `epoll_create()`. All listen sockets from the `ServerManager` are then registered to the interest list with `EPOLLIN` events, making them ready to accept incoming connections.
+
+### Event Dispatching
+
+The main loop distinguishes between two fd types: listen sockets trigger `acceptConnection()` to handle new clients, while client sockets are routed to `handleClientEvent()` which uses the connection's current state to determine the appropriate action (read headers, read body, send response, etc.).
+
+## Key Design Decisions
+
+### Non-Blocking Sockets
+
+All client sockets are set to non-blocking mode immediately after `accept()`:
+```cpp
+fcntl(clientFd, F_SETFL, O_NONBLOCK);
+```
+
+This ensures that `recv()` and `send()` never block the event loop, even if a client connection is slow or stalled.
+
+### Dynamic Timeout Calculation
+
+Rather than using a fixed timeout, `epoll_wait()` receives a dynamically computed value based on the nearest connection timeout. This optimizes CPU usage by avoiding unnecessary wake-ups while guaranteeing that timed-out connections are cleaned up promptly.
+
+### epoll_ctl Notes
+```cpp
+// EPOLL_CTL_DEL: NULL event parameter is safe on kernel > 2.6.9
+epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
+
+// EPOLL_CTL_ADD: EEXIST means fd already registered (not necessarily an error)
+// EPOLL_CTL_DEL: ENOENT means fd not registered (cleanup scenario)
+```
+
+## User Space Perspective
+
+From the application's point of view, the event loop provides:
+
+- **Simple system call interface**: `epoll_create`, `epoll_ctl`, `epoll_wait`
+- **O(1) performance**: regardless of connection count
+- **Event-driven programming model**: process only ready sockets
+- **Clean resource management**: centralized connection lifecycle

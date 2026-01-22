@@ -46,3 +46,5 @@ webserv
 servertest
 .vscode
 *.log
+
+!etc/webserv
