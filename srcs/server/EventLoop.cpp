@@ -130,7 +130,6 @@ void	EventLoop::run(void) {
 	Logger::notice("eventLoop running...");
 
 	while (_running) {
-		std::cout << "RUNNING LOOP" << std::endl;
 		int	timeout_sec = calculateEpollTimeout();
 		int	nEvents = epoll_wait(_epollFd, events, MAX_EVENTS, timeout_sec * 1000);
 		if (nEvents < 0) {
@@ -217,13 +216,6 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.startTimer(3, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
 				printWithoutR("Request", client.getBuffer());
-				// // read + parse headers
-				// if (header complete) {
-					// 	client.setState(READING_BODY);
-					// 	client.startTimer(2, CLIENT_TIMEOUT);
-					// } else {
-						// 	// errors
-						// }
 						
 			}
 			if (client.getBuffer().empty()) { // to avoid EPOLLERR 

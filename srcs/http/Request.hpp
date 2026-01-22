@@ -25,7 +25,6 @@ class Request {
 	    location _reqLocation;
 
         double _chunkSize;
-        // std::string _remainingChunk;
         int _chunkState;
 
     public:
