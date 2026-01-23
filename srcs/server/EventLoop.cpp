@@ -244,26 +244,26 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			if (ev & EPOLLOUT) {
 
 				// a bouger
-				if (client._request.err == true) {
-						sendError(clientFd, client._request.status);
-				} else {
-					sendStatus(clientFd, client._request.status);
-				}
+				// if (client._request.err == true) {
+				// 		sendError(clientFd, client._request.status);
+				// } else {
+				// 	sendStatus(clientFd, client._request.status);
+				// }
 
 
 				Response response;
 
 				response.debugPrintRequestData(client._request);
 				// preparation + debug mode
-				// response.prepare(client._request);
+				response.prepare(client._request);
 
 				// convertion pret a etre envoyer via send()
-				// std::vector<char> buffer = response.buildRaw();
-
-				// ssize_t	sent = send(clientFd, &buffer[0], buffer.size(), 0); // MSG_NOSIGNAL |
-				// if (sent > 0) {
-					// std::cout << GREEN "[fd " << clientFd << "] Sent " << sent << " bytes" RESET << std::endl;
-				// } // pour l'instant je gere pas les send en plusieurs fois, on verra plus tard
+				std::vector<char> buffer = response.buildRaw();
+				std::cout << buffer.size() << std::endl;
+				ssize_t	sent = send(clientFd, &buffer[0], buffer.size(), 0); // MSG_NOSIGNAL |
+				if (sent > 0) {
+					std::cout << GREEN "[fd " << clientFd << "] Sent " << sent << " bytes" RESET << std::endl;
+				} // pour l'instant je gere pas les send en plusieurs fois, on verra plus tard
 
 
 
