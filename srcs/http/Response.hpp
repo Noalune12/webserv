@@ -13,9 +13,9 @@ class Response {
 
 		void	debugPrintRequestData(const Request& req);
 
-		// void	prepare(const Request& req);
+		void	prepare(const Request& req);
 
-		// std::vector<char>	buildRaw(void);
+		std::vector<char>	buildRaw(void);
 
 		// data public for now
 		int									_statusCode;

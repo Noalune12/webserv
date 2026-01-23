@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "colors.hpp"
 #include "Response.hpp"
@@ -32,4 +33,80 @@ void	Response::debugPrintRequestData(const Request& req) {
 		std::string preview = req._body;
 		std::cout << "  FULL BODY BELOW\n" << preview << RESET;
 	}
+
+	std::cout << YELLOW "\nhtmlPage:" RESET << std::endl;
+	if (req.htmlPage.empty()) {
+		std::cout << "  (empty)" << std::endl;
+	} else {
+		std::cout << "  size = " << req.htmlPage.size() << " bytes" << std::endl;
+	}
+}
+
+
+void	Response::prepare(const Request& req) {
+
+	if (req.err) {
+		_statusCode = req.status;
+
+		if (_statusCode == 400) {
+			_statusText = "Bad Request";
+		} else if (_statusCode == 404){
+			_statusText = "Not Found";
+		} else if (_statusCode == 405) {
+			_statusText = "Method Not Allowed"; // and so on for other error codes
+		} else {
+			_statusText = "Error";
+		}
+	}
+
+	_headers["Server"] = "webserv/1.0";
+	// a l'arrache pour l'instant
+	_headers["Connection"] = "keep-alive";
+
+	std::ostringstream	bodyOss;
+	bodyOss << "<!DOCTYPE html>\n"
+			<< "<html>\n"
+			<< "<head><title>" << _statusCode << " " << _statusText << "</title></head>\n"
+			<< "<body>\n"
+			<< "<h1>" << _statusCode << " " << _statusText << "</h1>\n"
+			<< "<p>Method: " << req._method << "</p>\n"
+			<< "<p>URI: " << req._uri << "</p>\n"
+			<< "</body>\n"
+			<< "</html>\n";
+
+	std::string bodyStr = bodyOss.str();
+	_body.assign(bodyStr.begin(), bodyStr.end());
+
+	// Content-Length et Content-Type
+	std::ostringstream lenOss;
+	lenOss << _body.size();
+	_headers["Content-Length"] = lenOss.str();
+	_headers["Content-Type"] = "text/html";
+
+	std::cout << bodyOss.str() << std::endl;
+}
+
+
+std::vector<char>	Response::buildRaw(void) {
+
+	std::ostringstream	oss;
+	oss << "HTTP/1.1 " << _statusCode << " " << _statusText << "\r\n";
+
+	std::map<std::string, std::string>::const_iterator it;
+	for (it = _headers.begin(); it != _headers.end(); ++it) {
+		oss << it->first << ": " << it->second << "\r\n";
+	}
+	oss << "\r\n"; // last CRLF (double \r\n)
+
+	std::string	headerStr = oss.str();
+	std::vector<char>	result;
+
+	result.reserve(headerStr.size() + _body.size());
+
+	// headers
+	result.insert(result.end(), headerStr.begin(), headerStr.end());
+	// body
+	result.insert(result.end(), _body.begin(), _body.end());
+
+	return (result);
 }
