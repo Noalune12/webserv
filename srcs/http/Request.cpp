@@ -29,6 +29,7 @@ void Request::clearPreviousRequest() {
     _body.clear();
     _headers.clear();
     _chunk.clear();
+    // _trailing.clear();
 }
 
 void Request::checkRequestSem(std::string request) {
@@ -345,6 +346,7 @@ void Request::checkRequestContent() {
 	}
 
 	// uri check
+    // /!\ check only 1st /.../
 	std::vector<location>::iterator itLocation = _reqServer.loc.begin();
 	for (; itLocation != _reqServer.loc.end(); itLocation++) {
 		if (_uri == itLocation->path || (_uri + "/") == itLocation->path || _uri == itLocation->path + "/" ) {
@@ -424,33 +426,67 @@ void Request::checkRequestContent() {
 	// get info
 	if (_method == "GET") {
 		std::vector<std::string>::iterator itIndex = _reqLocation.index.begin();
-		std::string root = _reqLocation.root; // what if no root ? if starts with / need to check ?
-		for (; itIndex != _reqLocation.index.end() ; itIndex++) {
-            std::string path;
-            if (_uri[_uri.size() - 1] == '/')
-			    path = root + _uri + *itIndex; // what if directory does not exist ...
-            else
-                path = root + _uri + "/" + *itIndex;
-			if (path[0] == '/')
-                path = path.substr(1, path.size());
-			std::cout << "PATH = " << path << std::endl;
-			// check access
-			std::ifstream file(path.c_str());
-			if (!file) {
-				continue;
-			} else {
-				std::cout << "File found" << std::endl;
-				std::stringstream buffer;
-				buffer << file.rdbuf();
-				htmlPage = buffer.str();
-				// htmlPage.assign(
-				// 	(std::istreambuf_iterator<char>(file)),
-				// 	std::istreambuf_iterator<char>());
-				err = false;
-				status = 200;
-				return ;
-			}
-		}
+
+        // IF ROOT
+        if (!_reqLocation.root.empty()) {
+            std::string root = _reqLocation.root; // what if no root ? if starts with / need to check ?
+            for (; itIndex != _reqLocation.index.end() ; itIndex++) {
+                std::string path;
+                if (_uri[_uri.size() - 1] == '/')
+                    path = root + _uri + *itIndex; // what if directory does not exist ...
+                else
+                    path = root + _uri + "/" + *itIndex;
+                if (path[0] == '/')
+                    path = path.substr(1, path.size());
+                std::cout << "PATH = " << path << std::endl;
+                // check access
+                std::ifstream file(path.c_str());
+                if (!file) {
+                    continue;
+                } else {
+                    std::cout << "File found" << std::endl;
+                    std::stringstream buffer;
+                    buffer << file.rdbuf();
+                    htmlPage = buffer.str();
+                    // htmlPage.assign(
+                    // 	(std::istreambuf_iterator<char>(file)),
+                    // 	std::istreambuf_iterator<char>());
+                    err = false;
+                    status = 200;
+                    return ;
+                }
+            }
+        } else {
+            std::string alias = _reqLocation.alias;
+            for (; itIndex != _reqLocation.index.end() ; itIndex++) {
+                std::string path;
+                if (_uri[_uri.size() - 1] == '/')
+                    path = alias + *itIndex; 
+                else
+                    path = alias + "/" + *itIndex;
+                if (path[0] == '/')
+                    path = path.substr(1, path.size());
+                std::cout << "PATH = " << path << std::endl;
+                // check access
+                std::ifstream file(path.c_str());
+                if (!file) {
+                    continue;
+                } else {
+                    std::cout << "File found" << std::endl;
+                    std::stringstream buffer;
+                    buffer << file.rdbuf();
+                    htmlPage = buffer.str();
+                    // htmlPage.assign(
+                    // 	(std::istreambuf_iterator<char>(file)),
+                    // 	std::istreambuf_iterator<char>());
+                    err = false;
+                    status = 200;
+                    return ;
+                }
+            }
+        }
+
+        // IF ALIAS
 	
 		if (htmlPage.empty()) {
             findErrorPage(403, _reqLocation.root, _reqLocation.errPage);

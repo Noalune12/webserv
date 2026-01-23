@@ -42,6 +42,7 @@ class Request {
         std::map<std::string, std::string> _headers;
         std::string			htmlPage;
         std::string _chunk;
+        // std::string _trailing;
 
         void checkRequestSem(std::string request);
         bool extractRequestInfo();
