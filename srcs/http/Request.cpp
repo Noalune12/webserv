@@ -128,12 +128,24 @@ bool Request::extractRequestInfo() {
     return true;
  }
 
-bool hasWS(std::string s) {
-    for (size_t i = 0; i < s.length(); i++) {
-        if (isspace(s[i]))
+bool hasWS(const std::string& line) {
+    for (size_t i = 0; i < line.length(); i++) {
+        if (isspace(line[i]))
             return true;
     }
     return false;
+}
+
+bool isOnlyDigits(const std::string& line) {
+	size_t count = 0;
+
+	for (size_t i = 0; i < line.length(); ++i) {
+        if (isdigit(line[i]))
+            count++;
+    }
+	if (line.length() == count)
+		return true;
+	return false;
 }
 
 bool Request::checkHeaders() {
@@ -149,14 +161,28 @@ bool Request::checkHeaders() {
 
         line = line.substr(0, line.length() - 1);
         size_t index = line.find(":");
-        if (index == 0 || index == std::string::npos || index == line.length() - 2) {
+        if (index == 0 || index == std::string::npos) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error with headers no : or no header name or content" << std::endl;
+            std::cout << "error with headers no : or no header name" << std::endl;
             return false;
         }
         std::string name = line.substr(0, index);
-        std::string content = line.substr(index + 2);
-        // skip whitespace afte :
+        if (hasWS(name)) {
+            findErrorPage(400, "/", _globalDir.errPage);
+            std::cout << "error with headers name has WS" << std::endl;
+            return false;
+        }
+
+
+        std::string content = line.substr(index + 1);
+        
+        if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
+            std::cout << "CONTENT = \'" << content << "\'" << std::endl;
+            findErrorPage(400, "/", _globalDir.errPage);
+            std::cout << "error with headers : is not followed by space" << std::endl;
+            return false;
+        }
+
         name = lowerString(name);
         content = trimOws(content);
         if (name != "user-agent")
@@ -166,7 +192,8 @@ bool Request::checkHeaders() {
         if ((name == "host" && _headers.find("host") != _headers.end()) 
                 || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
                 || (name == "content-length" && _headers.find("content-length") != _headers.end())
-                || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())) {
+                || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())
+                || (name == "content-type" && _headers.find("content-type") != _headers.end())) {
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with duplicate headers : " << name << std::endl;
             return false;  
@@ -174,6 +201,19 @@ bool Request::checkHeaders() {
         if ((name == "host") && hasWS(content)) {
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error header : " << name << " has WS in its content" << std::endl;
+            return false;
+        }
+        if (((name == "host") && content.empty())
+                || ((name == "content-length") && content.empty())
+                || ((name == "transfer-encoding") && content.empty())
+                || ((name == "content-type") && content.empty())) {
+            findErrorPage(400, "/", _globalDir.errPage);
+            std::cout << "error header : " << name << " cannot have an empty content" << std::endl;
+            return false;
+        }
+        if (name == "content-length" && !isOnlyDigits(content)) {
+            findErrorPage(400, "/", _globalDir.errPage);
+            std::cout << "error header : " << name << " has to be only digits" << std::endl;
             return false;
         }
         _headers[name] = content;
@@ -380,13 +420,17 @@ void Request::checkRequestContent() {
         }
     }
     // if method is POST but no body => 400
-
+    
 	// get info
 	if (_method == "GET") {
 		std::vector<std::string>::iterator itIndex = _reqLocation.index.begin();
 		std::string root = _reqLocation.root; // what if no root ? if starts with / need to check ?
 		for (; itIndex != _reqLocation.index.end() ; itIndex++) {
-			std::string path = root + _uri + *itIndex; // what if directory does not exist ...
+            std::string path;
+            if (_uri[_uri.size() - 1] == '/')
+			    path = root + _uri + *itIndex; // what if directory does not exist ...
+            else
+                path = root + _uri + "/" + *itIndex;
 			if (path[0] == '/')
                 path = path.substr(1, path.size());
 			std::cout << "PATH = " << path << std::endl;
