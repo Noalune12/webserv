@@ -242,24 +242,42 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 		case SENDING_RESPONSE:
 			if (ev & EPOLLOUT) {
-				// send505exemple(clientFd);
 
+				// a bouger
 				if (client._request.err == true) {
 						sendError(clientFd, client._request.status);
 				} else {
 					sendStatus(clientFd, client._request.status);
 				}
-				client.setState(IDLE);
-				client.startTimer(0, CLIENT_TIMEOUT);
-				modifyEpoll(clientFd, EPOLLIN);
+
+
+				Response response;
+
+				response.debugPrintRequestData(client._request);
+				// preparation + debug mode
+				// response.prepare(client._request);
+
+				// convertion pret a etre envoyer via send()
+				// std::vector<char> buffer = response.buildRaw();
+
+				// ssize_t	sent = send(clientFd, &buffer[0], buffer.size(), 0); // MSG_NOSIGNAL |
+				// if (sent > 0) {
+					// std::cout << GREEN "[fd " << clientFd << "] Sent " << sent << " bytes" RESET << std::endl;
+				// } // pour l'instant je gere pas les send en plusieurs fois, on verra plus tard
+
+
+
 			// 	// send response
 			// 	if (sent) { // goes to response handling depending on requests parsing ?
 			// 		client.setState(IDLE);
 			// 		client.startTimer(0, CLIENT_TIMEOUT);
 			// 		modifyEpoll(clientFd, EPOLLIN);	// sets back to EPOLLIN to keep the sockets alive
 			// 	}
+				// Logger::accessLog(client.getIP(), client._request._method, client._request._uri, "HTTP/1.1", client._request.status, buffer.size());
+				client.setState(IDLE);
+				client.startTimer(0, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLIN);
 			}
-			Logger::accessLog(client.getIP(), "method", "uri", "version", 666, 100); // temp, won't we called here
 			Logger::debug("SENDING_RESPONSE state");
 			break ;
 

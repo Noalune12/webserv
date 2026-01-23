@@ -5,6 +5,7 @@
 # include <iostream>
 # include <sys/types.h>
 # include "Request.hpp"
+# include "Response.hpp"
 # include <vector>
 # include "ConfigInheritor.hpp"
 
@@ -37,26 +38,26 @@ class Connection {
 		// bool				_chunked;
 
 		std::vector<server>	_servers;
-		
+
 		public:
 		Connection(); // cannot compile without it and I don't understand why...
 		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers);
 		~Connection();
-		
+
 		/* timeout related functions */
 		void	startTimer(int index, time_t duration);
 		bool	isTimedOut(int index) const;
 		long	secondsToClosestTimeout(void) const;
-		
+
 		/* getters */
 		const std::string&	getIP(void) const;
 		ConnectionState		getState(void) const;
 		std::string			getBuffer(void) const;
-		
+
 		/* setters */
 		void				setState(ConnectionState s);
 		void				setBuffer(std::string request);
-		
+
 		void parseRequest();
 		// bool				err;
 		// int					status;

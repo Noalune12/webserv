@@ -50,7 +50,8 @@ override SERVERSRC	:= \
 SRC += $(addprefix $(HTTPDIR), $(addsuffix .cpp, $(HTTPSRC)))
 
 override HTTPSRC	:= \
-	Request
+	Request \
+	Response
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
