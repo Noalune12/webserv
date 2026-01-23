@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <vector>
 #include <sys/epoll.h>  
+#include <map>
 
 class TcpServer {
     public:
@@ -37,14 +38,24 @@ class TcpServer {
         int _clientFd;
         int _request;
 
-        int _epollFd;
-        struct epoll_event _ev;
+        // int _epollFd;
+        // struct epoll_event _ev;
         std::vector<int> _clientsFd;
         std::vector<std::string> _clientRequest;
 
         void startServer();
         void closeServer();
         void getRequest();
+
+        // check Request
+
+        bool checkRequestSem();
+        bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
+        bool checkHeaders(std::string headers);
+        std::string _req;
+        std::map<std::string, std::string> _headers;
+
+        void send400();
 };
 
 #endif

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <fstream>
 
-#include "colors.h"
+#include "colors.hpp"
 #include "rules.h"
 #include "Validator.hpp"
 #include "Utils.hpp"

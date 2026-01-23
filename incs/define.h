@@ -6,9 +6,9 @@
 
 typedef std::vector<
             std::pair<
-                std::string, 
-                std::vector<std::string> 
-        > 
+                std::string,
+                std::vector<std::string>
+        >
 > PairVector;
 
 
