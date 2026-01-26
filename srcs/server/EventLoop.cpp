@@ -143,22 +143,18 @@ void	EventLoop::run(void) {
 
 		checkTimeouts();
 
-		// main loop, will dispatch the sockets to specific handlers
 		for (int i = 0; i < nEvents; ++i) {
 
 			int			fd = events[i].data.fd;
 			uint32_t	ev = events[i].events;
 
-			// accept + client informations storage
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
+			else if (_pipeToClient.find(fd) != _pipeToClient.end())
+				handleCGIPipeEvent(fd, ev);
 			else {
 				handleClientEvent(fd, ev);
 			}
-			// else if () {
-				// } // cgi pipe ?
-			// else {
-				// } // client ?
 		}
 	}
 	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
@@ -171,6 +167,26 @@ void printWithoutR(std::string what, std::string line) {
             l.push_back(line[i]);
     }
     std::cout << what <<" = \'" << l << "\' -" << std::endl;
+}
+
+void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
+
+	std::map<int, int>::iterator it = _pipeToClient.find(pipeFd);
+	if (it == _pipeToClient.end())
+		return ;
+
+	int	clientFd = it->second;
+	std::map<int, Connection>::iterator clientIt = _connections.find(clientFd);
+	if (clientIt == _connections.end()) {
+		removeFromEpoll(pipeFd);
+		close(pipeFd);
+		_pipeToClient.erase(it);
+		return ;
+	}
+
+	Connection& client = clientIt->second;
+
+	// event checks
 }
 
 void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
