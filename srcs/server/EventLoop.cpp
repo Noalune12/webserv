@@ -74,7 +74,7 @@ void	EventLoop::checkTimeouts(void) {
 	for (size_t i = 0; i < timedOut.size(); ++i) {
 
 		int	clientFd = timedOut[i];
-		// Connection& client = _connections[clientFd];
+
 		std::ostringstream	oss;
 		Connection& client = _connections[clientFd];
 		if (client.getState() == READING_BODY) {
@@ -85,8 +85,6 @@ void	EventLoop::checkTimeouts(void) {
 		Logger::warn(oss.str());
 		// send408 -> timeout error
 		// sendTimeout(clientFd);
-		// send408(clientFd); // seems to be working when I force a sleep(5) instead of responding to the client.
-		// Logger::accessLog(client.getIP(), "408", "URI", "HTTP/1.1", 408, 169); // how to get client here ?
 		closeConnection(clientFd);
 	}
 }
@@ -217,6 +215,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.startTimer(3, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
 				printWithoutR("Request", client.getBuffer());
+
 			}
 			if (client.getBuffer().empty()) { // to avoid EPOLLERR
 				closeConnection(clientFd);
@@ -264,41 +263,22 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 		case SENDING_RESPONSE:
 			if (ev & EPOLLOUT) {
+				// send505exemple(clientFd);
 
-				// a bouger
-				// if (client._request.err == true) {
-				// 		sendError(clientFd, client._request.status);
-				// } else {
-				// 	sendStatus(clientFd, client._request.status);
-				// }
-
-
-				Response response;
-
-				response.debugPrintRequestData(client._request);
-				// preparation + debug mode
-				response.prepare(client._request);
-
-				// convertion pret a etre envoyer via send()
-				std::vector<char> buffer = response.buildRaw();
-				std::cout << buffer.size() << std::endl;
-				ssize_t	sent = send(clientFd, &buffer[0], buffer.size(), 0); // MSG_NOSIGNAL |
-				if (sent > 0) {
-					std::cout << GREEN "[fd " << clientFd << "] Sent " << sent << " bytes" RESET << std::endl;
-				} // pour l'instant je gere pas les send en plusieurs fois, on verra plus tard
-
-
-
+				if (client._request.err == true) {
+						sendError(clientFd, client._request.status);
+				} else {
+					sendStatus(clientFd, client._request.status);
+				}
+				client.setState(IDLE);
+				client.startTimer(0, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLIN);
 			// 	// send response
 			// 	if (sent) { // goes to response handling depending on requests parsing ?
 			// 		client.setState(IDLE);
 			// 		client.startTimer(0, CLIENT_TIMEOUT);
 			// 		modifyEpoll(clientFd, EPOLLIN);	// sets back to EPOLLIN to keep the sockets alive
 			// 	}
-				// Logger::accessLog(client.getIP(), client._request._method, client._request._uri, "HTTP/1.1", client._request.status, buffer.size());
-				client.setState(IDLE);
-				client.startTimer(0, CLIENT_TIMEOUT);
-				modifyEpoll(clientFd, EPOLLIN);
 			}
 			Logger::debug("SENDING_RESPONSE state");
 			break ;
@@ -444,9 +424,8 @@ bool	EventLoop::removeFromEpoll(int fd) {
 
 void	EventLoop::closeConnection(int clientFd) {
 
-	if (_connections.find(clientFd) == _connections.end()) {
+	if (_connections.find(clientFd) == _connections.end())
 		return ;
-	}
 
 	std::ostringstream	oss;
 	oss << "client #" << clientFd << " disconnected";
