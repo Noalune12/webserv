@@ -263,25 +263,34 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 		case SENDING_RESPONSE:
 			if (ev & EPOLLOUT) {
-				// send505exemple(clientFd);
 
-				if (client._request.err == true) {
-						sendError(clientFd, client._request.status);
-				} else {
-					sendStatus(clientFd, client._request.status);
+				Response response;
+				response.debugPrintRequestData(client._request);
+
+				response.prepare(client._request);
+
+				std::vector<char> buffer = response.buildRaw();
+
+				ssize_t sent = send(clientFd, &buffer[0], buffer.size(), 0);
+
+				if (sent > 0) {
+					std::cout << GREEN "[fd " << clientFd << "] Sent " << sent
+							<< " bytes, status=" << response._statusCode << RESET << std::endl;
+				} else if (sent < 0) {
+					std::cerr << RED "[fd " << clientFd << "] send() error: "
+							<< strerror(errno) << RESET << std::endl;
 				}
-				client.setState(IDLE);
-				client.startTimer(0, CLIENT_TIMEOUT);
-				modifyEpoll(clientFd, EPOLLIN);
-			// 	// send response
-			// 	if (sent) { // goes to response handling depending on requests parsing ?
-			// 		client.setState(IDLE);
-			// 		client.startTimer(0, CLIENT_TIMEOUT);
-			// 		modifyEpoll(clientFd, EPOLLIN);	// sets back to EPOLLIN to keep the sockets alive
-			// 	}
+
+				if (client._request._keepAlive && !client._request.err) {
+					client.setState(IDLE);
+					client.startTimer(0, CLIENT_TIMEOUT);
+					modifyEpoll(clientFd, EPOLLIN);
+				} else {
+					closeConnection(clientFd);
+				}
 			}
 			Logger::debug("SENDING_RESPONSE state");
-			break ;
+			break;
 
 		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
 			closeConnection(clientFd);

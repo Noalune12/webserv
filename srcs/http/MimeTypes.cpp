@@ -9,7 +9,7 @@
 
 std::map<std::string, std::string>	MimeTypes::_types;
 bool								MimeTypes::_initialized = false;
-std::string							MimeTypes::_defaultPath = "mime.types"; // "./etc/webserv/mime.types"
+std::string							MimeTypes::_defaultPath = "./etc/webserv/mime.types";
 std::string							MimeTypes::_lastMimeType;
 
 MimeTypes::MimeTypes(void) {}
@@ -58,7 +58,7 @@ std::string	MimeTypes::getType(const std::string& extensionOrFilename) {
 		ext = getExtension(extensionOrFilename);
 	}
 
-	std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
 	std::map<std::string, std::string>::const_iterator it = _types.find(ext);
 
