@@ -33,6 +33,9 @@ void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << "  root  = \"" << req._reqLocation.root << "\"" << std::endl;
 	std::cout << "  alias = \"" << req._reqLocation.alias << "\"" << std::endl;
 
+	std::cout << YELLOW "Query:" RESET << std::endl;
+	std::cout << "   query = \"" << req._queryString << "\"" << std::endl;
+
 	std::cout << CYAN "====================================\n" RESET << std::endl;
 }
 
