@@ -76,6 +76,11 @@ void	EventLoop::checkTimeouts(void) {
 		int	clientFd = timedOut[i];
 		// Connection& client = _connections[clientFd];
 		std::ostringstream	oss;
+		Connection& client = _connections[clientFd];
+		if (client.getState() == READING_BODY) {
+			modifyEpoll(clientFd, EPOLLOUT);
+			sendError(clientFd, 400); // send a response
+		}
 		oss << "client #" << clientFd << " timeout, closing";
 		Logger::warn(oss.str());
 		// send408 -> timeout error
@@ -147,8 +152,13 @@ void	EventLoop::run(void) {
 			// accept + client informations storage
 			if (_serverManager.isListenSocket(fd))
 				acceptConnection(fd);
-			else
+			else {
 				handleClientEvent(fd, ev);
+			}
+			// else if () {
+				// } // cgi pipe ?
+			// else {
+				// } // client ?
 		}
 	}
 	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
@@ -207,24 +217,36 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.startTimer(3, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
 				printWithoutR("Request", client.getBuffer());
-				// // read + parse headers
-				// if (header complete) {
-					// 	client.setState(READING_BODY);
-					// 	client.startTimer(2, CLIENT_TIMEOUT);
-					// } else {
-						// 	// errors
-						// }
-
 			}
 			if (client.getBuffer().empty()) { // to avoid EPOLLERR
 				closeConnection(clientFd);
 				break ;
 			}
 			client.parseRequest();
+
+			if (client._request.chunkRemaining == true) {
+				client.setState(READING_BODY);
+				client.startTimer(2, CLIENT_TIMEOUT - 2);
+				modifyEpoll(clientFd, EPOLLIN);
+			}
+
 			Logger::debug("READING_HEADERS state");
 			break ; // to remove if we fallthrought
 
 		case READING_BODY:
+			if (ev & EPOLLIN) {
+				tempCall(clientFd);
+				client._request._chunk += client.getBuffer();
+				client.startTimer(2, CLIENT_TIMEOUT - 2);
+				// printWithoutR("Body", client.getBuffer());
+			}
+			client._request.parseChunk();
+			if (client._request.chunkRemaining == false || client._request.err == true) {
+				client.setState(SENDING_RESPONSE);
+				client.startTimer(4, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT);
+			}
+
 			Logger::debug("READING_BODY state");
 			break ;
 
@@ -307,7 +329,6 @@ void	EventLoop::tempCall(int clientFd) {
 		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 		std::map<int, Connection>::iterator it = _connections.find(clientFd);
 		it->second.setBuffer(buffer);
-
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -331,7 +352,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	std::string clientIp;
 	int			clientPort;
 	getClientInfo(clientAddr, clientIp, clientPort);
-	Connection newClient(clientFd, clientIp, clientPort, _serverManager.getServers());
+	Connection newClient(clientFd, clientIp, clientPort, _serverManager.getServers(), _serverManager.getGlobalDir());
 
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
@@ -457,6 +478,8 @@ void EventLoop::sendError(int clientFd, int status) {
 		statusName = "Method Not Allowed";
 	if (status == 403)
 		statusName = "Forbidden";
+	if (status == 505)
+		statusName = "HTTP Version Not Supported";
 
 	std::stringstream ss;
     ss << status;
@@ -486,7 +509,8 @@ void EventLoop::sendError(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-
+	if (client._request._keepAlive == false)
+		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
@@ -528,7 +552,8 @@ void EventLoop::sendStatus(int clientFd, int status) {
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
 	// Connection& client = _connections[clientFd];
-
+	if (client._request._keepAlive == false)
+		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }

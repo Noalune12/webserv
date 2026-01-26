@@ -20,6 +20,7 @@ class ServerManager
 {
 	private:
 		std::vector<server>			_servers;
+		globalDir 					_globalDir;
 		std::vector<ListenEndPoint>	_endpoints;
 
 		// might want to use that for quick search of socketFd to endpoints indexes
@@ -28,7 +29,7 @@ class ServerManager
 		void	closeSockets(void);
 
 	public:
-		ServerManager(std::vector<server>& servers);
+		ServerManager(std::vector<server>& servers, globalDir globalDir);
 		~ServerManager();
 
 		// reminder: move to private what can be
@@ -45,6 +46,7 @@ class ServerManager
 		/* getters (to be completed if needed) */
 		std::vector<int>	getListenSocketFds(void);
 		std::vector<server>	getServers(void);
+		globalDir getGlobalDir(void);
 };
 
 #endif

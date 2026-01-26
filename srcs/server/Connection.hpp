@@ -41,7 +41,7 @@ class Connection {
 
 		public:
 		Connection(); // cannot compile without it and I don't understand why...
-		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers);
+		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir);
 		~Connection();
 
 		/* timeout related functions */

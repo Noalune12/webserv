@@ -97,6 +97,7 @@ class ConfigInheritor {
 
 		void inherit(Tokenizer& tokens);
 		std::vector<server>&	getServers(void);
+		globalDir& getGlobalDir(void);
 };
 
 #endif

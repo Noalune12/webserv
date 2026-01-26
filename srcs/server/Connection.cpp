@@ -6,7 +6,7 @@ Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffe
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers) {
+Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers, globalDir) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -85,7 +85,7 @@ std::string Connection::getBuffer(void) const {
 }
 
 void Connection::parseRequest() {
-	_request.htmlPage.clear();
+	_request.clearPreviousRequest();
 	_request.checkRequestSem(_buffer);
 	if (_request.err == true)
 		return ;
@@ -95,6 +95,10 @@ void Connection::parseRequest() {
 
 	std::cout << _request.err << " &&&&& " << _request.status << std::endl;
 	_buffer.clear();
+	if (_request._keepAlive == true) 
+        std::cout << "keep alive is true" << std::endl;
+    else
+        std::cout << "no keep alive" << std::endl;
 
 
 }

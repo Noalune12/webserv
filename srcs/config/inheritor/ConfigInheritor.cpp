@@ -316,8 +316,9 @@ void ConfigInheritor::setBodySize(PairVector::iterator& it, T& t) {
         iss >> t.bodySize;
         char suffix = arg[arg.size() - 2];
         switch (std::toupper(suffix)) { // overflow ?
-            case 'M': t.bodySize *= 1000; break;
-            case 'G': t.bodySize *= 1000000; break;
+            case 'K': t.bodySize *= 1000; break;
+            case 'M': t.bodySize *= 1000000; break;
+            case 'G': t.bodySize *= 1000000000; break;
         }
 }
 
@@ -505,3 +506,5 @@ void ConfigInheritor::printContent() const {
 }
 
 std::vector<server>&    ConfigInheritor::getServers(void) { return (_server); }
+globalDir&              ConfigInheritor::getGlobalDir(void) { return (_globalDir); }
+

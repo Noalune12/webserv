@@ -43,7 +43,7 @@ int	main(int ac, char **av) {
 		Logger::notice("configuration loaded successfully");
 		Logger::notice("Server startup");
 
-		ServerManager	serverManager(config.getServers()); // -> will setup the informations needed for each servers in their own subclasses
+		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
 		serverManager.setupListenSockets();
 
 		EventLoop	eventLoop(serverManager);
