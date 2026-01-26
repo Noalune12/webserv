@@ -97,9 +97,9 @@ int	EventLoop::getActiveTimer(ConnectionState s) {
 			return (1);
 		case READING_BODY:
 			return (2);
-		case SENDING_RESPONSE:
-			return (3);
 		case CGI_RUNNING:
+			return (3);
+		case SENDING_RESPONSE:
 			return (4);
 		default:
 			return (-1);
