@@ -32,6 +32,25 @@ struct CGIContext {
 		pipeOut[0] = -1;
 		pipeOut[1] = -1;
 	}
+
+	void	closePipes(void) {
+		if (pipeIn[0] != -1) {
+			close(pipeIn[0]);
+			pipeIn[0] = -1;
+		}
+		if (pipeIn[1] != -1) {
+			close(pipeIn[1]);
+			pipeIn[1] = -1;
+		}
+		if (pipeOut[0] != -1) {
+			close(pipeOut[0]);
+			pipeOut[0] = -1;
+		}
+		if (pipeOut[1] != -1) {
+			close(pipeOut[1]);
+			pipeOut[1] = -1;
+		}
+	}
 };
 
 // On pourrait la renommer Client la classe
