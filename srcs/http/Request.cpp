@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <sys/stat.h>
 
 Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
@@ -105,32 +106,107 @@ void Request::methodHandler() {
 
         // IF ROOT and no trailing url
         if (!_reqLocation->root.empty()) {
-            std::string root = _reqLocation->root;
-            for (; itIndex != _reqLocation->index.end() ; itIndex++) {
-                std::string path;
-                if (_uri[_uri.size() - 1] == '/')
-                    path = root + _uri + *itIndex; // what if directory does not exist ...
-                else
-                    path = root + _uri + "/" + *itIndex;
+            if (!_trailing.empty()) {
+                    std::string path;
+                    if (_uri[_uri.size() - 1] == '/')
+                        path = _reqLocation->root + _uri + _trailing;
+                    else
+                        path = _reqLocation->root + _uri + _trailing;
+    
+                    if (path[0] == '/')
+                        path = path.substr(1, path.size());
+                    std::cout << "PATH = " << path << std::endl;
 
-                if (path[0] == '/')
-                    path = path.substr(1, path.size());
-                std::cout << "PATH = " << path << std::endl;
-                // check access
-                std::ifstream file(path.c_str());
-                if (!file) {
-                    continue;
-                } else {
-                    std::cout << "File found" << std::endl;
-                    std::stringstream buffer;
-                    buffer << file.rdbuf();
-                    htmlPage = buffer.str();
-                    // htmlPage.assign(
-                    // 	(std::istreambuf_iterator<char>(file)),
-                    // 	std::istreambuf_iterator<char>());
-                    err = false;
-                    status = 200;
-                    return ;
+                    struct stat buf;
+
+                    if (stat(path.c_str(), &buf) == 0) {
+                        if (!S_ISREG(buf.st_mode)) {
+                            if (!_reqLocation->root.empty()) {
+                                findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                            }
+                            else {
+                                findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                            }
+                            std::cout << "error file is not regular" << std::endl;
+                            return ;
+                        }
+
+                        if (buf.st_mode & S_IRUSR) {
+                            std::ifstream file(path.c_str());
+                            std::cout << "File found" << std::endl;
+                            std::stringstream buffer;
+                            buffer << file.rdbuf();
+                            htmlPage = buffer.str();
+                            err = false;
+                            status = 200;
+                            return ;
+                        } else {
+                            if (!_reqLocation->root.empty()) {
+                                findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                            }
+                            else {
+                                findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                            }
+                            std::cout << "error file found but no rights" << std::endl;
+                            return ;
+                        } 
+                    } else { 
+                        if (!_reqLocation->root.empty()) {
+                            findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+                        }
+                        else {
+                            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+                        }
+                        std::cout << "error no file found for trailing file" << std::endl;
+                        return ;
+                    }
+            } else {
+                std::string root = _reqLocation->root;
+                for (; itIndex != _reqLocation->index.end() ; itIndex++) {
+                    std::string path;
+                    if (_uri[_uri.size() - 1] == '/')
+                        path = root + _uri + *itIndex;
+                    else
+                        path = root + _uri + "/" + *itIndex;
+    
+                    if (path[0] == '/')
+                        path = path.substr(1, path.size());
+                    std::cout << "PATH = " << path << std::endl;
+
+                    struct stat buf;
+
+                    if (stat(path.c_str(), &buf) == 0) {
+                        if (!S_ISREG(buf.st_mode)) {
+                            if (!_reqLocation->root.empty()) {
+                                findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                            }
+                            else {
+                                findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                            }
+                            std::cout << "error file is not regular" << std::endl;
+                            return ;
+                        }
+
+                        if (buf.st_mode & S_IRUSR) {
+                            std::ifstream file(path.c_str());
+                            std::cout << "File found" << std::endl;
+                            std::stringstream buffer;
+                            buffer << file.rdbuf();
+                            htmlPage = buffer.str();
+                            err = false;
+                            status = 200;
+                            return ;
+                        } else {
+                            if (!_reqLocation->root.empty()) {
+                                findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                            }
+                            else {
+                                findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                            }
+                            std::cout << "error file found but no rights" << std::endl;
+                            return ;
+                        } 
+                    } 
                 }
             }
         } else {
