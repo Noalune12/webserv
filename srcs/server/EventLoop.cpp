@@ -4,11 +4,13 @@
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <sstream>
+// #include <stdlib.h>
+#include <cstdlib>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <sstream>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
@@ -187,6 +189,8 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 	Connection& client = clientIt->second;
 
 	// event checks
+	(void) client;
+	(void) ev;
 }
 
 bool	EventLoop::startCGI(int clientFd) {
@@ -239,7 +243,9 @@ bool	EventLoop::startCGI(int clientFd) {
 		// execve du script
 
 		// on est jamais sensé arrivé la, on verra comment je sors plus tard
-		exit(666);
+		// std::exit(666);
+		// exit(666);
+		// _exit(666); -> le mieux mais est-ce qu'on a le droit ????
 	}
 	// implement parent logic
 

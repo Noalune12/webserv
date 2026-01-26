@@ -4,10 +4,12 @@
 # include <ctime>
 # include <iostream>
 # include <sys/types.h>
+# include <unistd.h>
+# include <vector>
+
+# include "ConfigInheritor.hpp"
 # include "Request.hpp"
 # include "Response.hpp"
-# include <vector>
-# include "ConfigInheritor.hpp"
 
 enum ConnectionState {
 	IDLE,				// 0. starting state
