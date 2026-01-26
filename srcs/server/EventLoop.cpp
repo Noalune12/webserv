@@ -243,7 +243,50 @@ bool	EventLoop::startCGI(int clientFd) {
 	}
 	// implement parent logic
 
+	// closing parent unused fds
+	close(cgi.pipeIn[0]);
+	close(cgi.pipeOut[1]);
+
+	cgi.pipeIn[0] = -1;
+	cgi.pipeOut[1] = -1;
+
+	fcntl(cgi.pipeOut[0], F_SETFL, O_NONBLOCK); // a securisé
+
+	if (!addToEpoll(cgi.pipeOut[0], EPOLLIN)) {
+		cleanupCGI(clientFd);
+		return (false);
+	}
+
+	_pipeToClient[cgi.pipeOut[0]] = clientFd;
+
+	close(cgi.pipeIn[1]);
+	cgi.pipeIn[1] = -1;
+
+	client.setState(CGI_RUNNING);
+	client.startTimer(3, CGI_TIMOUT);
+
 	return (true);
+}
+
+void	EventLoop::cleanupCGI(int clientFd) {
+	std::map<int, Connection>::iterator it = _connections.find(clientFd);
+	if (it == _connections.end())
+		return ;
+
+	CGIContext& cgi = it->second._cgi;
+
+	if (cgi.pipeOut[0] != -1) {
+		removeFromEpoll(cgi.pipeOut[0]);
+		_pipeToClient.erase(cgi.pipeOut[0]);
+	}
+
+	cgi.closePipes();
+
+	if (cgi.pid > 0) {
+		int status;
+		waitpid(cgi.pid, &status, WNOHANG); // the flag makes it non blocking (for the eventloop)
+		cgi.pid = -1;
+	}
 }
 
 void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
