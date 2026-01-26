@@ -44,7 +44,7 @@ class Request {
         std::map<std::string, std::string> _headers;
         std::string			htmlPage;
         std::string _chunk;
-        // std::string _trailing;
+        std::string _trailing;
         bool _keepAlive;
 
         // PARSING
@@ -64,10 +64,11 @@ class Request {
 
         // CHUNK PARSING
         void parseChunk();
+        bool getChunkSize();
 
         // HANDLER
         void methodHandler();
-        
+
         // UTILS
         std::string trimOws(const std::string& s);
         void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);

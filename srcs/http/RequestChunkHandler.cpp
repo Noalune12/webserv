@@ -3,6 +3,44 @@
 #include <iostream>
 #include <cstdlib>
 
+bool Request::getChunkSize() {
+    // convert hexa to int
+    char* end = NULL;
+    std::string hex;
+    size_t index = _chunk.find("\r\n");
+    if (index == 0) {
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        } else {
+            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+        }
+        std::cout << "error with chunked body = \\r\\n at index 0" << std::endl;
+        return false;
+    }
+    hex = _chunk.substr(0, index);
+    _chunk = _chunk.substr(index + 2, _chunk.size());
+    _chunkSize = strtol(hex.c_str(), &end, 16);
+
+    // std::cout << "CHUNK = " << _chunk << " VS HEX = " << hex << std::endl;
+    // std::cout << "CHUNK SIZE = " << _chunkSize << std::endl;
+
+    if (end == hex.c_str()
+            || *end != '\0'
+            || _chunkSize < 0) { // what if overflow 
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        } else {
+            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+        }
+        std::cout << "error with chunked size = erreur with hexa conversion" << std::endl;
+        return false;
+    }
+
+    // set sate to reading
+    _chunkState = READING_BYTES;
+    return true;
+}
+
 void Request::parseChunk() {
     std::cout << "PARSE CHUNK = " << _body << std::endl;
 
@@ -10,46 +48,26 @@ void Request::parseChunk() {
     if (_chunkState == GETTING_FIRST_SIZE) {
         if (_chunk.size() >= 2 &&
                 _chunk.compare(_chunk.size() - 2, 2, "\r\n") == 0) {
-                // convert hexa to int
-                char* end = NULL;
-                std::string hex;
-                size_t index = _chunk.find("\r\n");
-                if (index == 0) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
-                    std::cout << "error with chunked body = \\r\\n at index 0" << std::endl;
-                    return ;
-                }
-                hex = _chunk.substr(0, index);
-                _chunk = _chunk.substr(index + 2, _chunk.size());
-                _chunkSize = strtol(hex.c_str(), &end, 16);
-
-                std::cout << "CHUNK = " << _chunk << " VS HEX = " << hex << std::endl;
-                std::cout << "CHUNK SIZE = " << _chunkSize << std::endl;
-
-                if (end == hex.c_str()
-                        || *end != '\0'
-                        || _chunkSize < 0) { // what if overflow 
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
-                    std::cout << "error with chunked size = erreur with hexa conversion" << std::endl;
-                    return ;
-                }
-
-                // set sate to reading
-                _chunkState = READING_BYTES;
+            if (!getChunkSize())
+                return ;
         } else {
             return ;
         }
-        std::cout << "CHUNK = " << _chunk << std::endl;
+        // std::cout << "CHUNK = " << _chunk << std::endl;
     }
 
 
     // loop while chunk to read
     while (_chunkState != IS_END) {
         if (_reqLocation->bodySize < _body.size()) {
+            if (!_reqLocation->root.empty()) {
                 findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
-                std::cout << "error body is higher that client max body size" << std::endl;
-                return ;   
+            } else {
+                findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
             }
+            std::cout << "error body is higher that client max body size" << std::endl;
+            return ;   
+        }
         if (_chunkState == READING_BYTES) {
 
             std::cout << "READING BYTES\n" << std::endl;
@@ -62,7 +80,10 @@ void Request::parseChunk() {
                 size_t index = _chunk.find("\r\n");
                 std::cout << "INDEX OF RN = " << index << std::endl;
                 if (index != 0) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    if (!_reqLocation->root.empty())
+                        findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    else
+                        findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                     std::cout << "error with chunked body = \\r\\n missing" << std::endl;
                     return ;
                 }
@@ -71,7 +92,10 @@ void Request::parseChunk() {
                     chunkRemaining = false;
                     return ;
                 } else if (_chunkSize == 0) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    if (!_reqLocation->root.empty())
+                        findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    else
+                        findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                     std::cout << "error with chunked body = end not well formated" << std::endl;
                     return ;
                 }
@@ -88,36 +112,12 @@ void Request::parseChunk() {
 
             if (_chunk.size() >= 2 &&
                     _chunk.compare(_chunk.size() - 2, 2, "\r\n") == 0) {
-                // convert hexa to int
-                char* end = NULL;
-                std::string hex;
-                size_t index = _chunk.find("\r\n");
-                if (index == 0) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
-                    std::cout << "error with chunked size = \\r\\n at index 0" << std::endl;
+                if (!getChunkSize())
                     return ;
-                }
-                hex = _chunk.substr(0, index);
-                _chunk = _chunk.substr(index + 2, _chunk.size());
-                _chunkSize = strtol(hex.c_str(), &end, 16);
-
-                std::cout << "CHUNK = " << _chunk << " VS HEX = " << hex << std::endl;
-                std::cout << "CHUNK SIZE = " << _chunkSize << std::endl;
-
-                if (end == hex.c_str()
-                        || *end != '\0'
-                        || _chunkSize < 0) { // what if overflow 
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
-                    std::cout << "error with chunked size = erreur with hexa conversion" << std::endl;
-                    return ;
-                }
-
-                // set sate to reading
-                _chunkState = READING_BYTES;
             } else {
                 return ;
             }
-            std::cout << "CHUNK = " << _chunk << std::endl;
+            // std::cout << "CHUNK = " << _chunk << std::endl;
         }
     }
 }

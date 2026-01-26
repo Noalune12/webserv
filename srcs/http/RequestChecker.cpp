@@ -21,17 +21,37 @@ void Request::findServer() {
 	}
 }
 
+
 void Request::findLocation() {
 	// uri check
     // /!\ check only 1st /.../
-	std::vector<location>::iterator itLocation = _reqServer->loc.begin();
-	for (; itLocation != _reqServer->loc.end(); itLocation++) {
-		if (_uri == itLocation->path || (_uri + "/") == itLocation->path || _uri == itLocation->path + "/" ) {
-			std::cout << "location found at " << itLocation->path << std::endl;
-			_reqLocation = &(*itLocation);
-			return ;
-		}
-	}
+    size_t index = _uri.rfind('/');
+    if (index != _uri.size() - 1) {
+        _trailing = _uri.substr(index + 1, _uri.size());
+        _uri = _uri.substr(0, index + 1);
+    }
+    // std::cout << "URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
+    while (!_uri.empty()) {
+        std::vector<location>::iterator itLocation = _reqServer->loc.begin();
+        for (; itLocation != _reqServer->loc.end(); itLocation++) {
+            if (_uri == itLocation->path) {
+                std::cout << "location found at " << itLocation->path << std::endl;
+                _reqLocation = &(*itLocation);
+                return ;
+            }
+        }
+        if (_uri == "/")
+            break;
+        index = _uri.rfind('/');
+        if (index == _uri.size() - 1) {
+            _uri = _uri.substr(0, index);
+            _trailing = "/" + _trailing;
+            index = _uri.rfind('/');
+        }
+        _trailing = _uri.substr(index + 1, _uri.size()) + _trailing;
+        _uri = _uri.substr(0, index + 1);
+        // std::cout << "URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
+    }
 }
 
 bool Request::hostChecker() {
@@ -108,7 +128,11 @@ void Request::checkRequestContent() {
             || _method == "HEAD" || _method == "OPTIONS"
             || _method == "TRACE" || _method == "PUT"
             || _method == "PATCH" || _method == "CONNECT") {
-        findErrorPage(405, _reqLocation->root, _reqLocation->errPage);
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(405, _reqLocation->root, _reqLocation->errPage);
+        } else {
+            findErrorPage(405, _reqLocation->alias, _reqLocation->errPage);
+        }
 	    std::cout << "error not allowed method" << std::endl;
 		return ;
 	}
@@ -122,7 +146,10 @@ bool Request::bodyChecker() {
     // find transfer encoding
     std::map<std::string, std::string>::iterator it = _headers.find("transfer-encoding");
     if (it != _headers.end() && it->second != "chunked") {
-        findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        if (!_reqLocation->root.empty())
+            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        else
+            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         std::cout << "error transfer encoding not well defined" << std::endl;
         return false;
     } else if (it != _headers.end() && it->second == "chunked") {
@@ -141,7 +168,10 @@ bool Request::bodyChecker() {
 
     } else if (it == _headers.end()) {
         if (_reqLocation->bodySize < _body.size()) {
-            findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
+            if (!_reqLocation->root.empty())
+                findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
+            else
+                findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
             std::cout << "error body is higher that client max body size" << std::endl;
             return false;   
         }
@@ -150,7 +180,11 @@ bool Request::bodyChecker() {
         
         it = _headers.find("content-length");
         if (it == _headers.end() && !_body.empty()) {
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);            
+            }
             std::cout << "error no content length but existing body" << std::endl;
             return false;
         } else if (it != _headers.end()) {
@@ -160,7 +194,11 @@ bool Request::bodyChecker() {
             std::string bodySize = ss.str();
             std::cout << "BODY SIZE = " << bodySize << std::endl;
             if (it->second != bodySize) {
-                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                if (!_reqLocation->root.empty()) {
+                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                } else {
+                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);                
+                }
                 std::cout << "error  content length is not equal to existing body size" << std::endl;
                 return false;
             }

@@ -228,7 +228,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.setState(READING_BODY);
 				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				modifyEpoll(clientFd, EPOLLIN); 
-			} else {
+			} else if (client._request.err == false) { //not sure if it is here
 				client._request.methodHandler();
 			}
 

@@ -29,6 +29,7 @@ void Request::clearPreviousRequest() {
     _chunk.clear();
     _reqServer = NULL;
     _reqLocation = NULL;
+    _trailing.clear();
     // what about err and keep alive
     // _trailing.clear();
 }
@@ -72,12 +73,18 @@ std::string Request::trimOws(const std::string& s)
 void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
     err = true;
     status = code;
-    // root = root.substr(1, root.size()); // what if no root ? if starts with \ need to check ?
     std::map<int, std::string>::iterator itErr = errPage.find(code);
     if (itErr == errPage.end())
         return;
-    std::string path = root + itErr->second;
-    if (path[0] == '/')
+    std::string path;
+    if (root[root.size() - 1] == '/' && itErr->second[0] == '/')
+        path = root.substr(0, root.size() - 1) + itErr->second;
+    else if (root[root.size() - 1] != '/' && itErr->second[0] != '/')
+        path = root + "/" + itErr->second;
+    else
+        path = root + itErr->second;
+
+    if (path[0] == '/') // what if many /
         path = path.substr(1, path.size());
     std::cout << "PATH = " << path << std::endl;
 			std::ifstream file(path.c_str());
@@ -96,15 +103,16 @@ void Request::methodHandler() {
 	if (_method == "GET") {
 		std::vector<std::string>::iterator itIndex = _reqLocation->index.begin();
 
-        // IF ROOT
+        // IF ROOT and no trailing url
         if (!_reqLocation->root.empty()) {
-            std::string root = _reqLocation->root; // what if no root ? if starts with / need to check ?
+            std::string root = _reqLocation->root;
             for (; itIndex != _reqLocation->index.end() ; itIndex++) {
                 std::string path;
                 if (_uri[_uri.size() - 1] == '/')
                     path = root + _uri + *itIndex; // what if directory does not exist ...
                 else
                     path = root + _uri + "/" + *itIndex;
+
                 if (path[0] == '/')
                     path = path.substr(1, path.size());
                 std::cout << "PATH = " << path << std::endl;
@@ -158,8 +166,13 @@ void Request::methodHandler() {
         // IF ALIAS
 	
 		if (htmlPage.empty()) {
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
-			std::cout << "error no index found" << std::endl;
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+            }
+            else {
+                findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+            }
+        	std::cout << "error no index found" << std::endl;
 			return ;
 		}
 	}
