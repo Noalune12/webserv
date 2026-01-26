@@ -43,6 +43,7 @@ class Request {
         std::string			htmlPage;
         std::string _chunk;
         // std::string _trailing;
+        bool _keepAlive;
 
         void checkRequestSem(std::string request);
         bool extractRequestInfo();

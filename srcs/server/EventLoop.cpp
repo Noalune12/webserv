@@ -490,7 +490,8 @@ void EventLoop::sendError(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-
+	if (client._request._keepAlive == false)
+		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
@@ -532,7 +533,8 @@ void EventLoop::sendStatus(int clientFd, int status) {
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
 	// Connection& client = _connections[clientFd];
-
+	if (client._request._keepAlive == false)
+		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }

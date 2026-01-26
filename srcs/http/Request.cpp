@@ -6,9 +6,9 @@
 #include <cstdlib>
 #include <climits>
 
-Request::Request(): err(false), status(0), chunkRemaining(false) {}
+Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
 
 Request::~Request() {}
@@ -29,6 +29,7 @@ void Request::clearPreviousRequest() {
     _body.clear();
     _headers.clear();
     _chunk.clear();
+    // what about err and keep alive
     // _trailing.clear();
 }
 
@@ -194,7 +195,8 @@ bool Request::checkHeaders() {
                 || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
                 || (name == "content-length" && _headers.find("content-length") != _headers.end())
                 || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())
-                || (name == "content-type" && _headers.find("content-type") != _headers.end())) {
+                || (name == "content-type" && _headers.find("content-type") != _headers.end())
+                || (name == "connection" && _headers.find("connection") != _headers.end())) {
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with duplicate headers : " << name << std::endl;
             return false;  
@@ -207,7 +209,8 @@ bool Request::checkHeaders() {
         if (((name == "host") && content.empty())
                 || ((name == "content-length") && content.empty())
                 || ((name == "transfer-encoding") && content.empty())
-                || ((name == "content-type") && content.empty())) {
+                || ((name == "content-type") && content.empty())
+                || ((name == "connection") && content.empty())) {
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error header : " << name << " cannot have an empty content" << std::endl;
             return false;
@@ -295,8 +298,19 @@ std::string Request::lowerString(const std::string& s) {
 void Request::checkRequestContent() {
 
     std::cout << "\nCHECK REQUEST CONTENT\n" << std::endl;
+    std::map<std::string, std::string>::iterator it = _headers.find("connection");
+    if (it == _headers.end() || it->second == "close")
+        _keepAlive = false;
+    else if (it->second == "keep-alive")
+        _keepAlive = true;
+    else {
+        findErrorPage(400, "/", _globalDir.errPage);
+	    std::cout << "error in headers: connection not well formated " << std::endl;
+		return ;
+    }
+    
     // Host check
-	std::map<std::string, std::string>::iterator it = _headers.find("host");
+	it = _headers.find("host");
 	if (it == _headers.end()) {
 		findErrorPage(400, "/", _globalDir.errPage);
 	    std::cout << "error no host in headers " << std::endl;
