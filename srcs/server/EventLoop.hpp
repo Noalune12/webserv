@@ -6,6 +6,8 @@
 # include "Connection.hpp"
 # include "ServerManager.hpp"
 
+# define PROXY_AUTH_REQ 407
+
 class EventLoop {
 
 	private:

@@ -34,7 +34,7 @@ EventLoop::~EventLoop() {
 bool	EventLoop::init(void) {
 
 	Logger::notice("using the \"epoll\" event method");
-	_epollFd = epoll_create(42); // parce que pourquoi pas (go mettre un esther egg)
+	_epollFd = epoll_create(PROXY_AUTH_REQ);
 	if (_epollFd < 0) {
 		Logger::error(std::string("epoll_create() failed:") + strerror(errno));
 		return (false);

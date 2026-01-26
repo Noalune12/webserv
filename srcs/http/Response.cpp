@@ -3,6 +3,7 @@
 
 #include "colors.hpp"
 #include "Response.hpp"
+#include "StatusCodes.hpp"
 
 Response::Response() : _statusCode(200), _statusText("OK"), _headers(), _body(), _bytesSent(0) {}
 
@@ -45,36 +46,13 @@ void	Response::debugPrintRequestData(const Request& req) {
 
 void	Response::prepare(const Request& req) {
 
-	if (req.err) {
-		_statusCode = req.status;
-
-		if (_statusCode == 400) {
-			_statusText = "Bad Request";
-		} else if (_statusCode == 404){
-			_statusText = "Not Found";
-		} else if (_statusCode == 405) {
-			_statusText = "Method Not Allowed"; // and so on for other error codes
-		} else {
-			_statusText = "Error";
-		}
-	}
-
-	_headers["Server"] = "webserv/1.0";
 	// a l'arrache pour l'instant
+	_headers["Server"] = "webserv/1.0";
 	_headers["Connection"] = "keep-alive";
 
-	std::ostringstream	bodyOss;
-	bodyOss << "<!DOCTYPE html>\n"
-			<< "<html>\n"
-			<< "<head><title>" << _statusCode << " " << _statusText << "</title></head>\n"
-			<< "<body>\n"
-			<< "<h1>" << _statusCode << " " << _statusText << "</h1>\n"
-			<< "<p>Method: " << req._method << "</p>\n"
-			<< "<p>URI: " << req._uri << "</p>\n"
-			<< "</body>\n"
-			<< "</html>\n";
+	std::string bodyStr;
 
-	std::string bodyStr = bodyOss.str();
+	bodyStr = StatusCodes::generateDefaultErrorPage(req.status);
 	_body.assign(bodyStr.begin(), bodyStr.end());
 
 	// Content-Length et Content-Type
@@ -83,7 +61,7 @@ void	Response::prepare(const Request& req) {
 	_headers["Content-Length"] = lenOss.str();
 	_headers["Content-Type"] = "text/html";
 
-	std::cout << bodyOss.str() << std::endl;
+	std::cout << bodyStr << std::endl;
 }
 
 
