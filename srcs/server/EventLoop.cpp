@@ -228,6 +228,8 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.setState(READING_BODY);
 				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				modifyEpoll(clientFd, EPOLLIN); 
+			} else {
+				client._request.methodHandler();
 			}
 
 			Logger::debug("READING_HEADERS state");
@@ -246,7 +248,9 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT); 
 			}
-			
+			if (client._request.chunkRemaining == false && client._request.err == false) {
+				client._request.methodHandler();
+			}
 			Logger::debug("READING_BODY state");
 			break ;
 

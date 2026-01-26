@@ -21,8 +21,10 @@ class Request {
         std::string _requestLine;
         std::vector<server>	_servers;
         globalDir _globalDir;
-        server _reqServer;
-	    location _reqLocation;
+        server *_reqServer;
+	    location *_reqLocation;
+        std::string _serverName;
+        int _serverPort;
 
         double _chunkSize;
         int _chunkState;
@@ -45,18 +47,34 @@ class Request {
         // std::string _trailing;
         bool _keepAlive;
 
+        // PARSING
         void checkRequestSem(std::string request);
+
         bool extractRequestInfo();
         bool extractRequestLineInfo(std::string& method, std::string& uri, std::string& http);
         bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
         bool checkHeaders();
+        
         void checkRequestContent();
-        std::string trimOws(const std::string& s);
-        std::string lowerString(const std::string& s);
-        void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
-        void isChunkEnd();
-        void clearPreviousRequest();
+
+        bool hostChecker();
+        void findServer();
+        void findLocation();
+        bool bodyChecker();
+
+        // CHUNK PARSING
         void parseChunk();
+
+        // HANDLER
+        void methodHandler();
+        
+        // UTILS
+        std::string trimOws(const std::string& s);
+        void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
+        void clearPreviousRequest();
+        bool hasWS(const std::string& line) const;
+        bool isOnlyDigits(const std::string& line) const;
+        void printWithoutR(std::string what, std::string line) const;
 };
 
 
