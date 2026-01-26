@@ -44,6 +44,8 @@ class Request {
         bool _keepAlive;
         server _reqServer;
 	    location _reqLocation;
+        std::string _queryString;
+        std::string _scriptPath;
 
         void checkRequestSem(std::string request);
         bool extractRequestInfo();
