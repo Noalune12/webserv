@@ -219,7 +219,28 @@ bool	EventLoop::startCGI(int clientFd) {
 	}
 
 	// implement children logic
+	if (cgi.pid == 0) {
 
+		// closing child unused fds first
+		close(cgi.pipeIn[1]);
+		close(cgi.pipeOut[0]);
+
+		// redir
+		dup2(cgi.pipeIn[0], STDIN_FILENO);
+		dup2(cgi.pipeOut[1], STDOUT_FILENO);
+
+		// closing original fds
+		close(cgi.pipeIn[0]);
+		close(cgi.pipeOut[1]);
+
+		// GROS DU BOULOT:
+		// creation variable d'environnements
+		// chdir vers l'endroit ou est le script
+		// execve du script
+
+		// on est jamais sensé arrivé la, on verra comment je sors plus tard
+		exit(666);
+	}
 	// implement parent logic
 
 	return (true);
