@@ -189,6 +189,42 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 	// event checks
 }
 
+bool	EventLoop::startCGI(int clientFd) {
+
+	std::map<int, Connection>::iterator it = _connections.find(clientFd);
+	if (it == _connections.end())
+		return (false);
+
+	Connection& client = it->second;
+	CGIContext& cgi = client._cgi;
+
+	if (pipe(cgi.pipeIn) == -1) {
+		Logger::error("pipe(pipeIn) failed");
+		return (false);
+	}
+
+	if (pipe(cgi.pipeOut) == -1) {
+		close(cgi.pipeIn[0]);
+		close(cgi.pipeIn[1]);
+		Logger::error("pipe(pipeOut) failed");
+		return (false);
+	}
+
+	cgi.pid = fork();
+
+	if (cgi.pid == -1) {
+		cgi.closePipes();
+		Logger::error("fork() failed");
+		return (false);
+	}
+
+	// implement children logic
+
+	// implement parent logic
+
+	return (true);
+}
+
 void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 	std::map<int, Connection>::iterator it = _connections.find(clientFd);

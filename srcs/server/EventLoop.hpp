@@ -49,7 +49,10 @@ class EventLoop {
 
 		void	handleClientEvent(int clientFd, uint32_t ev);
 
-		void	handleCGIPipeEvent(int pipeFd, uint32_t ev); // empty for now
+		// cgi
+		void	handleCGIPipeEvent(int pipeFd, uint32_t ev);
+		bool	startCGI(int clientFd);
+
 
 		void	sendError(int clientFd, int status);
 		void	send505exemple(int clientFd);
