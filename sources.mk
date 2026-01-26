@@ -51,7 +51,8 @@ SRC += $(addprefix $(HTTPDIR), $(addsuffix .cpp, $(HTTPSRC)))
 
 override HTTPSRC	:= \
 	Request \
-	Response
+	Response \
+	StatusCodes
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
