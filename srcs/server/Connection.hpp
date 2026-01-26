@@ -18,6 +18,22 @@ enum ConnectionState {
 	CLOSED
 };
 
+struct CGIContext {
+	pid_t		pid;
+	int			pipeIn[2];	// stdin (server puis CGI)
+	int			pipeOut[2];	// stdout (CGI puis server)
+	std::string	outputBuff;
+	bool		headerParsed;
+	size_t		bodyStart;
+
+	CGIContext() : pid(-1), headerParsed(false), bodyStart(0) {
+		pipeIn[0] = -1;
+		pipeIn[1] = -1;
+		pipeOut[0] = -1;
+		pipeOut[1] = -1;
+	}
+};
+
 // On pourrait la renommer Client la classe
 // Avec l'architecture que j'ai en tete, c'est ici qu'on stock absolument toutes les donnees de chaque clients
 // Informations, etats, buffers, truc pour les CGI, tout!
@@ -63,6 +79,7 @@ class Connection {
 		// int					status;
 		Request				_request;
 		// std::string			htmlPage;
+		CGIContext			_cgi;
 };
 
 #endif
