@@ -53,6 +53,10 @@ struct CGIContext {
 			pipeOut[1] = -1;
 		}
 	}
+
+	bool	isActive() {
+		return (pid > 0);
+	}
 };
 
 // On pourrait la renommer Client la classe

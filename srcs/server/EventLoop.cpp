@@ -275,7 +275,9 @@ bool	EventLoop::startCGI(int clientFd) {
 }
 
 void	EventLoop::cleanupCGI(int clientFd) {
+
 	std::map<int, Connection>::iterator it = _connections.find(clientFd);
+
 	if (it == _connections.end())
 		return ;
 
@@ -413,7 +415,8 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					closeConnection(clientFd);
 				}
 			}
-			Logger::debug("SENDING_RESPONSE state");
+			if (_connections.find(clientFd) != _connections.end())
+				Logger::debug("SENDING_RESPONSE state");
 			break;
 
 		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
@@ -559,6 +562,15 @@ void	EventLoop::closeConnection(int clientFd) {
 
 	if (_connections.find(clientFd) == _connections.end())
 		return ;
+
+	Connection& client = _connections[clientFd];
+
+	if (client._cgi.isActive()) {
+		if (client._cgi.pid > 0) {
+			kill(client._cgi.pid, SIGKILL);
+		}
+		cleanupCGI(clientFd);
+	}
 
 	std::ostringstream	oss;
 	oss << "client #" << clientFd << " disconnected";
