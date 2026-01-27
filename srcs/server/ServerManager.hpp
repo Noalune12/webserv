@@ -10,7 +10,7 @@ struct ListenEndPoint
 	int			socketFd;
 
 	// List of servers that are linked/listening to that endpoint (Virtual Hosting)
-	std::vector<const server*>	servers;
+	std::vector<server*>	servers;
 
 	ListenEndPoint() : addr(), port(0), socketFd(-1), servers() {} // RAII
 };

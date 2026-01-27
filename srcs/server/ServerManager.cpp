@@ -53,6 +53,12 @@ void	ServerManager::setupListenSockets(void) {
 		_socketToEndpoint[sockFd] = i;
 		oneSuccess = true;
 
+
+		for (size_t j = 0; j < ep.servers.size(); ++j) {
+			ep.servers[j]->isRunning = true;
+		}
+
+		
 		std::ostringstream oss;
 		oss << "listening on " << ep.addr << ":" << ep.port;
 		Logger::notice(oss.str());

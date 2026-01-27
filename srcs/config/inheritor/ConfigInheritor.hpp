@@ -61,6 +61,9 @@ struct server {
 
 	std::map<int, std::string> errPage;
 	double bodySize;
+	bool	isRunning;
+
+	server() : lis(), serverName(), root(), index(), loc(), methods(), autoIndex(false), uploadTo(), ret(), errPage(), bodySize(0), isRunning(false) {}
 };
 
 class ConfigInheritor {

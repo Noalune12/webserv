@@ -175,7 +175,7 @@ void Request::methodHandler() {
 
                     struct stat buf;
 
-                    if (stat(path.c_str(), &buf) == 0) {
+                    if (stat(path.c_str(), &buf) == 0) { // not sure with many ////
                         if (!S_ISREG(buf.st_mode)) {
                             if (!_reqLocation->root.empty()) {
                                 findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
@@ -252,4 +252,9 @@ void Request::methodHandler() {
 			return ;
 		}
 	}
+}
+
+void Request::setServerInfo(const int& port, const std::string& ip) {
+    _serverIp = ip;
+    _serverPort = port;
 }

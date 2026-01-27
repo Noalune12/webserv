@@ -6,19 +6,42 @@
 
 void Request::findServer() {
 	std::vector<server>::iterator itServer = _servers.begin();
-	bool serverFound = false;
+    std::vector<size_t> possibleServerIndices;
 	for (; itServer != _servers.end(); itServer++) {
 		std::vector<listenDirective>::iterator itListen = itServer->lis.begin();
+        if (itServer->isRunning == false)
+            continue ;
 		for (; itListen != itServer->lis.end(); itListen++) {
 			if (itListen->port == _serverPort && (itListen->ip == _serverName || itListen->ip == "0.0.0.0")) {
-				// what about servername and virtual hosting
-				std::cout << "server found with " << itListen->port << ", " << itListen->ip << std::endl;
-				_reqServer = &(*itServer);
-				serverFound = true;
-				return ;
+				std::cout << "possible server found with " << itListen->port << ", " << itListen->ip << std::endl;
+                possibleServerIndices.push_back(std::distance(_servers.begin(), itServer));
+                break ;
 			}
 		}
 	}
+    for (size_t i = 0; i < possibleServerIndices.size(); i++) {
+        size_t serverIndex = possibleServerIndices[i];
+        server& candidateServer = _servers[serverIndex];
+        
+        std::vector<std::string>::iterator itServerName = candidateServer.serverName.begin();
+        for (; itServerName != candidateServer.serverName.end(); itServerName++) {
+            if (*itServerName == _serverName) {
+                std::cout << "server found with " << _serverName << std::endl;
+                _reqServer = &_servers[serverIndex]; 
+                break;
+            }
+        }    
+        if (_reqServer != NULL)
+            break;
+    }
+    // _reqServer = &(*itServer);
+    // std::cout << "SERVER FOUND = " << serverFound << std::endl;
+    if (_reqServer == NULL && possibleServerIndices.size() > 0) { // how to decide which server to chose, by default I set the 1st one
+        size_t serverIndex = possibleServerIndices[0];
+        _reqServer = &_servers[serverIndex]; 
+        std::cout << "default server is set" << std::endl;
+    }
+    // _reqServer = NULL;
 }
 
 
@@ -28,9 +51,10 @@ void Request::findLocation() {
     size_t index = _uri.rfind('/');
     if (index != _uri.size() - 1) {
         _trailing = _uri.substr(index + 1, _uri.size());
-        _uri = _uri.substr(0, index + 1);
+        if (index > 1)
+            _uri = _uri.substr(0, index + 1);
     }
-    // std::cout << "URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
+    std::cout << "URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
     while (!_uri.empty()) {
         std::vector<location>::iterator itLocation = _reqServer->loc.begin();
         for (; itLocation != _reqServer->loc.end(); itLocation++) {
@@ -69,9 +93,9 @@ bool Request::hostChecker() {
 		return false;
 	}
 	if (sep == std::string::npos) {
-		_serverName = it->second;
-		_serverPort = 8080;
+		_serverName = it->second; // can be server name or ip
 	} else {
+        int port;
         _serverName = it->second.substr(0, sep);
 		std::string temp = it->second.substr(sep + 1, it->second.size());
         if (!isOnlyDigits(temp)) {
@@ -80,7 +104,12 @@ bool Request::hostChecker() {
             return false;
         }
 		std::stringstream ss(temp);
-		ss >> _serverPort; // what if overflow
+		ss >> port; // what if overflow
+        if (port != _serverPort) {
+            findErrorPage(400, "/", _globalDir.errPage);
+            std::cout << "error host port is not the same as server" << std::endl;
+            return false;
+        }
 	}
 	if (_serverName == "localhost") {
 		_serverName = "127.0.0.1";

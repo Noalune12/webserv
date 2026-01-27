@@ -37,6 +37,9 @@ class Connection {
 		// bool				_chunked;
 
 		std::vector<server>	_servers;
+
+		std::string _serverIP;
+		int			_serverPort;
 		
 		public:
 		Connection(); // cannot compile without it and I don't understand why...

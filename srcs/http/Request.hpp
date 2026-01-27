@@ -24,10 +24,12 @@ class Request {
         server *_reqServer;
 	    location *_reqLocation;
         std::string _serverName;
-        int _serverPort;
 
         double _chunkSize;
         int _chunkState;
+
+        int _serverPort;
+        std::string _serverIp;
 
     public:
         Request();
@@ -76,6 +78,7 @@ class Request {
         bool hasWS(const std::string& line) const;
         bool isOnlyDigits(const std::string& line) const;
         void printWithoutR(std::string what, std::string line) const;
+        void setServerInfo(const int& port, const std::string& ip);
 };
 
 
