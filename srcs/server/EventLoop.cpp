@@ -395,6 +395,11 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			}
 			client.parseRequest();
 
+			Logger::debug("CGI check for URI: " + client._request._uri);
+			Logger::debug("cgiPath = '" + client._request._reqLocation.cgiPath + "'");
+			Logger::debug("cgiExt  = '" + client._request._reqLocation.cgiExt + "'");
+
+
 			if (client._request.chunkRemaining == true) {
 				client.setState(READING_BODY);
 				client.startTimer(2, CLIENT_TIMEOUT - 2);
