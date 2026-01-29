@@ -83,6 +83,22 @@ void	EventLoop::checkTimeouts(void) {
 			modifyEpoll(clientFd, EPOLLOUT);
 			sendError(clientFd, 400); // send a response
 		}
+
+		if (client.getState() == CGI_RUNNING) {
+			oss << "CGI timeout for client #" << clientFd << ", killing process";
+			Logger::warn(oss.str());
+
+			if (client._cgi.pid > 0) {
+				kill(client._cgi.pid, SIGKILL);
+			}
+			cleanupCGI(clientFd);
+			client._request.err = true;
+			client._request.status = 504;
+			client.setState(SENDING_RESPONSE);
+			modifyEpoll(clientFd, EPOLLOUT);
+			continue ;
+		}
+
 		oss << "client #" << clientFd << " timeout, closing";
 		Logger::warn(oss.str());
 		// send408 -> timeout error
@@ -293,6 +309,9 @@ bool	EventLoop::startCGI(int clientFd) {
 
 	_pipeToClient[cgi.pipeOut[0]] = clientFd;
 
+	// POST -> need to write the body into the pipe
+
+	// send EOF to the CGI
 	close(cgi.pipeIn[1]);
 	cgi.pipeIn[1] = -1;
 
@@ -305,7 +324,6 @@ bool	EventLoop::startCGI(int clientFd) {
 void	EventLoop::cleanupCGI(int clientFd) {
 
 	std::map<int, Connection>::iterator it = _connections.find(clientFd);
-
 	if (it == _connections.end())
 		return ;
 
