@@ -173,6 +173,7 @@ void printWithoutR(std::string what, std::string line) {
 
 void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 
+	// finds a client associated to a pipe
 	std::map<int, int>::iterator it = _pipeToClient.find(pipeFd);
 	if (it == _pipeToClient.end())
 		return ;
@@ -188,9 +189,36 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 
 	Connection& client = clientIt->second;
 
-	// event checks
-	(void) client;
-	(void) ev;
+	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // might not need all of those
+		// if we get there that means the pipe is closed or there has been an error
+		cleanupCGI(clientFd);
+		client.setState(SENDING_RESPONSE); // need to send the data we have for this client
+		client.startTimer(4, CLIENT_TIMEOUT);
+		modifyEpoll(clientFd, EPOLLOUT);
+		return ;
+	}
+
+	if (ev & EPOLLIN) {
+
+		char	buffer[8192];
+		ssize_t	bytes = read(pipeFd, buffer, sizeof(buffer));
+
+		if (bytes > 0) {
+			client._cgi.outputBuff.append(buffer, bytes);
+			client.startTimer(3, CGI_TIMOUT);
+		} else if (bytes == 0) {
+			cleanupCGI(clientFd);
+			client.setState(SENDING_RESPONSE);
+			client.startTimer(4, CLIENT_TIMEOUT);
+			modifyEpoll(clientFd, EPOLLOUT);
+		} else if (bytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) { // checking EAGAIN and EWOULDBLOCK for now BUT NEEDS TO BE REMOVED!!!!
+			cleanupCGI(clientFd);
+			client._request.err = true;
+			client._request.status = 502;
+			client.setState(SENDING_RESPONSE);
+			modifyEpoll(clientFd, EPOLLOUT);
+		}
+	}
 }
 
 bool	EventLoop::startCGI(int clientFd) {

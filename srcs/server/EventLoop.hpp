@@ -13,7 +13,7 @@ class EventLoop {
 	private:
 		static const int	MAX_EVENTS = 1024;		// to be define
 		static const time_t	CLIENT_TIMEOUT = 5;	// 5s, idk what is a good timeout value
-		static const time_t	CGI_TIMOUT = 10;
+		static const time_t	CGI_TIMOUT = 3;
 
 
 		int					_epollFd;		// epoll instance
@@ -22,6 +22,7 @@ class EventLoop {
 
 		// client socket fd, Connection object
 		std::map<int, Connection>	_connections;
+		// pipeFd, clientFd
 		std::map<int, int>			_pipeToClient;
 
 	public:
