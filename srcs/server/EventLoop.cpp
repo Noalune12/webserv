@@ -376,15 +376,23 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			break ;
 
 		case CGI_RUNNING:
-			// if (ev & EPOLLIN) {
-			// 	// temp
-			// 	if () { // cgi done
-			// 		client.setState(SENDING_RESPONSE);
-			// 		modifyEpoll(clientFd, EPOLLOUT);
-			// 	} else {
-
-			// 	}
-			// }
+			// si on arrive ici c'est probablement qu'il y a eu une erreur (les CGI sont handle dans handleCGIPipeEvent)
+			// On ne check que pour les erreurs et on laisse tourner
+			if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // je laisse pour identifier quelles erreurs on chope ici de la meme facon que plus haut
+				if (ev & EPOLLERR) {
+					std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+				} else if (ev & EPOLLHUP) {
+					std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+				} else if (ev & EPOLLRDHUP) {
+					std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+				}
+				if (client._cgi.pid > 0) {
+					kill(client._cgi.pid, SIGKILL);
+				}
+				Logger::debug("Client disconnection while CGI running");
+				cleanupCGI(clientFd);
+				closeConnection(clientFd);
+			}
 			break ;
 
 		case SENDING_RESPONSE:
