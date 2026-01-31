@@ -44,7 +44,10 @@ SRC += $(addprefix $(SERVERDIR), $(addsuffix .cpp, $(SERVERSRC)))
 
 override SERVERSRC	:= \
 	Connection \
+	EpollUtils \
 	EventLoop \
+	EventLoopTimeout \
+	EventLoopUtils \
 	ServerManager
 
 SRC += $(addprefix $(HTTPDIR), $(addsuffix .cpp, $(HTTPSRC)))

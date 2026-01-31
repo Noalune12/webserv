@@ -16,6 +16,9 @@
 #include "EventLoop.hpp"
 #include "Logger.hpp"
 
+// delete or add as EventLoop member function
+void	printWithoutR(std::string what, std::string line);
+
 EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections() {}
 
 EventLoop::~EventLoop() {
@@ -26,6 +29,8 @@ EventLoop::~EventLoop() {
 		close(it->first);
 	}
 	_connections.clear();
+
+	// cgi fds cleanup ?
 
 	if (_epollFd >= 0) {
 		close(_epollFd);
@@ -38,7 +43,7 @@ bool	EventLoop::init(void) {
 	Logger::notice("using the \"epoll\" event method");
 	_epollFd = epoll_create(PROXY_AUTH_REQ);
 	if (_epollFd < 0) {
-		Logger::error(std::string("epoll_create() failed:") + strerror(errno));
+		Logger::error(std::string("epoll_create() failed: ") + strerror(errno));
 		return (false);
 	}
 
@@ -55,91 +60,6 @@ bool	EventLoop::init(void) {
 	oss << "eventLoop initialized with " << listenFds.size() << " listen socket(s)";
 	Logger::debug(oss.str());
 	return (true);
-}
-
-void	EventLoop::checkTimeouts(void) {
-
-	std::vector<int>	timedOut;
-	std::map<int, Connection>::iterator	it;
-
-	for (it = _connections.begin(); it != _connections.end(); ++it) {
-		Connection& client = it->second;
-		if (it->second.getState() == CLOSED)
-			continue ;
-		int	active_timer = getActiveTimer(client.getState());
-
-		if (active_timer >= 0 && client.isTimedOut(active_timer)) {
-			timedOut.push_back(it->first);
-		}
-	}
-
-	for (size_t i = 0; i < timedOut.size(); ++i) {
-
-		int	clientFd = timedOut[i];
-
-		std::ostringstream	oss;
-		Connection& client = _connections[clientFd];
-		if (client.getState() == READING_BODY) {
-			modifyEpoll(clientFd, EPOLLOUT);
-			sendError(clientFd, 400); // send a response
-		}
-
-		if (client.getState() == CGI_RUNNING) {
-			oss << "CGI timeout for client #" << clientFd << ", killing process";
-			Logger::warn(oss.str());
-
-			if (client._cgi.pid > 0) {
-				kill(client._cgi.pid, SIGKILL);
-			}
-			cleanupCGI(clientFd);
-			client._request.err = true;
-			client._request.status = 504;
-			client.setState(SENDING_RESPONSE);
-			modifyEpoll(clientFd, EPOLLOUT);
-			continue ;
-		}
-
-		oss << "client #" << clientFd << " timeout, closing";
-		Logger::warn(oss.str());
-		// send408 -> timeout error
-		// sendTimeout(clientFd);
-		closeConnection(clientFd);
-	}
-}
-
-int	EventLoop::getActiveTimer(ConnectionState s) {
-	switch (s) {
-		case IDLE:
-			return (0);
-		case READING_HEADERS:
-			return (1);
-		case READING_BODY:
-			return (2);
-		case CGI_RUNNING:
-			return (3);
-		case SENDING_RESPONSE:
-			return (4);
-		default:
-			return (-1);
-	}
-}
-
-int	EventLoop::calculateEpollTimeout(void) {
-
-	if (_connections.empty())
-		return (5);
-
-	int min_sec = 5;
-
-	std::map<int, Connection>::const_iterator it;
-	for (it = _connections.begin(); it != _connections.end(); ++it) {
-
-		long rem = it->second.secondsToClosestTimeout();
-		if (rem < min_sec) {
-			min_sec = static_cast<int>(rem);
-		}
-	}
-	return (min_sec);
 }
 
 void	EventLoop::run(void) {
@@ -178,14 +98,6 @@ void	EventLoop::run(void) {
 	Logger::debug("eventLoop stopped"); // will have to be deleted since we get there if the server stops, and the only way to stop it is to send a SIGINT signal to the server. It gets printed after the signalHandling messages
 }
 
-void printWithoutR(std::string what, std::string line) {
-    std::string l;
-    for (size_t i = 0; i < line.size(); i++) {
-        if (line[i] != '\r')
-            l.push_back(line[i]);
-    }
-    std::cout << what <<" = \'" << l << "\' -" << std::endl;
-}
 
 void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 
@@ -221,7 +133,7 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 
 		if (bytes > 0) {
 			client._cgi.outputBuff.append(buffer, bytes);
-			client.startTimer(3, CGI_TIMOUT);
+			client.startTimer(3, CGI_TIMEOUT);
 		} else if (bytes == 0) {
 			cleanupCGI(clientFd);
 			client.setState(SENDING_RESPONSE);
@@ -265,10 +177,9 @@ bool	EventLoop::startCGI(int clientFd) {
 		Logger::error("fork() failed");
 		return (false);
 	}
-
 	// implement children logic
 	if (cgi.pid == 0) {
-
+		std::cout << RED "IN CHILD PROCESS" RESET << std::endl;
 		// closing child unused fds first
 		close(cgi.pipeIn[1]);
 		close(cgi.pipeOut[0]);
@@ -281,14 +192,50 @@ bool	EventLoop::startCGI(int clientFd) {
 		close(cgi.pipeIn[0]);
 		close(cgi.pipeOut[1]);
 
+		std::map<int, Connection>::iterator it;
+		for (it = _connections.begin(); it != _connections.end(); ++it) {
+			close(it->first);
+		}
+		if (_epollFd >= 0) {
+			close(_epollFd);
+			_epollFd = -1;
+		}
+
+		std::vector<int>			serverSockets = _serverManager.getListenSocketFds();
+		std::vector<int>::iterator	itServerSockets;
+
+		for (itServerSockets = serverSockets.begin(); itServerSockets != serverSockets.end(); ++itServerSockets) {
+			close(*itServerSockets);
+		}
+
+
+
+
+
 		// GROS DU BOULOT:
 		// creation variable d'environnements
 		// chdir vers l'endroit ou est le script
 		// execve du script
+		char* envp[] = {
+			(char*)"SERVER_SOFTWARE=Webserv/1.0",
+			(char*)"GATEWAY_INTERFACE=CGI/1.1",
+			(char*)"SERVER_PROTOCOL=HTTP/1.1",
+			(char*)"REQUEST_METHOD=GET",
+			(char*)"SCRIPT_NAME=/cgi-test/hello.py",
+			(char*)"SCRIPT_FILENAME=./var/www/cgi-test/hello.py",
+			(char*)"PATH_INFO=/cgi-test",
+			(char*)"QUERY_STRING=",  // à remplir si query string
+			(char*)"REMOTE_ADDR=127.0.0.1",
+			(char*)"CONTENT_LENGTH=0",
+			NULL
+		};
 
+		char *argv[] = {(char*)"/usr/bin/python3", (char*)"./var/www/cgi-test/hello.py", NULL};
+		execve("/usr/bin/python3", argv, envp);
+		std::cerr << RED "execve failed: " << strerror(errno) << std::endl << RESET;
+		_exit(1);
 		// on est jamais sensé arrivé la, on verra comment je sors plus tard
 		// std::exit(666);
-		// exit(666);
 		// _exit(666); -> le mieux mais est-ce qu'on a le droit ????
 	}
 	// implement parent logic
@@ -312,11 +259,12 @@ bool	EventLoop::startCGI(int clientFd) {
 	// POST -> need to write the body into the pipe
 
 	// send EOF to the CGI
+	Logger::debug("Sending EOF to CGI via pipeIn[1]");
 	close(cgi.pipeIn[1]);
 	cgi.pipeIn[1] = -1;
 
 	client.setState(CGI_RUNNING);
-	client.startTimer(3, CGI_TIMOUT);
+	client.startTimer(3, CGI_TIMEOUT);
 
 	return (true);
 }
@@ -387,7 +335,6 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.startTimer(3, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
 				printWithoutR("Request", client.getBuffer());
-
 			}
 			if (client.getBuffer().empty()) { // to avoid EPOLLERR
 				closeConnection(clientFd);
@@ -399,6 +346,16 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			Logger::debug("cgiPath = '" + client._request._reqLocation.cgiPath + "'");
 			Logger::debug("cgiExt  = '" + client._request._reqLocation.cgiExt + "'");
 
+			if (!client._request._reqLocation.cgiExt.empty() || !client._request._reqLocation.cgiPath.empty()) {
+				client._request._reqLocation.cgiPath = "var/www/cgi-test/hello.py";
+
+				if (startCGI(clientFd)) {
+					return ;
+				} else {
+					client._request.err = true;
+					client._request.status = 500;
+				}
+			}
 
 			if (client._request.chunkRemaining == true) {
 				client.setState(READING_BODY);
@@ -544,102 +501,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	Logger::notice(oss.str());
 }
 
-void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port) {
 
-	uint32_t ip_host = ntohl(addr.sin_addr.s_addr);
-	std::ostringstream oss;
-	for (size_t i = 0; i < 4; ++i) {
-		oss << ((ip_host >> (24 - (i * 8))) & 0xFF);
-		if (i < 3)
-			oss << ".";
-	}
-	ip = oss.str();
-	port = ntohs(addr.sin_port);
-}
-
-void	EventLoop::stop(void) {
-	_running = false;
-}
-
-bool	EventLoop::isRunning(void) const {
-	return (_running);
-}
-
-size_t	EventLoop::getConnectionCount(void) const {
-	return (_connections.size());
-}
-
-
-bool	EventLoop::addToEpoll(int fd, uint32_t events) {
-
-	struct epoll_event ev;
-	ev.events = events;
-	ev.data.fd = fd;
-
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) < 0) {
-		if (errno != EEXIST) { // I think we want to skip this case as it doesn't cause any trouble (does it ?)
-			std::cerr << "epoll_ctl(ADD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
-			return (false);
-		}
-	}
-
-	return (true);
-}
-
-// works for EPOLLIN | EPOLLOUT, can also set them both at the same time (see if this we have the use -> discussed with lthan)
-bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
-
-	if (_connections.find(fd) == _connections.end())
-		return (false);
-
-	struct epoll_event ev;
-	ev.events = events;
-	ev.data.fd = fd;
-
-	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) < 0) {
-		std::cerr << "epoll_ctl(MOD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
-		return (false);
-	}
-
-	return (true);
-}
-
-bool	EventLoop::removeFromEpoll(int fd) {
-
-	// can pass NULL as event parameter here, school computer kernel are on a version > 2.6.9 so we will not face a bug doing it that way (might want to defend it with other words lol)
-	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0) {
-		if (errno != ENOENT) { // ENOENT means the fd is not registered to the epoll instance, I don't think we should care if it happens
-			std::cerr << "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << std::endl;
-			return (false);
-		}
-	}
-
-	return (true);
-}
-
-void	EventLoop::closeConnection(int clientFd) {
-
-	if (_connections.find(clientFd) == _connections.end())
-		return ;
-
-	Connection& client = _connections[clientFd];
-
-	if (client._cgi.isActive()) {
-		if (client._cgi.pid > 0) {
-			kill(client._cgi.pid, SIGKILL);
-		}
-		cleanupCGI(clientFd);
-	}
-
-	std::ostringstream	oss;
-	oss << "client #" << clientFd << " disconnected";
-
-	removeFromEpoll(clientFd); // need to check the return value of this function depending on the cases
-	Logger::notice(oss.str());
-
-	close(clientFd);
-	_connections.erase(clientFd);
-}
 
 
 /* utils */
@@ -698,6 +560,8 @@ void EventLoop::sendError(int clientFd, int status) {
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
 
+
+// delete if not used
 void EventLoop::sendStatus(int clientFd, int status) {
 	std::cout << GREEN "Sending " << status << " response to fd[" << clientFd << "]" RESET << std::endl;
     Connection& client = _connections[clientFd];
@@ -738,36 +602,5 @@ void EventLoop::sendStatus(int clientFd, int status) {
 	if (client._request._keepAlive == false)
 		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
-	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
-}
-
-
-void	EventLoop::send505exemple(int clientFd) {
-
-	std::string body =
-		"<html>\n"
-		"<html lang=\"en\">\n"
-		"<head>\n"
-		"<title>505 HTTP Version Not Supported</title>\n"
-		"</head>\n"
-		"<body>\n"
-		"<h1>505 HTTP Version Not Supported</h1>\n"
-		"<p>If this problem persists, please <a href=\"https://example.com/support\">contact support</a>.</p>\n"
-		"<p>Server logs contain details of this error with request ID: ABC-123.</p>\n"
-		"</body>\n"
-		"</html>\n";
-
-		std::stringstream	ss;
-		ss << body.size();
-		std::string bodySize = ss.str();
-
-	std::string res =
-		"HTTP/1.1 505 HTTP Version Not Supported\r\n"
-		"Content-Type: text/html;\r\n"
-		"Content-Length: " + bodySize + "\r\n"
-		"\r\n" +
-		body;
-
-	send(clientFd, res.c_str(), res.size(), 0);
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
