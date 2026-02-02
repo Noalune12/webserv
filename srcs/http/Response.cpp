@@ -20,6 +20,8 @@ void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << YELLOW "Request line:" RESET << std::endl;
 	std::cout << "  method = \"" << req._method << "\"" << std::endl;
 	std::cout << "  uri    = \"" << req._uri << "\"" << std::endl;
+	std::cout << "  trailing    = \"" << req._trailing << "\"" << std::endl;
+
 
 	std::cout << YELLOW "htmlPage:" RESET << std::endl;
 	if (req.htmlPage.empty()) {
@@ -40,7 +42,6 @@ void	Response::debugPrintRequestData(const Request& req) {
 }
 
 void	Response::prepare(const Request& req) {
-
 	_statusCode = 200;
 	_statusText = "OK";
 	_headers.clear();
@@ -51,46 +52,26 @@ void	Response::prepare(const Request& req) {
 	_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
 
 	if (req.err) {
-
 		_statusCode = req.status;
 		_statusText = StatusCodes::getReasonPhrase(req.status);
-
-		if (!req.htmlPage.empty()) {
-			_body.assign(req.htmlPage.begin(), req.htmlPage.end());
-		} else {
-			std::string errorPage = StatusCodes::generateDefaultErrorPage(req.status);
-			_body.assign(errorPage.begin(), errorPage.end());
-		}
-		// std::string type = MimeTypes::getType(req._uri);
-		// _headers["Content-Type"] = type;
-		_headers["Content-Type"] = "text/html"; // a changer en appelant les functions de MimeTypes
-
-		return ;
 	}
 
 	if (!req.htmlPage.empty()) {
-
-		_statusCode = 200;
-		_statusText = "OK";
 		_body.assign(req.htmlPage.begin(), req.htmlPage.end());
-
-		std::string type = MimeTypes::getType(req._uri);
-		std::cout << RED << req._uri << RESET << std::endl;
-		std::cout << RED << type << RESET << std::endl;
-
-		// _headers["Content-Type"] = type;
-		_headers["Content-Type"] = "text/html"; // a changer en appelant les functions de MimeTypes
+		std::string type = MimeTypes::getType(req._trailing);
+		_headers["Content-Type"] = type.empty() ? "text/html" : type;
+		std::cout << RED << req._trailing << " -> " << _headers["Content-Type"] << RESET << std::endl;
 		return ;
 	}
 
-	// chunked ?
-	_statusCode = 500;
-	_statusText = "Internal Server Error";
-	std::string errorPage = StatusCodes::generateDefaultErrorPage(500);
+	if (req.err || _statusCode == 200) {
+		_statusCode = req.err ? req.status : 500;
+		_statusText = StatusCodes::getReasonPhrase(_statusCode);
+	}
+	std::string errorPage = StatusCodes::generateDefaultErrorPage(_statusCode);
 	_body.assign(errorPage.begin(), errorPage.end());
 	_headers["Content-Type"] = "text/html";
 }
-
 
 std::vector<char>	Response::buildRaw(void) {
 
