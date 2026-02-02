@@ -361,6 +361,8 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.setState(READING_BODY);
 				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				modifyEpoll(clientFd, EPOLLIN);
+			} else if (client._request.err == false) { //not sure if it is here
+				client._request.methodHandler();
 			}
 
 			Logger::debug("READING_HEADERS state");
@@ -368,7 +370,12 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 		case READING_BODY:
 			if (ev & EPOLLIN) {
-				tempCall(clientFd);
+				size_t n = tempCall(clientFd);
+				if (n == 0) {
+					std::cout << "NOTHING RECEIVED" << std::endl;
+					closeConnection(clientFd);
+					break ;
+				}
 				client._request._chunk += client.getBuffer();
 				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				// printWithoutR("Body", client.getBuffer());
@@ -404,6 +411,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			break ;
 
 		case SENDING_RESPONSE:
+		std::cout << "BODY = " << client._request._body << std::endl;
 			if (ev & EPOLLOUT) {
 
 				Response response;
@@ -431,9 +439,11 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					closeConnection(clientFd);
 				}
 			}
-			if (_connections.find(clientFd) != _connections.end())
-				Logger::debug("SENDING_RESPONSE state");
-			break;
+			Logger::accessLog(client.getIP(), "method", "uri", "version", 666, 100); // temp, won't we called here
+			Logger::debug("SENDING_RESPONSE state");
+			if (client._request._keepAlive == false)
+				closeConnection(clientFd);
+			break ;
 
 		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
 			closeConnection(clientFd);
@@ -441,7 +451,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 	}
 }
 
-void	EventLoop::tempCall(int clientFd) {
+size_t	EventLoop::tempCall(int clientFd) {
 		// static int a = 0;
 		// std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
 		char	buf[10];
@@ -453,7 +463,7 @@ void	EventLoop::tempCall(int clientFd) {
 				if (bytes == -1) {
 					std::cout << "recv failed: " << strerror(errno) << std::endl;
 				}
-				return ;
+				return bytes;
 			}
 			buffer += std::string(buf, bytes);
 		}
@@ -461,6 +471,7 @@ void	EventLoop::tempCall(int clientFd) {
 		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 		std::map<int, Connection>::iterator it = _connections.find(clientFd);
 		it->second.setBuffer(buffer);
+		return bytes;
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
@@ -554,8 +565,8 @@ void EventLoop::sendError(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-	if (client._request._keepAlive == false)
-		closeConnection(clientFd);
+	// if (client._request._keepAlive == false)
+	// 	closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
@@ -599,8 +610,8 @@ void EventLoop::sendStatus(int clientFd, int status) {
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
 	// Connection& client = _connections[clientFd];
-	if (client._request._keepAlive == false)
-		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
+	// if (client._request._keepAlive == false)
+	// 	closeConnection(clientFd);
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }

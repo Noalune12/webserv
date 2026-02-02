@@ -21,9 +21,15 @@ class Request {
         std::string _requestLine;
         std::vector<server>	_servers;
         globalDir _globalDir;
+        server *_reqServer;
+	    location *_reqLocation;
+        std::string _serverName;
 
         double _chunkSize;
         int _chunkState;
+
+        int _serverPort;
+        std::string _serverIp;
 
     public:
         Request();
@@ -40,25 +46,43 @@ class Request {
         std::map<std::string, std::string> _headers;
         std::string			htmlPage;
         std::string _chunk;
-        // std::string _trailing;
+        std::string _trailing;
         bool _keepAlive;
         server _reqServer;
 	    location _reqLocation;
         std::string _queryString;
         std::string _scriptPath;
 
+        // PARSING
         void checkRequestSem(std::string request);
+
         bool extractRequestInfo();
         bool extractRequestLineInfo(std::string& method, std::string& uri, std::string& http);
         bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
         bool checkHeaders();
+
         void checkRequestContent();
-        std::string trimOws(const std::string& s);
-        std::string lowerString(const std::string& s);
-        void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
-        void isChunkEnd();
-        void clearPreviousRequest();
+
+        bool hostChecker();
+        void findServer();
+        void findLocation();
+        bool bodyChecker();
+
+        // CHUNK PARSING
         void parseChunk();
+        bool getChunkSize();
+
+        // HANDLER
+        void methodHandler();
+
+        // UTILS
+        std::string trimOws(const std::string& s);
+        void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
+        void clearPreviousRequest();
+        bool hasWS(const std::string& line) const;
+        bool isOnlyDigits(const std::string& line) const;
+        void printWithoutR(std::string what, std::string line) const;
+        void setServerInfo(const int& port, const std::string& ip);
 };
 
 
