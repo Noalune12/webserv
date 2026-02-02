@@ -22,7 +22,7 @@ bool Request::getChunkSize() {
     _chunkSize = strtol(hex.c_str(), &end, 16);
 
     // std::cout << "CHUNK = " << _chunk << " VS HEX = " << hex << std::endl;
-    // std::cout << "CHUNK SIZE = " << _chunkSize << std::endl;
+    std::cout << "CHUNK SIZE = " << _chunkSize << std::endl;
 
     if (end == hex.c_str()
             || *end != '\0'
@@ -53,12 +53,13 @@ void Request::parseChunk() {
         } else {
             return ;
         }
-        // std::cout << "CHUNK = " << _chunk << std::endl;
+        std::cout << "CHUNK = " << _chunk << std::endl;
     }
 
 
     // loop while chunk to read
     while (_chunkState != IS_END) {
+        std::cout << "IN CHUNK LOOP" << std::endl;
         if (_reqLocation->bodySize < _body.size()) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
@@ -118,6 +119,6 @@ void Request::parseChunk() {
                 return ;
             }
             // std::cout << "CHUNK = " << _chunk << std::endl;
-        }
+        } 
     }
 }

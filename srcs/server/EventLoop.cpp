@@ -283,6 +283,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			break ;
 
 		case SENDING_RESPONSE:
+		std::cout << "BODY = " << client._request._body << std::endl;
 			if (ev & EPOLLOUT) {
 				// send505exemple(clientFd);
 
@@ -303,6 +304,8 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			}
 			Logger::accessLog(client.getIP(), "method", "uri", "version", 666, 100); // temp, won't we called here
 			Logger::debug("SENDING_RESPONSE state");
+			if (client._request._keepAlive == false)
+				closeConnection(clientFd);
 			break ;
 
 		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
@@ -511,8 +514,8 @@ void EventLoop::sendError(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-	if (client._request._keepAlive == false)
-		closeConnection(clientFd);
+	// if (client._request._keepAlive == false)
+	// 	closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
@@ -554,9 +557,9 @@ void EventLoop::sendStatus(int clientFd, int status) {
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
 	// Connection& client = _connections[clientFd];
-	if (client._request._keepAlive == false)
-		closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
+	// if (client._request._keepAlive == false)
+	// 	closeConnection(clientFd);
 	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
 

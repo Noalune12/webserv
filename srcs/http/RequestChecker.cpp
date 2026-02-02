@@ -186,6 +186,7 @@ bool Request::bodyChecker() {
                 _body.compare(_body.size() - 5, 5, "0\r\n\r\n") == 0) {
                 chunkRemaining = false;
                 _body = _body.substr(0, _body.size() - 5);
+                _chunkState = GETTING_FIRST_SIZE;
                 parseChunk();
         } else {
             chunkRemaining = true;
