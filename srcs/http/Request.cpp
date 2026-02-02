@@ -661,6 +661,8 @@ void Request::parseChunk() {
                 return ;
             }
             std::cout << "CHUNK = " << _chunk << std::endl;
+        } else {
+            return ;
         }
     }
 }
