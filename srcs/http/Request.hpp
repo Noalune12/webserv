@@ -21,8 +21,7 @@ class Request {
         std::string _requestLine;
         std::vector<server>	_servers;
         globalDir _globalDir;
-        server *_reqServer;
-	    location *_reqLocation;
+
         std::string _serverName;
 
         double _chunkSize;
@@ -48,11 +47,10 @@ class Request {
         std::string _chunk;
         std::string _trailing;
         bool _keepAlive;
-        server _reqServer;
-	    location _reqLocation;
         std::string _queryString;
         std::string _scriptPath;
-
+        server *_reqServer;
+	    location *_reqLocation;
         // PARSING
         void checkRequestSem(std::string request);
 

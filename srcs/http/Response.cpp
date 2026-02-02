@@ -29,9 +29,9 @@ void	Response::debugPrintRequestData(const Request& req) {
 	}
 
 	std::cout << YELLOW "Location:" RESET << std::endl;
-	std::cout << "  path  = \"" << req._reqLocation.path << "\"" << std::endl;
-	std::cout << "  root  = \"" << req._reqLocation.root << "\"" << std::endl;
-	std::cout << "  alias = \"" << req._reqLocation.alias << "\"" << std::endl;
+	std::cout << "  path  = \"" << req._reqLocation->path << "\"" << std::endl;
+	std::cout << "  root  = \"" << req._reqLocation->root << "\"" << std::endl;
+	std::cout << "  alias = \"" << req._reqLocation->alias << "\"" << std::endl;
 
 	std::cout << YELLOW "Query:" RESET << std::endl;
 	std::cout << "   query = \"" << req._queryString << "\"" << std::endl;
@@ -80,7 +80,7 @@ void	Response::prepare(const Request& req) {
 
 		// _headers["Content-Type"] = type;
 		_headers["Content-Type"] = "text/html"; // a changer en appelant les functions de MimeTypes
-		return;
+		return ;
 	}
 
 	// chunked ?

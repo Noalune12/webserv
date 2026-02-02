@@ -131,6 +131,7 @@ void Request::methodHandler() {
                             std::cout << "File found" << std::endl;
                             std::stringstream buffer;
                             buffer << file.rdbuf();
+                            // std::cout << buffer.str() << std::endl;
                             htmlPage = buffer.str();
                             err = false;
                             status = 200;

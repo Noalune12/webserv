@@ -343,11 +343,11 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			client.parseRequest();
 
 			Logger::debug("CGI check for URI: " + client._request._uri);
-			Logger::debug("cgiPath = '" + client._request._reqLocation.cgiPath + "'");
-			Logger::debug("cgiExt  = '" + client._request._reqLocation.cgiExt + "'");
+			Logger::debug("cgiPath = '" + client._request._reqLocation->cgiPath + "'");
+			Logger::debug("cgiExt  = '" + client._request._reqLocation->cgiExt + "'");
 
-			if (!client._request._reqLocation.cgiExt.empty() || !client._request._reqLocation.cgiPath.empty()) {
-				client._request._reqLocation.cgiPath = "var/www/cgi-test/hello.py";
+			if (!client._request._reqLocation->cgiExt.empty() || !client._request._reqLocation->cgiPath.empty()) {
+				client._request._reqLocation->cgiPath = "var/www/cgi-test/hello.py";
 
 				if (startCGI(clientFd)) {
 					return ;
