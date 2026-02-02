@@ -439,7 +439,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					closeConnection(clientFd);
 				}
 			}
-			Logger::accessLog(client.getIP(), client._request._method, client._request._uri + client._request._trailing, "version", client._request.status, client._request._body.size()); // temp, won't we called here
+			Logger::accessLog(client.getIP(), client._request._method, client._request._uri + client._request._trailing, "version", client._request.status, 123456/*client._request._body.size()*/); // temp, won't we called here
 			Logger::debug("SENDING_RESPONSE state");
 			if (client._request._keepAlive == false)
 				closeConnection(clientFd);
