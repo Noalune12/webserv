@@ -48,7 +48,7 @@ class EventLoop {
 		void	send505exemple(int clientFd);
 		void	sendStatus(int clientFd, int status);
 
-		void	tempCall(int clientFd);
+		size_t	tempCall(int clientFd);
 
 		void	checkTimeouts(void);
 		int		calculateEpollTimeout(void);

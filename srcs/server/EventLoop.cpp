@@ -237,7 +237,12 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 		case READING_BODY:
 			if (ev & EPOLLIN) {
-				tempCall(clientFd);
+				size_t n = tempCall(clientFd);
+				if (n == 0) {
+					std::cout << "NOTHING RECEIVED" << std::endl;
+					closeConnection(clientFd);
+					break ;
+				}
 				client._request._chunk += client.getBuffer();
 				client.startTimer(2, CLIENT_TIMEOUT - 2);
 				// printWithoutR("Body", client.getBuffer());		
@@ -251,6 +256,17 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			if (client._request.chunkRemaining == false && client._request.err == false) {
 				client._request.methodHandler();
 			}
+			// if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+			// 	if (ev & EPOLLERR) {
+			// 		std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+			// 	} else if (ev & EPOLLHUP) {
+			// 		std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+			// 	} else if (ev & EPOLLRDHUP) {
+			// 		std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+			// 	}
+			// 	closeConnection(clientFd);
+			// 	return;
+			// }
 			Logger::debug("READING_BODY state");
 			break ;
 
@@ -295,7 +311,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 	}
 }
 
-void	EventLoop::tempCall(int clientFd) {
+size_t	EventLoop::tempCall(int clientFd) {
 		// static int a = 0;
 		// std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
 		char	buf[10];
@@ -307,7 +323,7 @@ void	EventLoop::tempCall(int clientFd) {
 				if (bytes == -1) {
 					std::cout << "recv failed: " << strerror(errno) << std::endl;
 				}
-				return ;
+				return bytes;
 			}
 			buffer += std::string(buf, bytes);
 		}
@@ -315,6 +331,7 @@ void	EventLoop::tempCall(int clientFd) {
 		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 		std::map<int, Connection>::iterator it = _connections.find(clientFd);
 		it->second.setBuffer(buffer);
+		return bytes;
 }
 
 void	EventLoop::acceptConnection(int listenFd) {
