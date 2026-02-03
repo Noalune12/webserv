@@ -334,9 +334,6 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 		case READING_HEADERS: // fallthrought ? not sure yet
 			if (ev & EPOLLIN) {
 				tempCall(clientFd);
-				client.setState(SENDING_RESPONSE); // will need to set READING_BODY first
-				client.startTimer(3, CLIENT_TIMEOUT);
-				modifyEpoll(clientFd, EPOLLOUT);   // needs to be in the: case READING_BODY, not here
 				printWithoutR("Request", client.getBuffer());
 			}
 			if (client.getBuffer().empty()) { // to avoid EPOLLERR
@@ -364,10 +361,14 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 			if (client._request.chunkRemaining == true) {
 				client.setState(READING_BODY);
-				client.startTimer(2, CLIENT_TIMEOUT - 2);
+				client.startTimer(2, CLIENT_TIMEOUT - 4);
 				modifyEpoll(clientFd, EPOLLIN);
-			} else if (client._request.err == false) { //not sure if it is here
+			} else if (client._request.err == false && client._request._cgi == false) { //not sure if it is here
 				client._request.methodHandler();
+			} else if (client._request.err == false && client._request._cgi == true) {
+				client.setState(CGI_RUNNING);
+				client.startTimer(3, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT);
 			}
 
 			// check boolean CGI here
@@ -383,16 +384,34 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					break ;
 				}
 				client._request._chunk += client.getBuffer();
-				client.startTimer(2, CLIENT_TIMEOUT - 2);
+				client.startTimer(2, CLIENT_TIMEOUT - 4);
 				// printWithoutR("Body", client.getBuffer());
 			}
 			client._request.parseChunk();
+			if (client._request.chunkRemaining == false && client._request.err == false && client._request._cgi == false) {
+				client._request.methodHandler();
+			} else if (client._request.err == false && client._request._cgi == true) {
+				client.setState(CGI_RUNNING);
+				client.startTimer(3, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT);
+			}
 			if (client._request.chunkRemaining == false || client._request.err == true) {
 				client.setState(SENDING_RESPONSE);
 				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);
 			}
 
+			// if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+			// 	if (ev & EPOLLERR) {
+			// 		std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+			// 	} else if (ev & EPOLLHUP) {
+			// 		std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+			// 	} else if (ev & EPOLLRDHUP) {
+			// 		std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+			// 	}
+			// 	closeConnection(clientFd);
+			// 	return;
+			// }
 			Logger::debug("READING_BODY state");
 			break ;
 
@@ -415,6 +434,30 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				closeConnection(clientFd);
 				return ;
 			}
+			std::cout << "CGI with " << client._request._scriptPath << " and " << client._request._queryString << std::endl;
+			if (client._request._reqLocation && (!client._request._reqLocation->cgiExt.empty() || !client._request._reqLocation->cgiPath.empty())) {
+				client._request._reqLocation->cgiPath = "var/www/cgi-bin/text.py";
+
+				if (startCGI(clientFd)) {
+					return ;
+				} else {
+					client._request.err = true;
+					client._request.status = 500;
+				}
+			}
+			client.setState(SENDING_RESPONSE);
+			client.startTimer(4, CLIENT_TIMEOUT);
+			modifyEpoll(clientFd, EPOLLOUT);
+			client._request.status = 500;
+			// if (ev & EPOLLIN) {
+			// 	// temp
+			// 	if () { // cgi done
+			// 		client.setState(SENDING_RESPONSE);
+			// 		modifyEpoll(clientFd, EPOLLOUT);
+			// 	} else {
+
+			// 	}
+			// }
 			break ;
 
 		case SENDING_RESPONSE:

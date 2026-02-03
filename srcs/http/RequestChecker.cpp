@@ -3,16 +3,19 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <sys/stat.h>
 
 void Request::findServer() {
 	std::vector<server>::iterator itServer = _servers.begin();
     std::vector<size_t> possibleServerIndices;
 	for (; itServer != _servers.end(); itServer++) {
 		std::vector<listenDirective>::iterator itListen = itServer->lis.begin();
+        // std::cout << "Is server running ? " << itServer->isRunning << std::endl;
         if (itServer->isRunning == false)
             continue ;
 		for (; itListen != itServer->lis.end(); itListen++) {
-			if (itListen->port == _serverPort && (itListen->ip == _serverName || itListen->ip == "0.0.0.0")) {
+            // std::cout << "POST it = " << itListen->port << "ServerPort = "<< _serverPort << "IP it = "<< itListen->ip << "ServerName = "<< _serverName << std::endl;
+			if (itListen->port == _serverPort && (itListen->ip == _serverName || itListen->ip == "0.0.0.0" || itListen->ip == _serverIp)) {
 				std::cout << "possible server found with " << itListen->port << ", " << itListen->ip << std::endl;
                 possibleServerIndices.push_back(std::distance(_servers.begin(), itServer));
                 break ;
@@ -166,6 +169,35 @@ void Request::checkRequestContent() {
 	}
 
     bodyChecker();
+
+    if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
+        if (_trailing.empty())
+            return;
+        size_t index = _trailing.find('?'); //what if the folder has a ?
+        if (index != std::string::npos) {
+            _queryString = _trailing.substr(index);
+            _trailing = _trailing.substr(0, index);
+        }
+        if (!_reqLocation->root.empty())
+            _scriptPath = getPath(_reqLocation->root + _uri, _trailing);
+        else
+            _scriptPath = getPath(_reqLocation->alias, _trailing);
+        struct stat buf;
+
+        if (stat(_scriptPath.c_str(), &buf) == 0) {
+            std::cout << "FILE FOUND FOR CGI" << std::endl;
+            _cgi = true;
+        }
+        else {
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+            }
+            else {
+                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+            }
+            std::cout << "error with CGI file or folder note found" << std::endl;
+        }
+    }
     // if method is POST but no body => 400
 
 }

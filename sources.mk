@@ -59,7 +59,9 @@ override HTTPSRC	:= \
 	RequestChunkHandler \
 	RequestSemantics \
 	Response \
-	StatusCodes
+	StatusCodes \
+	RequestGetHandler \
+	RequestDeleteHandler
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 

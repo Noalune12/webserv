@@ -47,11 +47,13 @@ class Request {
         std::string _chunk;
         std::string _trailing;
         bool _keepAlive;
-        std::string _queryString;
-        std::string _scriptPath;
         server *_reqServer;
-	    location *_reqLocation;
+	location *_reqLocation;
         std::string _version;
+        bool _cgi;
+        std::string _scriptPath;
+        std::string _queryString;
+
         // PARSING
         void checkRequestSem(std::string request);
 
@@ -73,6 +75,13 @@ class Request {
 
         // HANDLER
         void methodHandler();
+        void methodGetHandler();
+        void methodDeleteHandler();
+        std::string getPath(std::string folder);
+        std::string getPath(std::string folder, std::string file);
+        bool readFile(std::string path, struct stat buf, std::string errorPath);
+        std::string getDirectory();
+        bool deleteFolder(std::string path);
 
         // UTILS
         std::string trimOws(const std::string& s);
