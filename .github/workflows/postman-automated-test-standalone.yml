@@ -1,42 +1,25 @@
-name: Automated API tests using Postman CLI
+name: Automated API tests using Postman CLI (Standalone)
 
 on:
-  # Triggers after the parser tests workflow completes
-  workflow_run:
-    workflows: ["Configuration Parser Tests"]
-    types: [completed]
-
-  # Also allow manual trigger for testing
+  pull_request:
+    branches:
+      - '*'
   workflow_dispatch:
 
 jobs:
   automated-api-tests:
     runs-on: ubuntu-22.04
-    # Only run if the triggering workflow succeeded (or if manually triggered)
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - uses: actions/checkout@v4
 
-      # Use third-party action to download artifact from another workflow
-      - name: Download webserv binary from parser workflow
-        if: github.event_name == 'workflow_run'
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: check-build-parsing.yml
-          run_id: ${{ github.event.workflow_run.id }}
-          name: webserv-binary
-          path: ./
-
-      # Build locally if manually triggered (no artifact available)
-      - name: Build webserv (manual trigger fallback)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential
-          make
+
+      - name: Build webserv
+        run: make
 
       - name: Make executable
         run: chmod +x ./webserv
@@ -89,15 +72,3 @@ jobs:
           if [ -f server.pid ]; then
             kill $(cat server.pid) || true
           fi
-
-  # Handle case where parser tests were skipped or failed
-  skip-notification:
-    runs-on: ubuntu-22.04
-    if: >
-      github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion != 'success'
-    steps:
-      - name: Notify skip
-        run: |
-          echo "⏭️ API tests skipped because parser workflow did not succeed"
-          echo "Parser workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
