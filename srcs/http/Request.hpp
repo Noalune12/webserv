@@ -70,6 +70,10 @@ class Request {
 
         // HANDLER
         void methodHandler();
+        void methodGetHandler();
+        std::string getPath(std::string folder);
+        std::string getPath(std::string folder, std::string file);
+        bool readFile(std::string path, struct stat buf, std::string errorPath);
         std::string getDirectory();
         bool deleteFolder(std::string path);
 
