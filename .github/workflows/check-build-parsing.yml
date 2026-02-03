@@ -71,6 +71,19 @@ jobs:
         run: cd scripts && ./test_parser.sh --valgrind
         continue-on-error: false
 
+  upload-webserv:
+    needs: test-parser
+    runs-on: ubuntu-22.04
+    if: success()
+    steps:
+      - uses: actions/checkout@v3
+      - name: Upload webserv binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: webserv-binary
+          path: ./webserv
+          retention-days: 1
+
   test-summary:
     needs: [check-branch, test-parser]
     if: always()
