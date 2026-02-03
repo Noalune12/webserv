@@ -51,6 +51,7 @@ class Request {
         std::string _scriptPath;
         server *_reqServer;
 	    location *_reqLocation;
+        std::string _version;
         // PARSING
         void checkRequestSem(std::string request);
 
