@@ -370,6 +370,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client._request.methodHandler();
 			}
 
+			// check boolean CGI here
 			Logger::debug("READING_HEADERS state");
 			break ; // to remove if we fallthrought
 
