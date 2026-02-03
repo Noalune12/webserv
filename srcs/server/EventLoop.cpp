@@ -226,7 +226,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 
 			if (client._request.chunkRemaining == true) {
 				client.setState(READING_BODY);
-				client.startTimer(2, CLIENT_TIMEOUT - 2);
+				client.startTimer(2, CLIENT_TIMEOUT - 4);
 				modifyEpoll(clientFd, EPOLLIN); 
 			} else if (client._request.err == false) { //not sure if it is here
 				client._request.methodHandler();
@@ -244,7 +244,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					break ;
 				}
 				client._request._chunk += client.getBuffer();
-				client.startTimer(2, CLIENT_TIMEOUT - 2);
+				client.startTimer(2, CLIENT_TIMEOUT - 4);
 				// printWithoutR("Body", client.getBuffer());		
 			}
 			client._request.parseChunk();

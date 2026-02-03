@@ -70,6 +70,8 @@ class Request {
 
         // HANDLER
         void methodHandler();
+        std::string getDirectory();
+        bool deleteFolder(std::string path);
 
         // UTILS
         std::string trimOws(const std::string& s);
