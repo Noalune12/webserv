@@ -210,30 +210,32 @@ bool	EventLoop::startCGI(int clientFd) {
 
 
 
+		std::string scriptPath = "./var/www/cgi-bin/test.py";  // À récupérer de client._request
+		const char* interpreter = "/usr/bin/python3";
 
+		char* envp[] = {
+			(char*)"REQUEST_METHOD=GET",
+			(char*)"QUERY_STRING=",
+			(char*)"CONTENT_LENGTH=0",
+			(char*)"CONTENT_TYPE=",
+			(char*)"SERVER_PROTOCOL=HTTP/1.1",
+			(char*)"GATEWAY_INTERFACE=CGI/1.1",
+			NULL
+		};
 
+		char* argv[] = {
+			(char*)interpreter,
+			(char*)scriptPath.c_str(),
+			NULL
+		};
+
+		execve(interpreter, argv, envp);
+		std::cerr << RED "execve failed: " << strerror(errno) << std::endl << RESET;
+		_exit(1);
 		// GROS DU BOULOT:
 		// creation variable d'environnements
 		// chdir vers l'endroit ou est le script
 		// execve du script
-		char* envp[] = {
-			(char*)"SERVER_SOFTWARE=Webserv/1.0",
-			(char*)"GATEWAY_INTERFACE=CGI/1.1",
-			(char*)"SERVER_PROTOCOL=HTTP/1.1",
-			(char*)"REQUEST_METHOD=GET",
-			(char*)"SCRIPT_NAME=/cgi-test/hello.py",
-			(char*)"SCRIPT_FILENAME=./var/www/cgi-test/hello.py",
-			(char*)"PATH_INFO=/cgi-test",
-			(char*)"QUERY_STRING=",  // à remplir si query string
-			(char*)"REMOTE_ADDR=127.0.0.1",
-			(char*)"CONTENT_LENGTH=0",
-			NULL
-		};
-
-		char *argv[] = {(char*)"/usr/bin/python3", (char*)"./var/www/cgi-test/hello.py", NULL};
-		execve("/usr/bin/python3", argv, envp);
-		std::cerr << RED "execve failed: " << strerror(errno) << std::endl << RESET;
-		_exit(1);
 		// on est jamais sensé arrivé la, on verra comment je sors plus tard
 		// std::exit(666);
 		// _exit(666); -> le mieux mais est-ce qu'on a le droit ????
@@ -343,11 +345,13 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			client.parseRequest();
 
 			Logger::debug("CGI check for URI: " + client._request._uri);
-			Logger::debug("cgiPath = '" + client._request._reqLocation->cgiPath + "'");
-			Logger::debug("cgiExt  = '" + client._request._reqLocation->cgiExt + "'");
+			if (client._request._reqLocation != NULL && !client._request._reqLocation->cgiPath.empty()) {
+				Logger::debug("cgiPath = '" + client._request._reqLocation->cgiPath + "'");
+				Logger::debug("cgiExt  = '" + client._request._reqLocation->cgiExt + "'");
+			}
 
-			if (!client._request._reqLocation->cgiExt.empty() || !client._request._reqLocation->cgiPath.empty()) {
-				client._request._reqLocation->cgiPath = "var/www/cgi-test/hello.py";
+			if (client._request._reqLocation && (!client._request._reqLocation->cgiExt.empty() || !client._request._reqLocation->cgiPath.empty())) {
+				client._request._reqLocation->cgiPath = "var/www/cgi-bin/text.py";
 
 				if (startCGI(clientFd)) {
 					return ;

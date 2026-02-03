@@ -31,9 +31,13 @@ void	Response::debugPrintRequestData(const Request& req) {
 	}
 
 	std::cout << YELLOW "Location:" RESET << std::endl;
-	std::cout << "  path  = \"" << req._reqLocation->path << "\"" << std::endl;
-	std::cout << "  root  = \"" << req._reqLocation->root << "\"" << std::endl;
-	std::cout << "  alias = \"" << req._reqLocation->alias << "\"" << std::endl;
+	if (req._reqLocation != NULL) {
+		std::cout << "  path  = \"" << req._reqLocation->path << "\"" << std::endl;
+		std::cout << "  root  = \"" << req._reqLocation->root << "\"" << std::endl;
+		std::cout << "  alias = \"" << req._reqLocation->alias << "\"" << std::endl;
+	} else {
+		std::cout << "  (no matching location)" << std::endl;
+	}
 
 	std::cout << YELLOW "Query:" RESET << std::endl;
 	std::cout << "   query = \"" << req._queryString << "\"" << std::endl;
