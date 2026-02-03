@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - '*'
-    # Uncomment paths below once you're confident the workflow works
     # paths:
     #   - 'srcs/config/**'
     #   - 'config-files/**'
@@ -13,7 +12,7 @@ on:
   push:
     branches:
       - 'main'
-  workflow_dispatch:  # Allows manual triggering for testing
+  workflow_dispatch:
 
 jobs:
   check-branch:
@@ -24,7 +23,6 @@ jobs:
       - name: Check branch name
         id: check
         run: |
-          # Get the source branch name
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BRANCH_NAME="${{ github.head_ref }}"
           else
@@ -33,7 +31,6 @@ jobs:
 
           echo "Branch name: $BRANCH_NAME"
 
-          # Check if branch name contains parser, parsing, or parse
           if [[ "$BRANCH_NAME" =~ parser|parsing|parse ]]; then
             echo "Branch name matches parser-related keywords"
             echo "should-run=true" >> $GITHUB_OUTPUT
@@ -68,14 +65,6 @@ jobs:
       - name: Run parser tests (with valgrind)
         run: cd scripts && ./test_parser.sh --valgrind
         continue-on-error: false
-
-      # Upload artifact from the SAME job where it's built
-      - name: Upload webserv binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: webserv-binary
-          path: ./webserv
-          retention-days: 1
 
   test-summary:
     needs: [check-branch, test-parser]
