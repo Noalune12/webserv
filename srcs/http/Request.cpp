@@ -7,7 +7,7 @@
 
 Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false) {}
 
 
 Request::~Request() {}
@@ -31,6 +31,9 @@ void Request::clearPreviousRequest() {
     _reqServer = NULL;
     _reqLocation = NULL;
     _trailing.clear();
+    _cgi = false;
+   _scriptPath.clear();
+   _queryString.clear();
     // what about err and keep alive
 }
 

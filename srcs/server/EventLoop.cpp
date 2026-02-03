@@ -228,8 +228,12 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.setState(READING_BODY);
 				client.startTimer(2, CLIENT_TIMEOUT - 4);
 				modifyEpoll(clientFd, EPOLLIN); 
-			} else if (client._request.err == false) { //not sure if it is here
+			} else if (client._request.err == false && client._request._cgi == false) { //not sure if it is here
 				client._request.methodHandler();
+			} else if (client._request.err == false && client._request._cgi == true) {
+				client.setState(CGI_RUNNING);
+				client.startTimer(3, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT); 
 			}
 
 			Logger::debug("READING_HEADERS state");
@@ -248,14 +252,19 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				// printWithoutR("Body", client.getBuffer());		
 			}
 			client._request.parseChunk();
+			if (client._request.chunkRemaining == false && client._request.err == false && client._request._cgi == false) {
+				client._request.methodHandler();
+			} else if (client._request.err == false && client._request._cgi == true) {
+				client.setState(CGI_RUNNING);
+				client.startTimer(3, CLIENT_TIMEOUT);
+				modifyEpoll(clientFd, EPOLLOUT); 
+			}
 			if (client._request.chunkRemaining == false || client._request.err == true) {
 				client.setState(SENDING_RESPONSE);
 				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT); 
 			}
-			if (client._request.chunkRemaining == false && client._request.err == false) {
-				client._request.methodHandler();
-			}
+
 			// if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
 			// 	if (ev & EPOLLERR) {
 			// 		std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
@@ -271,6 +280,11 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			break ;
 
 		case CGI_RUNNING:
+			std::cout << "CGI with " << client._request._scriptPath << " and " << client._request._queryString << std::endl;
+			client.setState(SENDING_RESPONSE);
+			client.startTimer(4, CLIENT_TIMEOUT);
+			modifyEpoll(clientFd, EPOLLOUT); 
+			client._request.status = 500;
 			// if (ev & EPOLLIN) {
 			// 	// temp
 			// 	if () { // cgi done

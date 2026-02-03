@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <sys/stat.h>
 
 void Request::findServer() {
 	std::vector<server>::iterator itServer = _servers.begin();
@@ -168,6 +169,35 @@ void Request::checkRequestContent() {
 	}
 
     bodyChecker();
+
+    if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
+        if (_trailing.empty())
+            return;
+        size_t index = _trailing.find('?'); //what if the folder has a ?
+        if (index != std::string::npos) {
+            _queryString = _trailing.substr(index);
+            _trailing = _trailing.substr(0, index);
+        }
+        if (!_reqLocation->root.empty())
+            _scriptPath = getPath(_reqLocation->root + _uri, _trailing);
+        else
+            _scriptPath = getPath(_reqLocation->alias, _trailing);
+        struct stat buf;
+
+        if (stat(_scriptPath.c_str(), &buf) == 0) {
+            std::cout << "FILE FOUND FOR CGI" << std::endl;
+            _cgi = true;
+        }
+        else {
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+            }
+            else {
+                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+            }
+            std::cout << "error with CGI file or folder note found" << std::endl;
+        }
+    }
     // if method is POST but no body => 400
 
 }

@@ -48,6 +48,9 @@ class Request {
         std::string _chunk;
         std::string _trailing;
         bool _keepAlive;
+        bool _cgi;
+        std::string _scriptPath;
+        std::string _queryString;
 
         // PARSING
         void checkRequestSem(std::string request);
