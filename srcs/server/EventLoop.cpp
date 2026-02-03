@@ -136,6 +136,7 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 			client.startTimer(3, CGI_TIMEOUT);
 		} else if (bytes == 0) {
 			cleanupCGI(clientFd);
+
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, CLIENT_TIMEOUT);
 			modifyEpoll(clientFd, EPOLLOUT);
@@ -300,7 +301,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 	if (it == _connections.end())
 		return ;
 
-	Connection& client = _connections[clientFd];
+	Connection& client = it->second;
 
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
 		if (ev & EPOLLERR) {
@@ -411,6 +412,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				Logger::debug("Client disconnection while CGI running");
 				cleanupCGI(clientFd);
 				closeConnection(clientFd);
+				return ;
 			}
 			break ;
 
@@ -421,7 +423,12 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				Response response;
 				response.debugPrintRequestData(client._request);
 
-				response.prepare(client._request);
+				if (!client._cgi.outputBuff.empty()) {
+					response.prepareCGI(client._cgi.outputBuff, client._request);
+					client._cgi.outputBuff.clear();
+				} else {
+					response.prepare(client._request);
+				}
 
 				std::vector<char> buffer = response.buildRaw();
 
@@ -441,16 +448,21 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					modifyEpoll(clientFd, EPOLLIN);
 				} else {
 					closeConnection(clientFd);
+					return ;
 				}
 			}
-			Logger::accessLog(client.getIP(), client._request._method, client._request._uri + client._request._trailing, "version", client._request.status, 123456/*client._request._body.size()*/); // temp, won't we called here
+			Logger::accessLog(client.getIP(), client._request._method, client._request._uri + client._request._trailing, "HTTP/" + client._request._version, client._request.status, 123456/*client._request._body.size()*/); // temp, won't we called here
 			Logger::debug("SENDING_RESPONSE state");
-			if (client._request._keepAlive == false)
+			// std::cout << RED << (client._request._keepAlive ? "exists" : "doesn't") << RESET << std::endl;
+			if (client._request._keepAlive == false) {
 				closeConnection(clientFd);
+				return ;
+			}
 			break ;
 
 		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
 			closeConnection(clientFd);
+			return ;
 			break ;
 	}
 }
@@ -613,7 +625,7 @@ void EventLoop::sendStatus(int clientFd, int status) {
 
 	send(clientFd, response.c_str(), response.size(), 0); // flags no use ? MSG_NOSIGNAL | MSG_DONTWAIT | also MSG_OOB
 
-	// Connection& client = _connections[clientFd];
+	// Connection& client = it->second;
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
 	// if (client._request._keepAlive == false)
 	// 	closeConnection(clientFd);

@@ -38,7 +38,7 @@ void	EventLoop::checkTimeouts(void) {
 		int	clientFd = timedOut[i];
 
 		std::ostringstream	oss;
-		Connection& client = _connections[clientFd];
+		Connection& client = it->second;
 		if (client.getState() == READING_BODY) {
 			std::ostringstream	oss;
 			oss << "Body read timeout for client #" << clientFd << ", sending 408";

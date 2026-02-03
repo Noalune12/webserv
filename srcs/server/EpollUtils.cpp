@@ -65,10 +65,11 @@ bool	EventLoop::removeFromEpoll(int fd) {
 
 void	EventLoop::closeConnection(int clientFd) {
 
-	if (_connections.find(clientFd) == _connections.end())
+	std::map<int, Connection>::iterator it = _connections.find(clientFd);
+	if (it == _connections.end())
 		return ;
 
-	Connection& client = _connections[clientFd];
+	Connection& client = it->second;
 
 	if (client._cgi.isActive()) {
 		if (client._cgi.pid > 0) {
@@ -84,5 +85,5 @@ void	EventLoop::closeConnection(int clientFd) {
 	Logger::notice(oss.str());
 
 	close(clientFd);
-	_connections.erase(clientFd);
+	_connections.erase(it);
 }
