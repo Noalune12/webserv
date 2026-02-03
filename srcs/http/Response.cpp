@@ -77,6 +77,63 @@ void	Response::prepare(const Request& req) {
 	_headers["Content-Type"] = "text/html";
 }
 
+void	Response::prepareCGI(const std::string& cgiOutput, const Request& req) {
+	_statusCode = 200;
+	_statusText = "OK";
+	_headers.clear();
+	_body.clear();
+	_bytesSent = 0;
+
+	_headers["Server"] = "webserv/1.0";
+	_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
+
+	size_t headerEnd = cgiOutput.find("\r\n\r\n");
+	size_t bodyStart = 4;
+
+	if (headerEnd == std::string::npos) {
+		headerEnd = cgiOutput.find("\n\n");
+		bodyStart = 2;
+	}
+
+	std::string headerSection;
+	std::string bodySection;
+
+	if (headerEnd == std::string::npos) {
+		bodySection = cgiOutput;
+	} else {
+		headerSection = cgiOutput.substr(0, headerEnd);
+		bodySection = cgiOutput.substr(headerEnd + bodyStart);
+	}
+
+	std::istringstream	headerStream(headerSection);
+	std::string			line;
+
+	while (std::getline(headerStream, line)) {
+
+		if (!line.empty() && line[line.size() - 1] == '\r') {
+			line.erase(line.size() - 1);
+		}
+
+		size_t	colonPos = line.find(':');
+		if (colonPos != std::string::npos) {
+			std::string	name = line.substr(0, colonPos);
+			std::string	value = line.substr(colonPos + 1);
+
+			size_t	start = value.find_first_not_of(" \t");
+			if (start != std::string::npos) {
+				value = value.substr(start);
+			}
+			_headers[name] = value;
+		}
+	}
+
+	_body.assign(bodySection.begin(), bodySection.end());
+
+	if (_headers.find("Content-Type") == _headers.end()) {
+		_headers["Content-Type"] = "text/html";
+	}
+}
+
 std::vector<char>	Response::buildRaw(void) {
 
 	std::ostringstream	oss;

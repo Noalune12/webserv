@@ -14,6 +14,7 @@ class Response {
 		void	debugPrintRequestData(const Request& req);
 
 		void	prepare(const Request& req);
+		void	prepareCGI(const std::string& cgiOutput, const Request& req);
 
 		std::vector<char>	buildRaw(void);
 
