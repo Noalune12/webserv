@@ -9,10 +9,12 @@ void Request::findServer() {
     std::vector<size_t> possibleServerIndices;
 	for (; itServer != _servers.end(); itServer++) {
 		std::vector<listenDirective>::iterator itListen = itServer->lis.begin();
+        // std::cout << "Is server running ? " << itServer->isRunning << std::endl;
         if (itServer->isRunning == false)
             continue ;
 		for (; itListen != itServer->lis.end(); itListen++) {
-			if (itListen->port == _serverPort && (itListen->ip == _serverName || itListen->ip == "0.0.0.0")) {
+            // std::cout << "POST it = " << itListen->port << "ServerPort = "<< _serverPort << "IP it = "<< itListen->ip << "ServerName = "<< _serverName << std::endl;
+			if (itListen->port == _serverPort && (itListen->ip == _serverName || itListen->ip == "0.0.0.0" || itListen->ip == _serverIp)) {
 				std::cout << "possible server found with " << itListen->port << ", " << itListen->ip << std::endl;
                 possibleServerIndices.push_back(std::distance(_servers.begin(), itServer));
                 break ;
