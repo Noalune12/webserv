@@ -4,18 +4,16 @@ on:
   pull_request:
     branches:
       - '*'
-    paths:
-      - 'srcs/config/**'
-      - 'config-files/**'
-      - 'config/**'
-      - 'scripts/test_parser.sh'
+    # Uncomment paths below once you're confident the workflow works
+    # paths:
+    #   - 'srcs/config/**'
+    #   - 'config-files/**'
+    #   - 'config/**'
+    #   - 'scripts/test_parser.sh'
   push:
     branches:
       - 'main'
-
-# The paths directive could make us remove branch name checks (below).
-# I'd like to make the parsing test only if the configuration parsing files are modified.
-# To prevent extra layers of actions on code that does not need it... Cannot test it rn anyway it is too early
+  workflow_dispatch:  # Allows manual triggering for testing
 
 jobs:
   check-branch:
@@ -51,7 +49,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -71,12 +69,7 @@ jobs:
         run: cd scripts && ./test_parser.sh --valgrind
         continue-on-error: false
 
-  upload-webserv:
-    needs: test-parser
-    runs-on: ubuntu-22.04
-    if: success()
-    steps:
-      - uses: actions/checkout@v3
+      # Upload artifact from the SAME job where it's built
       - name: Upload webserv binary
         uses: actions/upload-artifact@v4
         with:
@@ -93,7 +86,7 @@ jobs:
         run: |
           if [ "${{ needs.check-branch.outputs.should-run }}" != "true" ]; then
             echo "⏭️ Parser tests were skipped (branch name doesn't match)"
-            echo "ℹ️ Tests only run for branches containing: parser, parsing, or parse" 
+            echo "ℹ️ Tests only run for branches containing: parser, parsing, or parse"
           elif [ "${{ needs.test-parser.result }}" == "success" ]; then
             echo "✅ All parser tests passed!"
           else
