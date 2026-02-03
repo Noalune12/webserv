@@ -5,7 +5,6 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
-// #include <stdlib.h>
 #include <cstdlib>
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -119,6 +118,14 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) { // might not need all of those
 		// if we get there that means the pipe is closed or there has been an error
+		if (ev & EPOLLERR) {
+			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLHUP) {
+			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLRDHUP) {
+			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+		}
+		Logger::debug("CGI pipe error/hangup");
 		cleanupCGI(clientFd);
 		client.setState(SENDING_RESPONSE); // need to send the data we have for this client
 		client.startTimer(4, CLIENT_TIMEOUT);
@@ -134,17 +141,25 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 		if (bytes > 0) {
 			client._cgi.outputBuff.append(buffer, bytes);
 			client.startTimer(3, CGI_TIMEOUT);
+			std::ostringstream ossBytes;
+			ossBytes << bytes;
+			Logger::debug("CGI: read " + ossBytes.str() + " bytes");
 		} else if (bytes == 0) {
+			std::ostringstream ossSize;
+			ossSize << client._cgi.outputBuff.size();
+			Logger::debug("CGI finished (EOF), output size: " + ossSize.str());
 			cleanupCGI(clientFd);
 
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, CLIENT_TIMEOUT);
 			modifyEpoll(clientFd, EPOLLOUT);
 		} else if (bytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) { // checking EAGAIN and EWOULDBLOCK for now BUT NEEDS TO BE REMOVED!!!!
+			Logger::error("CGI read error: " + std::string(strerror(errno)));
 			cleanupCGI(clientFd);
 			client._request.err = true;
 			client._request.status = 502;
 			client.setState(SENDING_RESPONSE);
+			client.startTimer(4, CLIENT_TIMEOUT);
 			modifyEpoll(clientFd, EPOLLOUT);
 		}
 	}
@@ -158,6 +173,8 @@ bool	EventLoop::startCGI(int clientFd) {
 
 	Connection& client = it->second;
 	CGIContext& cgi = client._cgi;
+
+	Logger::debug("Starting CGI: " + client._request._scriptPath);
 
 	if (pipe(cgi.pipeIn) == -1) {
 		Logger::error("pipe(pipeIn) failed");
@@ -209,32 +226,55 @@ bool	EventLoop::startCGI(int clientFd) {
 			close(*itServerSockets);
 		}
 
+		std::string scriptPath = client._request._scriptPath;
+		std::string interpreter = client._request._reqLocation->cgiPath;
+		std::string queryString = client._request._queryString;
+		std::string method = client._request._method;
+		std::string contentLength = "0";
+		std::string contentType = "";
 
+		std::map<std::string, std::string>::iterator hdrIt;
+		hdrIt = client._request._headers.find("Content-Length");
+		if (hdrIt != client._request._headers.end()) {
+			contentLength = hdrIt->second;
+		}
+		hdrIt = client._request._headers.find("Content-Type");
+		if (hdrIt != client._request._headers.end()) {
+			contentType = hdrIt->second;
+		}
 
-		std::string scriptPath = "./var/www/cgi-bin/test.py";  // À récupérer de client._request
-		const char* interpreter = "/usr/bin/python3";
+		std::string envMethod = "REQUEST_METHOD=" + method;
+		std::string envQuery = "QUERY_STRING=" + queryString;
+		std::string envContentLen = "CONTENT_LENGTH=" + contentLength;
+		std::string envContentType = "CONTENT_TYPE=" + contentType;
+		std::string envScriptName = "SCRIPT_NAME=" + client._request._uri + client._request._trailing;
+		std::string envScriptFilename = "SCRIPT_FILENAME=" + scriptPath;
+		std::string envPathInfo = "PATH_INFO=" + client._request._trailing;
 
 		char* envp[] = {
-			(char*)"REQUEST_METHOD=GET",
-			(char*)"QUERY_STRING=",
-			(char*)"CONTENT_LENGTH=0",
-			(char*)"CONTENT_TYPE=",
+			(char*)envMethod.c_str(),
+			(char*)envQuery.c_str(),
+			(char*)envContentLen.c_str(),
+			(char*)envContentType.c_str(),
+			(char*)envScriptName.c_str(),
+			(char*)envScriptFilename.c_str(),
+			(char*)envPathInfo.c_str(),
 			(char*)"SERVER_PROTOCOL=HTTP/1.1",
 			(char*)"GATEWAY_INTERFACE=CGI/1.1",
+			(char*)"SERVER_SOFTWARE=webserv/1.0",
 			NULL
 		};
 
 		char* argv[] = {
-			(char*)interpreter,
+			(char*)interpreter.c_str(),
 			(char*)scriptPath.c_str(),
 			NULL
 		};
 
-		execve(interpreter, argv, envp);
-		std::cerr << RED "execve failed: " << strerror(errno) << std::endl << RESET;
+		execve(interpreter.c_str(), argv, envp);
+		std::cerr << RED "execve failed: " << strerror(errno) << RESET << std::endl;
 		_exit(1);
 		// GROS DU BOULOT:
-		// creation variable d'environnements
 		// chdir vers l'endroit ou est le script
 		// execve du script
 		// on est jamais sensé arrivé la, on verra comment je sors plus tard
@@ -259,7 +299,10 @@ bool	EventLoop::startCGI(int clientFd) {
 
 	_pipeToClient[cgi.pipeOut[0]] = clientFd;
 
-	// POST -> need to write the body into the pipe
+	// POST: write the body to the CGI stdin
+	if (client._request._method == "POST" && !client._request._body.empty()) {
+		write(cgi.pipeIn[1], client._request._body.c_str(), client._request._body.size()); // does it have to be checked by poll or is this call good ?
+	}
 
 	// send EOF to the CGI
 	Logger::debug("Sending EOF to CGI via pipeIn[1]");
@@ -342,16 +385,25 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			}
 			client.parseRequest();
 
-			Logger::debug("CGI check for URI: " + client._request._uri);
-			if (client._request._reqLocation != NULL && !client._request._reqLocation->cgiPath.empty()) {
-				Logger::debug("cgiPath = '" + client._request._reqLocation->cgiPath + "'");
-				Logger::debug("cgiExt  = '" + client._request._reqLocation->cgiExt + "'");
+			// Debug CGI info
+			Logger::debug("CGI check - _cgi=" + std::string(client._request._cgi ? "true" : "false"));
+			if (client._request._cgi) {
+				Logger::debug("scriptPath: " + client._request._scriptPath);
+				Logger::debug("queryString: " + client._request._queryString);
 			}
 
-			if (client._request._reqLocation && (!client._request._reqLocation->cgiExt.empty() || !client._request._reqLocation->cgiPath.empty())) {
-				client._request._reqLocation->cgiPath = "var/www/cgi-bin/text.py";
+			// Check if we need to read body first (chunked transfer)
+			if (client._request.chunkRemaining == true) {
+				client.setState(READING_BODY);
+				client.startTimer(2, CLIENT_TIMEOUT - 4);
+				modifyEpoll(clientFd, EPOLLIN);
+				Logger::debug("READING_HEADERS -> READING_BODY (chunked)");
+				break ;
+			}
 
+			if (client._request._cgi && !client._request.err) {
 				if (startCGI(clientFd)) {
+					Logger::debug("READING_HEADERS -> CGI_RUNNING");
 					return ;
 				} else {
 					client._request.err = true;
@@ -359,21 +411,17 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				}
 			}
 
-			if (client._request.chunkRemaining == true) {
-				client.setState(READING_BODY);
-				client.startTimer(2, CLIENT_TIMEOUT - 4);
-				modifyEpoll(clientFd, EPOLLIN);
-			} else if (client._request.err == false && client._request._cgi == false) { //not sure if it is here
+			// Normal request (no CGI, no chunked)
+			if (!client._request.err && !client._request._cgi) {
 				client._request.methodHandler();
-			} else if (client._request.err == false && client._request._cgi == true) {
-				client.setState(CGI_RUNNING);
-				client.startTimer(3, CLIENT_TIMEOUT);
-				modifyEpoll(clientFd, EPOLLOUT);
 			}
 
-			// check boolean CGI here
-			Logger::debug("READING_HEADERS state");
-			break ; // to remove if we fallthrought
+			// Go to SENDING_RESPONSE
+			client.setState(SENDING_RESPONSE);
+			client.startTimer(4, CLIENT_TIMEOUT);
+			modifyEpoll(clientFd, EPOLLOUT);
+			Logger::debug("READING_HEADERS -> SENDING_RESPONSE");
+			break ;
 
 		case READING_BODY:
 			if (ev & EPOLLIN) {
@@ -388,14 +436,24 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				// printWithoutR("Body", client.getBuffer());
 			}
 			client._request.parseChunk();
-			if (client._request.chunkRemaining == false && client._request.err == false && client._request._cgi == false) {
-				client._request.methodHandler();
-			} else if (client._request.err == false && client._request._cgi == true) {
-				client.setState(CGI_RUNNING);
-				client.startTimer(3, CLIENT_TIMEOUT);
+			if (client._request.chunkRemaining == false) {
+				if (client._request._cgi && !client._request.err) {
+					if (startCGI(clientFd)) {
+						Logger::debug("READING_BODY -> CGI_RUNNING");
+						return ;
+					} else {
+						client._request.err = true;
+						client._request.status = 500;
+					}
+				} else if (!client._request.err) {
+					client._request.methodHandler();
+				}
+
+				client.setState(SENDING_RESPONSE);
+				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);
-			}
-			if (client._request.chunkRemaining == false || client._request.err == true) {
+				Logger::debug("READING_BODY -> SENDING_RESPONSE");
+			} else if (client._request.err) {
 				client.setState(SENDING_RESPONSE);
 				client.startTimer(4, CLIENT_TIMEOUT);
 				modifyEpoll(clientFd, EPOLLOUT);
@@ -434,30 +492,9 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				closeConnection(clientFd);
 				return ;
 			}
-			std::cout << "CGI with " << client._request._scriptPath << " and " << client._request._queryString << std::endl;
-			if (client._request._reqLocation && (!client._request._reqLocation->cgiExt.empty() || !client._request._reqLocation->cgiPath.empty())) {
-				client._request._reqLocation->cgiPath = "var/www/cgi-bin/text.py";
 
-				if (startCGI(clientFd)) {
-					return ;
-				} else {
-					client._request.err = true;
-					client._request.status = 500;
-				}
-			}
-			client.setState(SENDING_RESPONSE);
-			client.startTimer(4, CLIENT_TIMEOUT);
-			modifyEpoll(clientFd, EPOLLOUT);
-			client._request.status = 500;
-			// if (ev & EPOLLIN) {
-			// 	// temp
-			// 	if () { // cgi done
-			// 		client.setState(SENDING_RESPONSE);
-			// 		modifyEpoll(clientFd, EPOLLOUT);
-			// 	} else {
-
-			// 	}
-			// }
+			// Just wait - handleCGIPipeEvent will transition us to SENDING_RESPONSE
+			Logger::debug("CGI_RUNNING: waiting for CGI to complete...");
 			break ;
 
 		case SENDING_RESPONSE:
@@ -468,6 +505,7 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				response.debugPrintRequestData(client._request);
 
 				if (!client._cgi.outputBuff.empty()) {
+					Logger::debug("Preparing CGI response");
 					response.prepareCGI(client._cgi.outputBuff, client._request);
 					client._cgi.outputBuff.clear();
 				} else {
@@ -486,7 +524,10 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 							<< strerror(errno) << RESET << std::endl;
 				}
 
+				Logger::accessLog(client.getIP(), client._request._method, client._request._uri + client._request._trailing, "HTTP/" + client._request._version, response._statusCode, buffer.size());
+
 				if (client._request._keepAlive && !client._request.err) {
+					client._request.clearPreviousRequest();
 					client.setState(IDLE);
 					client.startTimer(0, CLIENT_TIMEOUT);
 					modifyEpoll(clientFd, EPOLLIN);
@@ -495,25 +536,16 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 					return ;
 				}
 			}
-			Logger::accessLog(client.getIP(), client._request._method, client._request._uri + client._request._trailing, "HTTP/" + client._request._version, client._request.status, 123456/*client._request._body.size()*/); // temp, won't we called here
 			Logger::debug("SENDING_RESPONSE state");
-			// std::cout << RED << (client._request._keepAlive ? "exists" : "doesn't") << RESET << std::endl;
-			if (client._request._keepAlive == false) {
-				closeConnection(clientFd);
-				return ;
-			}
 			break ;
 
 		case CLOSED: // not sure we need it tbh since we keep alive the connection, and if the socket timeouts its identified somewhere else
 			closeConnection(clientFd);
 			return ;
-			break ;
 	}
 }
 
 size_t	EventLoop::tempCall(int clientFd) {
-		// static int a = 0;
-		// std::cout << "TEST: reading data from client socket -> number of call: " << ++a << std::endl;
 		char	buf[10];
 		std::memset(buf, 0, 10);
 		std::string buffer;
@@ -527,8 +559,6 @@ size_t	EventLoop::tempCall(int clientFd) {
 			}
 			buffer += std::string(buf, bytes);
 		}
-		// std::string req = buffer;
-		// std::cout << YELLOW "Message from fd[" << clientFd << "]:\n" RESET << buffer;
 		std::map<int, Connection>::iterator it = _connections.find(clientFd);
 		it->second.setBuffer(buffer);
 		return bytes;
@@ -628,11 +658,9 @@ void EventLoop::sendError(int clientFd, int status) {
 	// if (client._request._keepAlive == false)
 	// 	closeConnection(clientFd);
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
-	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
 
 
-// delete if not used
 void EventLoop::sendStatus(int clientFd, int status) {
 	std::cout << GREEN "Sending " << status << " response to fd[" << clientFd << "]" RESET << std::endl;
     Connection& client = _connections[clientFd];
@@ -641,16 +669,7 @@ void EventLoop::sendStatus(int clientFd, int status) {
     ss << status;
 	std::string statusReturn = ss.str();
 
-	std::string body;
-	// if (client.htmlPage.empty()) {
-	// 	body =
-	// 		"<html>\n"
-	// 		"<head><title>" + statusReturn + "</title></head>\n"
-	// 		"</body>\n"
-	// 		"</html>\n";
-	// } else {
-		body = client._request.htmlPage;
-	// }
+	std::string body = client._request.htmlPage;
 
     std::stringstream sss;
     sss << body.size();
@@ -671,7 +690,4 @@ void EventLoop::sendStatus(int clientFd, int status) {
 
 	// Connection& client = it->second;
 	Logger::accessLog(client.getIP(), "method", "uri", "version", -1, body.size());
-	// if (client._request._keepAlive == false)
-	// 	closeConnection(clientFd);
-	// std::cout << GREEN "Sent " << sent << " bytes to fd[" << clientFd << "]" RESET << std::endl;
 }
