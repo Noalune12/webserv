@@ -45,7 +45,8 @@ struct location {
 	allowMeth methods;
 	bool autoIndex;
 	std::string uploadTo;
-	std::map<int, std::string> ret;
+	std::string returnPath;
+	int returnStatus;
 };
 
 struct server {
@@ -57,13 +58,14 @@ struct server {
 	allowMeth methods;
 	bool autoIndex;
 	std::string uploadTo;
-	std::map<int, std::string> ret;
+	std::string returnPath;
+	int returnStatus;
 
 	std::map<int, std::string> errPage;
 	double bodySize;
 	bool	isRunning;
 
-	server() : lis(), serverName(), root(), index(), loc(), methods(), autoIndex(false), uploadTo(), ret(), errPage(), bodySize(0), isRunning(false) {}
+	server() : lis(), serverName(), root(), index(), loc(), methods(), autoIndex(false), uploadTo(), errPage(), bodySize(0), isRunning(false) {}
 };
 
 class ConfigInheritor {
@@ -79,7 +81,6 @@ class ConfigInheritor {
 		void getErrPageFromGlobal(server& server);
 		void getErrPageFromServer(server& server, location& location);
 		void getReturnFromServer(server& server, location& location);
-		void printContent() const;
 
 		template <typename T>
 		void setErrorPage(PairVector::iterator& it, T& t);
@@ -101,6 +102,7 @@ class ConfigInheritor {
 		void inherit(Tokenizer& tokens);
 		std::vector<server>&	getServers(void);
 		globalDir& getGlobalDir(void);
+		void printContent() const;
 };
 
 #endif

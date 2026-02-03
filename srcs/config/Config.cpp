@@ -26,6 +26,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
     	// _tokens.printContent();
 
 		_conf.inherit(_tokens);
+		// _conf.printContent();
 
 	} catch(const std::exception& e) {
 		throw ;
