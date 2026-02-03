@@ -1,0 +1,57 @@
+name: Automated API tests using Postman CLI
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  automated-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+      - name: Run API tests
+        run: |
+          postman collection run "52021088-0ff5ccb2-57f6-4b42-a0a1-da75fb99035b" -e "52021088-580ece52-37d3-4dd2-9ca1-a242d70d68b0"
+
+
+jobs:
+  automated-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run API tests
+        id: tests
+        run: |
+          postman collection run "52021088-0ff5ccb2-57f6-4b42-a0a1-da75fb99035b" \
+            -e "52021088-580ece52-37d3-4dd2-9ca1-a242d70d68b0" \
+            -r json --reporter-json-export report.json
+
+      - name: Log test summary
+        run: |
+          echo "## Test Results Summary"
+          echo "Total Requests: $(jq '.run.stats.requests.complete' report.json)"
+          echo "Passed Assertions: $(jq '.run.stats.assertions.passed' report.json)"
+          echo "Failed Assertions: $(jq '.run.stats.assertions.failed' report.json)"
+          echo "Total Assertions: $(jq '.run.stats.assertions.total' report.json)"
+          echo "Passed %: $(jq '.run.stats.assertions.passed / .run.stats.assertions.total * 100 | round' report.json)%"
+          if [ $(jq '.run.stats.assertions.failed' report.json) -gt 0 ]; then
+            echo "❌ Some tests failed - check details above."
+          else
+            echo "✅ All assertions passed!"
+          fi
