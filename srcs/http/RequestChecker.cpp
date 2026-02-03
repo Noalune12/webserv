@@ -182,7 +182,7 @@ void Request::checkRequestContent() {
     }
 
     if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
-        if (_trailing.empty())
+        if (_trailing.empty() || _method != "POST")
             return;
         size_t index = _trailing.find('?'); //what if the folder has a ?
         if (index != std::string::npos) {
