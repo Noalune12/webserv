@@ -108,7 +108,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
         if (it == directives.end()) {
-            temp.ret[0] = "";
+            // temp.ret[0] = "";
         } else {
             setReturn(it, temp);
         }

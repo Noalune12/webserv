@@ -228,7 +228,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				client.setState(READING_BODY);
 				client.startTimer(2, CLIENT_TIMEOUT - 4);
 				modifyEpoll(clientFd, EPOLLIN); 
-			} else if (client._request.err == false && client._request._cgi == false) { //not sure if it is here
+			} else if (client._request.err == false && client._request._cgi == false && client._request._return == false) { //not sure if it is here
 				client._request.methodHandler();
 			} else if (client._request.err == false && client._request._cgi == true) {
 				client.setState(CGI_RUNNING);
@@ -252,7 +252,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 				// printWithoutR("Body", client.getBuffer());		
 			}
 			client._request.parseChunk();
-			if (client._request.chunkRemaining == false && client._request.err == false && client._request._cgi == false) {
+			if (client._request.chunkRemaining == false && client._request.err == false && client._request._cgi == false && client._request._return == false) {
 				client._request.methodHandler();
 			} else if (client._request.err == false && client._request._cgi == true) {
 				client.setState(CGI_RUNNING);

@@ -170,6 +170,17 @@ void Request::checkRequestContent() {
 
     bodyChecker();
 
+    if (!_reqLocation->ret.empty()) {
+        if (!_trailing.empty())
+            return;
+        htmlPage = "this will be a return";
+        std::map<int, std::string>::iterator it = _reqLocation->ret.begin();
+        status = it->first;
+        _returnPath = it->second;
+        std::cout << "RETUEN STATUS " << status << "with path " << _returnPath << std::endl;
+        _return = true;
+    }
+
     if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
         if (_trailing.empty())
             return;
