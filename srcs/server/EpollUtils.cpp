@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "colors.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
 
@@ -55,7 +56,7 @@ bool	EventLoop::removeFromEpoll(int fd) {
 	// can pass NULL as event parameter here, school computer kernel are on a version > 2.6.9 so we will not face a bug doing it that way (might want to defend it with other words lol)
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0) {
 		if (errno != ENOENT) { // ENOENT means the fd is not registered to the epoll instance, I don't think we should care if it happens
-			std::cerr << "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+			std::cerr << RED "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << RESET << std::endl;
 			return (false);
 		}
 	}

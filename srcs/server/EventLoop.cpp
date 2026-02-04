@@ -359,6 +359,13 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 bool	EventLoop::checkEpollErrors(uint32_t ev, int clientFd) {
 
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+		if (ev & EPOLLERR) {
+			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLHUP) {
+			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (ev & EPOLLRDHUP) {
+			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+		}
 		Logger::debug("Epoll error");
 		closeConnection(clientFd);
 		return (true);
