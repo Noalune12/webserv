@@ -17,7 +17,6 @@ enum ConnectionState {
 	READING_BODY,		// 2. nd state
 	CGI_RUNNING,		// 3. only if CGI
 	SENDING_RESPONSE,	// 4.
-	CLOSED
 };
 
 struct CGIContext {
