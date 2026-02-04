@@ -283,6 +283,8 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	Response response;
 
+	response.debugPrintRequestData(client._request);
+
 	if (!client._cgi.outputBuff.empty()) {
 		Logger::debug("Building CGI response");
 		response = _responseBuilder.buildFromCGI(client._cgi.outputBuff, client._request);
