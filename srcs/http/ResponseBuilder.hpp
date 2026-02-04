@@ -9,34 +9,31 @@
 class ResponseBuilder {
 
 	private:
+		std::string	getCustomErrorPage(int statusCode, const Request& req);
+		std::string	loadErrorPageFile(const std::string& path, const Request& req);
 
 	public:
 		ResponseBuilder();
 		~ResponseBuilder();
 
-		Response buildFromRequest(const Request& req);
-		Response buildFromCGI(const std::string& cgiOutput, const Request& req);
-		Response buildError(int statusCode, bool keepAlive);
+		Response	buildFromRequest(const Request& req);
+		Response	buildFromCGI(const std::string& cgiOutput, const Request& req);
+		Response	buildError(int statusCode, bool keepAlive);
 
-		// Response initialization
-		void initializeResponse(Response& resp, const Request& req);
+		void	initializeResponse(Response& resp, const Request& req);
 
-		// Body handling
-		void setBodyFromFile(Response& resp, const Request& req);
-		void setBodyFromError(Response& resp, int statusCode);
+		void	setBodyFromFile(Response& resp, const Request& req);
+		void	setBodyFromError(Response& resp, int statusCode, const Request& req);
 
-		// CGI parsing
-		void parseCGIHeaders(const std::string& cgiOutput, Response& resp);
-		void parseCGIBody(const std::string& cgiOutput, Response& resp);
-		size_t findHeaderEnd(const std::string& cgiOutput);
+		void	parseCGIHeaders(const std::string& cgiOutput, Response& resp);
+		void	parseCGIBody(const std::string& cgiOutput, Response& resp);
+		size_t	findHeaderEnd(const std::string& cgiOutput);
 
-		// Header helpers
-		void setCommonHeaders(Response& resp, bool keepAlive);
-		void setContentType(Response& resp, const std::string& extension);
-		void setContentTypeFromCGI(Response& resp);
+		void	setCommonHeaders(Response& resp, bool keepAlive);
+		void	setContentType(Response& resp, const std::string& extension);
+		void	setContentTypeFromCGI(Response& resp);
 
-		// Status helpers
-		void setStatus(Response& resp, int code);
+		void	setStatus(Response& resp, int code);
 };
 
 #endif

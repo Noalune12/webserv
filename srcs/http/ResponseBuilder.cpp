@@ -3,6 +3,8 @@
 #include "MimeTypes.hpp"
 #include "ResponseBuilder.hpp"
 #include "StatusCodes.hpp"
+#include "Logger.hpp"
+#include "fstream"
 
 ResponseBuilder::ResponseBuilder() {}
 
@@ -16,7 +18,11 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 
 	if (req.err) {
 		setStatus(resp, req.status);
-		setBodyFromError(resp, req.status); // or setBodyFromErrorFile();
+		if (!req.htmlPage.empty()) {
+			resp._body.assign(req.htmlPage.begin(), req.htmlPage.end());
+		} else {
+			setBodyFromError(resp, req.status, req);
+		}
 	}
 	else if (!req.htmlPage.empty()) {
 		setStatus(resp, 200);
@@ -24,7 +30,7 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 	}
 	else { // No content - return error
 		setStatus(resp, req.err ? req.status : 500);
-		setBodyFromError(resp, resp._statusCode);
+		setBodyFromError(resp, resp._statusCode, req);
 	}
 	return (resp);
 }
@@ -49,7 +55,12 @@ Response	ResponseBuilder::buildError(int statusCode, bool keepAlive) {
 
 	setCommonHeaders(resp, keepAlive);
 	setStatus(resp, statusCode);
-	setBodyFromError(resp, statusCode);
+
+	setStatus(resp, statusCode);
+
+	std::string errorPage = StatusCodes::generateDefaultErrorPage(statusCode);
+	resp._body.assign(errorPage.begin(), errorPage.end());
+	resp._headers["Content-Type"] = "text/html";
 
 	return (resp);
 }
@@ -70,7 +81,21 @@ void	ResponseBuilder::setBodyFromFile(Response& resp, const Request& req) {
 	setContentType(resp, req._trailing);
 }
 
-void	ResponseBuilder::setBodyFromError(Response& resp, int statusCode) {
+void ResponseBuilder::setBodyFromError(Response& resp, int statusCode, const Request& req) {
+
+	std::string customErrorPath = getCustomErrorPage(statusCode, req);
+
+	if (!customErrorPath.empty()) {
+		std::string customPage = loadErrorPageFile(customErrorPath, req);
+		if (!customPage.empty()) {
+			resp._body.assign(customPage.begin(), customPage.end());
+			resp._headers["Content-Type"] = "text/html";
+			Logger::debug("Loaded custom error page: " + customErrorPath);
+			return ;
+		}
+	}
+
+	// Fallback to default error page
 	std::string errorPage = StatusCodes::generateDefaultErrorPage(statusCode);
 	resp._body.assign(errorPage.begin(), errorPage.end());
 	resp._headers["Content-Type"] = "text/html";
@@ -159,4 +184,54 @@ void	ResponseBuilder::setContentTypeFromCGI(Response& resp) {
 void ResponseBuilder::setStatus(Response& resp, int code) {
 	resp._statusCode = code;
 	resp._statusText = StatusCodes::getReasonPhrase(code);
+}
+
+
+/* private methods */
+std::string	ResponseBuilder::getCustomErrorPage(int statusCode, const Request& req) {
+
+	if (req._reqLocation == NULL) {
+		return ("");
+	}
+
+	std::map<int, std::string>::const_iterator	it;
+	it = req._reqLocation->errPage.find(statusCode);
+
+	if (it != req._reqLocation->errPage.end()) {
+		return (it->second);
+	}
+
+	return ("");
+}
+
+
+// todo: fix si error_page existe
+std::string ResponseBuilder::loadErrorPageFile(const std::string& uriPath, const Request& req) {
+
+	if (req._reqLocation == NULL) {
+		return ("");
+	}
+
+	std::string	fullPath;
+
+	if (!req._reqLocation->alias.empty()) {
+		fullPath = req._reqLocation->alias + uriPath;
+	} else {
+		fullPath = req._reqLocation->root + uriPath;
+	}
+
+	Logger::debug("Trying to load error page: " + fullPath);
+
+	std::ifstream file(fullPath.c_str(), std::ios::binary);
+	if (!file.is_open()) {
+		Logger::warn("Could not open custom error page: " + fullPath);
+		return ("");
+	}
+
+	std::ostringstream content;
+	content << file.rdbuf();
+	file.close();
+
+	Logger::debug("Successfully loaded custom error page: " + fullPath);
+	return (content.str());
 }
