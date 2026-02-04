@@ -35,6 +35,8 @@ void Request::clearPreviousRequest() {
     _return = false;
    _scriptPath.clear();
    _queryString.clear();
+   _postExt.clear();
+   _postFilename.clear();
     // what about err and keep alive
 }
 

@@ -53,6 +53,8 @@ class Request {
         std::string _scriptPath;
         std::string _queryString;
         std::string _returnPath;
+        std::string _postExt;
+        std::string _postFilename;
 
         // PARSING
         void checkRequestSem(std::string request);

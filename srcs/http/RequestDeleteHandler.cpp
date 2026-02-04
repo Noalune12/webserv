@@ -40,6 +40,9 @@ void Request::methodDeleteHandler() {
             std::cout << "error with DELETE file or folder note found" << std::endl;
             return ;
         }
+
+        // CHECK IF rootDir is a folder ?
+
         // delete permission based on directory not file
         if (access(rootDir.c_str(), W_OK | X_OK) != 0) {
             if (!_reqLocation->root.empty()) {
