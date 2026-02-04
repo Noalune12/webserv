@@ -55,6 +55,8 @@ class Request {
         std::string _returnPath;
         std::string _postExt;
         std::string _postFilename;
+        std::string _postUploadDir;
+        
 
         // PARSING
         void checkRequestSem(std::string request);
