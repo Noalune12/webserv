@@ -29,6 +29,13 @@
   - if a body is present but content-type is note supported -> 415
 
 # GET
+- autoindex
+| Autoindex | Index file         | GET /test/                  |
+| --------- | ------------------ | --------------------------- |
+| Désactivé | absent             | 403 Forbidden               |
+| Activé    | absent             | 200 OK + listing HTML       |
+| Désactivé | index.html présent | 200 OK + contenu index.html |
+| Activé    | index.html présent | 200 OK + contenu index.html |
 
 # POST
 
