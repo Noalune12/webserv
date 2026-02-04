@@ -72,6 +72,13 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	CGIContext& cgi = client._cgi;
 
 	if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+		if (events & EPOLLERR) {
+			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (events & EPOLLHUP) {
+			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
+		} else if (events & EPOLLRDHUP) {
+			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+		}
 		Logger::debug("CGI pipe error/hangup");
 		cleanup(cgi);
 		client.setState(SENDING_RESPONSE);
@@ -147,7 +154,13 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLo
 	closeAllFds(loop);
 
 	// Build environment
-	std::vector<char*>	env = buildEnvironment(req);
+	std::vector<std::string> envStrings = buildEnvironmentStrings(req);
+
+	std::vector<char*> env(envStrings.size() + 1);
+    for (size_t i = 0; i < envStrings.size(); ++i) {
+        env[i] = const_cast<char*>(envStrings[i].c_str());
+    }
+    env[envStrings.size()] = NULL;
 
 	char* argv[] = {
 		const_cast<char*>(req._reqLocation->cgiPath.c_str()),
@@ -165,10 +178,9 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLo
 	exit(EXIT_FAILURE);
 }
 
-std::vector<char*>	CGIExecutor::buildEnvironment(const Request& req) {
+std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Request& req) {
 
 	std::vector<std::string>	envStrings;
-	std::vector<char*>			envPointers;
 
 	envStrings.push_back(buildEnvVar("REQUEST_METHOD", req._method));
 	envStrings.push_back(buildEnvVar("QUERY_STRING", req._queryString));
@@ -194,12 +206,7 @@ std::vector<char*>	CGIExecutor::buildEnvironment(const Request& req) {
 		// add SERVER_NAME, SERVER_PORT
 	}
 
-	for (size_t i = 0; i < envStrings.size(); ++i) {
-		envPointers.push_back(const_cast<char*>(envStrings[i].c_str())); // Convertion to char* array for execve
-	}
-	envPointers.push_back(NULL); // null terminated env
-
-	return (envPointers);
+	return (envStrings);
 }
 
 std::string	CGIExecutor::buildEnvVar(const std::string& name, const std::string& value) {

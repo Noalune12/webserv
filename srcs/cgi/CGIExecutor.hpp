@@ -24,8 +24,8 @@ class CGIExecutor {
 		bool	createPipes(CGIContext& cgi);
 		void	setupChildProcess(CGIContext& cgi, const Request& req, EventLoop& loop);
 
-		std::vector<char*>	buildEnvironment(const Request& req);
-		std::string			buildEnvVar(const std::string& name, const std::string& value);
+		std::vector<std::string>	buildEnvironmentStrings(const Request& req);
+		std::string					buildEnvVar(const std::string& name, const std::string& value);
 
 		bool	writeBodyToCGI(CGIContext& cgi, const std::string& body);
 
