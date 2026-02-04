@@ -60,7 +60,7 @@ void	CGIExecutor::cleanup(CGIContext& cgi) {
 	if (cgi.pid > 0) {
 		int	status;
 		waitpid(cgi.pid, &status, WNOHANG); // the flag makes it non blocking (for the eventloop)
-		pid = -1;
+		cgi.pid = -1;
 	}
 }
 
