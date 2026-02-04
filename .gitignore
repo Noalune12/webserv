@@ -46,3 +46,15 @@ webserv
 servertest
 .vscode
 *.log
+
+var/*
+out
+usr/*
+server
+*.html
+
+.gitignore
+
+config-files
+*.conf
+default.conf
