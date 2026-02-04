@@ -71,19 +71,15 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 
 	CGIContext& cgi = client._cgi;
 
-	if (events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-		if (events & EPOLLERR) {
-			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
-		} else if (events & EPOLLHUP) {
-			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
-		} else if (events & EPOLLRDHUP) {
-			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
-		}
-		Logger::debug("CGI pipe error/hangup");
+	if (events & EPOLLERR) {
+		std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
+		Logger::error("CGI pipe error");
 		cleanup(cgi);
+		client._request.err = true;
+		client._request.status = 502;
 		client.setState(SENDING_RESPONSE);
-		client.startTimer(4, 5); // CLIENT_TIMEOUT -> maybe change it for a define instead of a static member of EventLoop
-		loop.modifyEpoll(clientFd, EPOLLOUT); // EPOLLIN | EPOLLOUT ? need to check later
+		client.startTimer(4, 5);
+		loop.modifyEpoll(clientFd, EPOLLOUT);
 		return ;
 	}
 
@@ -105,6 +101,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, 5); // CLIENT_TIMEOUT
 			loop.modifyEpoll(clientFd, EPOLLOUT);
+			return ;
 		}
 		else if (errno != EAGAIN && errno != EWOULDBLOCK) {
 			Logger::error("CGI read error: " + std::string(strerror(errno)));
@@ -114,7 +111,25 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, 5); // CLIENT_TIMEOUT
 			loop.modifyEpoll(clientFd, EPOLLOUT);
+			return ;
 		}
+	}
+
+	if (events & (EPOLLHUP | EPOLLRDHUP)) {
+		if (events & EPOLLHUP) {
+			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "] (which is the expected behavior)" RESET << std::endl;
+		} else if (events & EPOLLRDHUP) {
+			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
+		}
+		std::ostringstream oss;
+		oss << cgi.outputBuff.size();
+		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
+
+		cleanup(cgi);
+		client.setState(SENDING_RESPONSE);
+		client.startTimer(4, 5);
+		loop.modifyEpoll(clientFd, EPOLLOUT);
+		return;
 	}
 }
 
