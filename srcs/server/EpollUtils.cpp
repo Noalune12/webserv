@@ -72,10 +72,7 @@ void	EventLoop::closeConnection(int clientFd) {
 	Connection& client = it->second;
 
 	if (client._cgi.isActive()) {
-		if (client._cgi.pid > 0) {
-			kill(client._cgi.pid, SIGKILL);
-		}
-		cleanupCGI(clientFd);
+		_cgiExecutor.cleanup(client._cgi);
 	}
 
 	std::ostringstream	oss;
@@ -86,4 +83,12 @@ void	EventLoop::closeConnection(int clientFd) {
 
 	close(clientFd);
 	_connections.erase(it);
+}
+
+void	EventLoop::registerPipe(int pipeFd, int clientFd) {
+	_pipeToClient[pipeFd] = clientFd;
+}
+
+void	EventLoop::unregisterPipe(int pipeFd) {
+	_pipeToClient.erase(pipeFd);
 }

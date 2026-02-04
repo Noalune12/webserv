@@ -19,58 +19,49 @@
 
 void	EventLoop::checkTimeouts(void) {
 
-	std::vector<int>	timedOut;
+	std::vector<int>					timedOut;
 	std::map<int, Connection>::iterator	it;
 
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
 		Connection& client = it->second;
-		if (it->second.getState() == CLOSED)
-			continue ;
-		int	active_timer = getActiveTimer(client.getState());
+		int activeTimer = getActiveTimer(client.getState());
 
-		if (active_timer >= 0 && client.isTimedOut(active_timer)) {
+		if (activeTimer >= 0 && client.isTimedOut(activeTimer)) {
 			timedOut.push_back(it->first);
 		}
 	}
 
 	for (size_t i = 0; i < timedOut.size(); ++i) {
 
-		int	clientFd = timedOut[i];
+		int clientFd = timedOut[i];
 
-		std::ostringstream	oss;
-		Connection& client = it->second;
+		it = _connections.find(clientFd);
+		if (it == _connections.end())
+			continue ;
+
+		Connection&			client = it->second;
+
 		if (client.getState() == READING_BODY) {
-			std::ostringstream	oss;
-			oss << "Body read timeout for client #" << clientFd << ", sending 408";
-			Logger::warn(oss.str());
-
+			Logger::warn("Body read timeout, sending 408");
 			client._request.err = true;
 			client._request.status = 408;
-			client.setState(SENDING_RESPONSE);
-			client.startTimer(4, CLIENT_TIMEOUT);
-			modifyEpoll(clientFd, EPOLLOUT);
+			transitionToSendingResponse(client, clientFd);
 			continue ;
 		}
 
 		if (client.getState() == CGI_RUNNING) {
-			oss << "CGI timeout for client #" << clientFd << ", killing process";
-			Logger::warn(oss.str());
-
+			Logger::warn("CGI timeout, killing process");
 			if (client._cgi.pid > 0) {
 				kill(client._cgi.pid, SIGKILL);
 			}
-			cleanupCGI(clientFd);
+			_cgiExecutor.cleanup(client._cgi);
 			client._request.err = true;
 			client._request.status = 504;
-			client.setState(SENDING_RESPONSE);
-			modifyEpoll(clientFd, EPOLLOUT);
+			transitionToSendingResponse(client, clientFd);
 			continue ;
 		}
 
-		oss << "client #" << clientFd << " timeout, closing";
-		Logger::warn(oss.str());
-		// send408 -> timeout error
-		// sendTimeout(clientFd);
+		Logger::warn("Client timeout, closing connection");
 		closeConnection(clientFd);
 	}
 }

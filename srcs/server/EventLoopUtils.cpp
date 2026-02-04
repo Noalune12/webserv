@@ -49,3 +49,14 @@ bool	EventLoop::isRunning(void) const {
 size_t	EventLoop::getConnectionCount(void) const {
 	return (_connections.size());
 }
+
+std::vector<int>	EventLoop::getListenSocketFds(void) const {
+	return (_serverManager.getListenSocketFds());
+}
+
+void	EventLoop::closeEpollFd(void) {
+	if (_epollFd >= 0) {
+		close(_epollFd);
+		_epollFd = -1;
+	}
+}
