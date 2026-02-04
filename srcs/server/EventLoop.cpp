@@ -309,10 +309,12 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 }
 
 void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
+	client._request.clearPreviousRequest();
+	client.setBuffer("");
 	client.setState(IDLE);
 	client.startTimer(0, CLIENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN);
-	Logger::debug("-> IDLE");
+	Logger::debug("-> IDLE (keep-alive)");
 }
 
 void	EventLoop::transitionToReadingBody(Connection& client, int clientFd) {
