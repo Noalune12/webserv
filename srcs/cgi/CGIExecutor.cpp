@@ -203,7 +203,12 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Request& req
 	}
 
 	if (req._reqLocation) {
-		// add SERVER_NAME, SERVER_PORT
+		std::stringstream ss;
+		ss << req._reqServer->lis[0].port;
+		envStrings.push_back(buildEnvVar("SERVER_NAME", req._reqServer->serverName[0]));
+		envStrings.push_back(buildEnvVar("SERVER_PORT", ss.str()));
+
+		std::cerr <<  "HERE: " << req._reqServer->serverName[0] << "\nport: " << ss.str() << std::endl;
 	}
 
 	return (envStrings);
