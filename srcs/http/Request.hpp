@@ -77,6 +77,7 @@ class Request {
         void methodHandler();
         void methodGetHandler();
         void methodDeleteHandler();
+        void methodPostHandler();
         std::string getPath(std::string folder);
         std::string getPath(std::string folder, std::string file);
         bool readFile(std::string path, struct stat buf, std::string errorPath);

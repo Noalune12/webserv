@@ -106,9 +106,10 @@ void Request::methodHandler() {
 	// get info
 	if (_method == "GET") {
         methodGetHandler();
-	}
-    else if (_method == "DELETE") {
+	} else if (_method == "DELETE") {
         methodDeleteHandler();
+    } else if (_method == "POST") {
+        methodPostHandler();
     }
 }
 
