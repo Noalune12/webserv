@@ -50,7 +50,7 @@ void Request::methodPostHandler() {
     
     if (_reqLocation->uploadTo.empty()) {
         if (!_reqLocation->root.empty())
-            _postUploadDir = _reqLocation->root;
+            _postUploadDir = _reqLocation->root + _uri; // check /////
         else
             _postUploadDir = _reqLocation->alias;
     } else {
@@ -154,7 +154,7 @@ void Request::methodPostHandler() {
 
     std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
 
-    outfile << "my text here!" << std::endl;
+    outfile << _body;
 
     outfile.close();
     

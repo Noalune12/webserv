@@ -88,7 +88,10 @@ void Request::methodGetHandler() {
 std::string Request::getPath(std::string folder) {
     std::cout << "ENTERING get Path with only folder " << folder << std::endl;
     std::string path;
-    path = folder + _trailing;
+    if (folder[folder.size() - 1] != '/')
+        path = folder + "/" + _trailing;
+    else
+        path = folder + _trailing;
     if (path[0] == '/')
         path = path.substr(1, path.size());
     std::cout << "PATH = " << path << std::endl;

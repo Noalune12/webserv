@@ -297,7 +297,7 @@ void EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			break ;
 
 		case SENDING_RESPONSE:
-		std::cout << "BODY = " << client._request._body << std::endl;
+		// std::cout << "BODY = " << client._request._body << std::endl;
 			if (ev & EPOLLOUT) {
 				// send505exemple(clientFd);
 

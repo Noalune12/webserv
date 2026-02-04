@@ -51,16 +51,16 @@ void Request::findServer() {
 void Request::findLocation() {
 	// uri check
     // /!\ check only 1st /.../
-    size_t index = _uri.rfind('/');
-    if (index != _uri.size() - 1) {
-        _trailing = _uri.substr(index + 1, _uri.size());
-        _uri = _uri.substr(0, index + 1);
-    }
+    // size_t index = _uri.rfind('/');
+    // if (index != _uri.size() - 1) {
+    //     _trailing = _uri.substr(index + 1, _uri.size());
+    //     _uri = _uri.substr(0, index + 1);
+    // }
     std::cout << "before loop URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
     while (!_uri.empty()) {
         std::vector<location>::iterator itLocation = _reqServer->loc.begin();
         for (; itLocation != _reqServer->loc.end(); itLocation++) {
-            if (_uri == itLocation->path) {
+            if (_uri == itLocation->path || _uri + "/" == itLocation->path || _uri == itLocation->path + "/") {
                 std::cout << "location found at " << itLocation->path << std::endl;
                 _reqLocation = &(*itLocation);
                 return ;
@@ -68,7 +68,7 @@ void Request::findLocation() {
         }
         if (_uri == "/")
             break;
-        index = _uri.rfind('/');
+        size_t index = _uri.rfind('/');
         if (index == _uri.size() - 1) {
             _uri = _uri.substr(0, index);
             _trailing = "/" + _trailing;
