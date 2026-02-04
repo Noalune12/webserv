@@ -59,6 +59,8 @@ override HTTPSRC	:= \
 	RequestChunkHandler \
 	RequestSemantics \
 	Response \
+	ResponseBuilder \
+	ResponseSender \
 	StatusCodes \
 	RequestGetHandler \
 	RequestDeleteHandler
@@ -94,3 +96,8 @@ SRC += $(addprefix $(INHERITORDIR), $(addsuffix .cpp, $(INHERITORSRC)))
 
 override INHERITORSRC	:= \
 	ConfigInheritor
+
+SRC += $(addprefix $(CGIDIR), $(addsuffix .cpp, $(CGISRC)))
+
+override CGISRC	:= \
+	CGIExecutor

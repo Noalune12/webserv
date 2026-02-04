@@ -8,6 +8,8 @@
 # include "Connection.hpp"
 # include "Request.hpp"
 
+class EventLoop;
+
 class CGIExecutor {
 
 	public:
