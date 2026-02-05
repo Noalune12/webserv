@@ -30,7 +30,7 @@ void Request::methodPostHandler() {
     }
     std::map<std::string, std::string>::iterator it = _headers.find("content-type");
     if (it == _headers.end()) {
-        _postExt = ".txt"; // not sure
+        _postExt = "txt"; // not sure
     } else {
         // set extenstion
 
@@ -40,7 +40,8 @@ void Request::methodPostHandler() {
         if (lastSlash != std::string::npos) {
             _postExt += it->second.substr(lastSlash + 1);
         } else {
-            // error
+            _postExt = "txt";
+            
         }
         
     }

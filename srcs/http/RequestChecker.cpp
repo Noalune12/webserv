@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <sys/stat.h>
+#include <algorithm>
 
 void Request::findServer() {
 	std::vector<server>::iterator itServer = _servers.begin();
@@ -240,6 +241,20 @@ bool Request::bodyChecker() {
         // }
 
     } else if (it == _headers.end()) {
+
+        // check if multipart
+        it = _headers.find("content-type");
+        if (it != _headers.end()) {
+            checkMultipart(it->second);
+            if (_isMultipart) {
+                std::cout << "\nMULTIPART PARSING" << std::endl;
+                return true;
+            } else {
+                std::transform(it->second.begin(), it->second.end(), it->second.begin(), ::tolower);
+            }
+        }
+
+
         if (_reqLocation->bodySize < _body.size()) {
             if (!_reqLocation->root.empty())
                 findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
@@ -278,4 +293,8 @@ bool Request::bodyChecker() {
         }
     }
     return true;
+}
+
+void Request::checkMultipart(std::string content) {
+ (void)content;
 }

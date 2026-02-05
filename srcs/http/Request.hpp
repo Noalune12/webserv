@@ -58,6 +58,8 @@ class Request {
         std::string _postUploadDir;
         std::string _getPath;
         bool _indexFound;
+        bool _isMultipart;
+        std::string _multipartBoundary;
         
 
         // PARSING
@@ -74,6 +76,7 @@ class Request {
         void findServer();
         void findLocation();
         bool bodyChecker();
+        void checkMultipart(std::string content);
 
         // CHUNK PARSING
         void parseChunk();
