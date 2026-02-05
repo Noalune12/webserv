@@ -30,17 +30,27 @@ void Request::methodPostHandler() {
     }
     std::map<std::string, std::string>::iterator it = _headers.find("content-type");
     if (it == _headers.end()) {
-        _postExt = "txt"; // not sure
+        _postExt = ".txt"; // not sure
     } else {
         // set extenstion
 
         // check is valid extension in mime types ?
+        if (!MimeTypes::isSupportedType(it->second)) {
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);                
+            }
+            std::cout << "error type is not supported" << std::endl;
+            return ;
+        }
+
         size_t		lastSlash = it->second.find_last_of('/');
         _postExt = ".";
         if (lastSlash != std::string::npos) {
             _postExt += it->second.substr(lastSlash + 1);
         } else {
-            _postExt = "txt";
+            _postExt = ".txt";
             
         }
         
