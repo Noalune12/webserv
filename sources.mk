@@ -44,16 +44,26 @@ SRC += $(addprefix $(SERVERDIR), $(addsuffix .cpp, $(SERVERSRC)))
 
 override SERVERSRC	:= \
 	Connection \
+	EpollUtils \
 	EventLoop \
+	EventLoopTimeout \
+	EventLoopUtils \
 	ServerManager
 
 SRC += $(addprefix $(HTTPDIR), $(addsuffix .cpp, $(HTTPSRC)))
 
 override HTTPSRC	:= \
-	Request \
-	Response \
 	MimeTypes \
-	StatusCodes
+	Request \
+	RequestChecker \
+	RequestChunkHandler \
+	RequestSemantics \
+	Response \
+	ResponseBuilder \
+	ResponseSender \
+	StatusCodes \
+	RequestGetHandler \
+	RequestDeleteHandler
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
@@ -86,3 +96,10 @@ SRC += $(addprefix $(INHERITORDIR), $(addsuffix .cpp, $(INHERITORSRC)))
 
 override INHERITORSRC	:= \
 	ConfigInheritor
+
+SRC += $(addprefix $(CGIDIR), $(addsuffix .cpp, $(CGISRC)))
+
+override CGISRC	:= \
+	CGIEnvironment \
+	CGIExecutor \
+	CGIUtils

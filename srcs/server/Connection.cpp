@@ -1,4 +1,7 @@
 #include "Connection.hpp"
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sstream>
 
 Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true) {
 	for (size_t i = 0; i < 5; ++i) {
@@ -10,6 +13,24 @@ Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<se
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
+	// Get the local address (server's IP:port that received this connection)
+	struct sockaddr_storage local_addr;
+	socklen_t addr_len = sizeof(local_addr);
+	getsockname(clientFd, (struct sockaddr*)&local_addr, &addr_len);
+
+	// Extract IP and Port
+
+	if (local_addr.ss_family == AF_INET) {
+		struct sockaddr_in* addr = (struct sockaddr_in*)&local_addr;
+		
+		unsigned char* bytes = (unsigned char*)&addr->sin_addr; // protect ???
+		std::stringstream ss;
+		ss << (int)bytes[0] << "." << (int)bytes[1] << "." << (int)bytes[2] << "." << (int)bytes[3];
+		_serverIP = ss.str();
+
+		_serverPort = ntohs(addr->sin_port);
+	}
+	std::cout << "CLIENT CONNECTED TO SERVER PORT = " << _serverPort << "WITH IP = " << _serverIP << std::endl;
 }
 
 Connection::~Connection() {
@@ -86,6 +107,7 @@ std::string Connection::getBuffer(void) const {
 
 void Connection::parseRequest() {
 	_request.clearPreviousRequest();
+	_request.setServerInfo(_serverPort, _serverIP);
 	_request.checkRequestSem(_buffer);
 	if (_request.err == true)
 		return ;

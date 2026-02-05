@@ -20,6 +20,8 @@ void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << YELLOW "Request line:" RESET << std::endl;
 	std::cout << "  method = \"" << req._method << "\"" << std::endl;
 	std::cout << "  uri    = \"" << req._uri << "\"" << std::endl;
+	std::cout << "  trailing    = \"" << req._trailing << "\"" << std::endl;
+
 
 	std::cout << YELLOW "htmlPage:" RESET << std::endl;
 	if (req.htmlPage.empty()) {
@@ -29,9 +31,13 @@ void	Response::debugPrintRequestData(const Request& req) {
 	}
 
 	std::cout << YELLOW "Location:" RESET << std::endl;
-	std::cout << "  path  = \"" << req._reqLocation.path << "\"" << std::endl;
-	std::cout << "  root  = \"" << req._reqLocation.root << "\"" << std::endl;
-	std::cout << "  alias = \"" << req._reqLocation.alias << "\"" << std::endl;
+	if (req._reqLocation != NULL) {
+		std::cout << "  path  = \"" << req._reqLocation->path << "\"" << std::endl;
+		std::cout << "  root  = \"" << req._reqLocation->root << "\"" << std::endl;
+		std::cout << "  alias = \"" << req._reqLocation->alias << "\"" << std::endl;
+	} else {
+		std::cout << "  (no matching location)" << std::endl;
+	}
 
 	std::cout << YELLOW "Query:" RESET << std::endl;
 	std::cout << "   query = \"" << req._queryString << "\"" << std::endl;
@@ -40,7 +46,6 @@ void	Response::debugPrintRequestData(const Request& req) {
 }
 
 void	Response::prepare(const Request& req) {
-
 	_statusCode = 200;
 	_statusText = "OK";
 	_headers.clear();
@@ -51,46 +56,83 @@ void	Response::prepare(const Request& req) {
 	_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
 
 	if (req.err) {
-
 		_statusCode = req.status;
 		_statusText = StatusCodes::getReasonPhrase(req.status);
-
-		if (!req.htmlPage.empty()) {
-			_body.assign(req.htmlPage.begin(), req.htmlPage.end());
-		} else {
-			std::string errorPage = StatusCodes::generateDefaultErrorPage(req.status);
-			_body.assign(errorPage.begin(), errorPage.end());
-		}
-		// std::string type = MimeTypes::getType(req._uri);
-		// _headers["Content-Type"] = type;
-		_headers["Content-Type"] = "text/html"; // a changer en appelant les functions de MimeTypes
-
-		return ;
 	}
 
 	if (!req.htmlPage.empty()) {
-
-		_statusCode = 200;
-		_statusText = "OK";
 		_body.assign(req.htmlPage.begin(), req.htmlPage.end());
-
-		std::string type = MimeTypes::getType(req._uri);
-		std::cout << RED << req._uri << RESET << std::endl;
-		std::cout << RED << type << RESET << std::endl;
-
-		// _headers["Content-Type"] = type;
-		_headers["Content-Type"] = "text/html"; // a changer en appelant les functions de MimeTypes
-		return;
+		std::string type = MimeTypes::getType(req._trailing);
+		_headers["Content-Type"] = type.empty() ? "text/html" : type;
+		std::cout << RED << req._trailing << " -> " << _headers["Content-Type"] << RESET << std::endl;
+		return ;
 	}
 
-	// chunked ?
-	_statusCode = 500;
-	_statusText = "Internal Server Error";
-	std::string errorPage = StatusCodes::generateDefaultErrorPage(500);
+	if (req.err || _statusCode == 200) {
+		_statusCode = req.err ? req.status : 500;
+		_statusText = StatusCodes::getReasonPhrase(_statusCode);
+	}
+	std::string errorPage = StatusCodes::generateDefaultErrorPage(_statusCode);
 	_body.assign(errorPage.begin(), errorPage.end());
 	_headers["Content-Type"] = "text/html";
 }
 
+void	Response::prepareCGI(const std::string& cgiOutput, const Request& req) {
+	_statusCode = 200;
+	_statusText = "OK";
+	_headers.clear();
+	_body.clear();
+	_bytesSent = 0;
+
+	_headers["Server"] = "webserv/1.0";
+	_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
+
+	size_t headerEnd = cgiOutput.find("\r\n\r\n");
+	size_t bodyStart = 4;
+
+	if (headerEnd == std::string::npos) {
+		headerEnd = cgiOutput.find("\n\n");
+		bodyStart = 2;
+	}
+
+	std::string headerSection;
+	std::string bodySection;
+
+	if (headerEnd == std::string::npos) {
+		bodySection = cgiOutput;
+	} else {
+		headerSection = cgiOutput.substr(0, headerEnd);
+		bodySection = cgiOutput.substr(headerEnd + bodyStart);
+	}
+
+	std::istringstream	headerStream(headerSection);
+	std::string			line;
+
+	while (std::getline(headerStream, line)) {
+
+		if (!line.empty() && line[line.size() - 1] == '\r') {
+			line.erase(line.size() - 1);
+		}
+
+		size_t	colonPos = line.find(':');
+		if (colonPos != std::string::npos) {
+			std::string	name = line.substr(0, colonPos);
+			std::string	value = line.substr(colonPos + 1);
+
+			size_t	start = value.find_first_not_of(" \t");
+			if (start != std::string::npos) {
+				value = value.substr(start);
+			}
+			_headers[name] = value;
+		}
+	}
+
+	_body.assign(bodySection.begin(), bodySection.end());
+
+	if (_headers.find("Content-Type") == _headers.end()) {
+		_headers["Content-Type"] = "text/html";
+	}
+}
 
 std::vector<char>	Response::buildRaw(void) {
 
