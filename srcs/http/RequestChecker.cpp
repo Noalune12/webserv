@@ -296,5 +296,17 @@ bool Request::bodyChecker() {
 }
 
 void Request::checkMultipart(std::string content) {
- (void)content;
+    std::cout << "\nCHECK MULTIPART : " << content << std::endl;
+    size_t index = content.find(";");
+    std::string type, boundary;
+    if (index == std::string::npos)
+        return ;
+    else { 
+        type = content.substr(0, index);
+        boundary = content.substr(index + 1);
+        boundary = trimOws(boundary);
+        std::cout << type << " with boundary \'" << boundary << "\'" << std::endl;
+        if (type == "multipart/form-data")
+            _isMultipart = true;
+    }
 }
