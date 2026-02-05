@@ -39,7 +39,9 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	}
 
 	close(cgi.pipeIn[0]);	// Close read end of stdin
+	cgi.pipeIn[0] = -1;
 	close(cgi.pipeOut[1]);	// Close write end of stdout
+	cgi.pipeOut[1] = -1;
 
 	if (!writeBodyToCGI(cgi, client._request._body)) {
 		cleanup(cgi);
