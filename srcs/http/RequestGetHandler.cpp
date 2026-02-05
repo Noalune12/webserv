@@ -15,7 +15,7 @@ void Request::methodGetHandler() {
     if (!_reqLocation->root.empty() && !_trailing.empty()) {
         _getPath = getPath(_reqLocation->root + _uri, _trailing);
     } else if (!_reqLocation->root.empty() && _trailing.empty()) {
-        _getPath = getPath(_reqLocation->root);
+        _getPath = getPath(_reqLocation->root + _uri);
     } else if (!_reqLocation->alias.empty() && !_trailing.empty()) {
         _getPath = getPath(_reqLocation->alias, _trailing);
     } else if (!_reqLocation->alias.empty() && _trailing.empty()) {
@@ -45,10 +45,10 @@ void Request::methodGetHandler() {
                 for (; itIndex != _reqLocation->index.end() ; itIndex++) {
                     std::string path = getPath(_getPath, *itIndex);
 
-                    struct stat buf;
+                    struct stat st;
 
-                    if (stat(path.c_str(), &buf) == 0) {
-                        if (readFile(path, buf, _reqLocation->root))
+                    if (stat(path.c_str(), &st) == 0) {
+                        if (readFile(path, st, _reqLocation->root))
                             return ;
                     } 
                 }
@@ -99,10 +99,10 @@ void Request::methodGetHandler() {
                 for (; itIndex != _reqLocation->index.end() ; itIndex++) {
                     std::string path = getPath(_getPath, *itIndex);
 
-                    struct stat buf;
+                    struct stat st;
 
-                    if (stat(path.c_str(), &buf) == 0) {
-                        if (readFile(path, buf, _reqLocation->root))
+                    if (stat(path.c_str(), &st) == 0) {
+                        if (readFile(path, st, _reqLocation->root))
                             return ;
                     } 
                 }
