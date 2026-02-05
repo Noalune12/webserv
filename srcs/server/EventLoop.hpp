@@ -16,7 +16,7 @@ class EventLoop {
 	private:
 		static const int    MAX_EVENTS = 1024;	// to be defined
 		static const time_t CLIENT_TIMEOUT = 5; // to be defined
-		static const time_t CGI_TIMEOUT = 3;	// to be defined
+		static const time_t CGI_TIMEOUT = 5;	// to be defined
 
 		int                         _epollFd;		// epoll instance
 		bool                        _running;		// Main loop control

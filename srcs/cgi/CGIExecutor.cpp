@@ -29,7 +29,7 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	cgi.pid = fork();
 
 	if (cgi.pid == -1) {
-		cleanup(cgi);
+		cleanup(cgi); // add loop as parameter to removeFromEpoll properly
 		Logger::error("fork() failed");
 		return (false);
 	}
