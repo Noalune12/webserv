@@ -56,6 +56,8 @@ class Request {
         std::string _postExt;
         std::string _postFilename;
         std::string _postUploadDir;
+        std::string _getPath;
+        bool _indexFound;
         
 
         // PARSING
@@ -85,6 +87,7 @@ class Request {
         std::string getPath(std::string folder);
         std::string getPath(std::string folder, std::string file);
         bool readFile(std::string path, struct stat buf, std::string errorPath);
+        bool handleAutoindex(std::string dirPath);
         std::string getDirectory();
         bool deleteFolder(std::string path);
 

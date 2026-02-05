@@ -7,7 +7,7 @@
 
 Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false), _return(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false) {}
 
 
 Request::~Request() {}
@@ -37,6 +37,8 @@ void Request::clearPreviousRequest() {
    _queryString.clear();
    _postExt.clear();
    _postFilename.clear();
+   _indexFound = false;
+   _getPath.clear();
     // what about err and keep alive
 }
 
