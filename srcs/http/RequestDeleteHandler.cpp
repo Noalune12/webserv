@@ -128,6 +128,8 @@ void Request::methodDeleteHandler() {
             return ;
         }
     }
+    err = false;
+    status = 200;
 }
 
 bool Request::deleteFolder(std::string path) {
