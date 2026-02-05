@@ -159,9 +159,8 @@ void Request::methodPostHandler() {
 
     outfile.close();
     
-    
-    
-    
+    err = false;
+    status = 201;
 
 
     std::cout << std::endl;
