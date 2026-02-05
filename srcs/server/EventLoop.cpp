@@ -46,8 +46,8 @@ bool	EventLoop::init(void) {
 	std::vector<int> listenFds = _serverManager.getListenSocketFds();
 	for (size_t i = 0; i < listenFds.size(); ++i) {
 		if (!addToEpoll(listenFds[i], EPOLLIN)) {
-			// close(_epollFd);
-			// _epollFd = -1;
+			close(_epollFd);
+			_epollFd = -1;
 			return (false);
 		}
 	}
