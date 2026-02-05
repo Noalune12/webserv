@@ -36,13 +36,11 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Request& req
 		envStrings.push_back(buildEnvVar("CONTENT_TYPE", it->second));
 	}
 
-	if (req._reqLocation) {
+	if (req._reqLocation && req._reqServer && !req._reqServer->lis.empty() && !req._reqServer->serverName.empty()) {
 		std::stringstream ss;
 		ss << req._reqServer->lis[0].port;
 		envStrings.push_back(buildEnvVar("SERVER_NAME", req._reqServer->serverName[0]));
 		envStrings.push_back(buildEnvVar("SERVER_PORT", ss.str()));
-
-		std::cerr <<  "HERE: " << req._reqServer->serverName[0] << "\nport: " << ss.str() << std::endl;
 	}
 
 	return (envStrings);

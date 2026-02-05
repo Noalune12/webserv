@@ -42,8 +42,6 @@ bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 	ev.data.fd = fd;
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) < 0) {
-		int mypid = getpid();
-		std::cout << mypid << std::endl;
 		std::cerr << "epoll_ctl(MOD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
 		return (false);
 	}

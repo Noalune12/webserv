@@ -381,7 +381,6 @@ bool	EventLoop::checkTimeout(Connection& client, int clientFd) {
 	int	timerIdx = getActiveTimer(client.getState());
 	if (timerIdx >= 0 && client.isTimedOut(timerIdx)) {
 		Logger::warn("Timeout");
-		Logger::error(std::string("epoll_wait() failed: ") + strerror(errno));
 		closeConnection(clientFd);
 		return (true);
 	}
