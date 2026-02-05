@@ -56,16 +56,6 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	return (true);
 }
 
-void	CGIExecutor::cleanup(CGIContext& cgi) {
-
-	cgi.closePipes();
-
-	if (cgi.pid > 0) {
-		int	status;
-		waitpid(cgi.pid, &status, WNOHANG); // the flag makes it non blocking (for the eventloop)
-		cgi.pid = -1;
-	}
-}
 
 void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, uint32_t events, EventLoop& loop) {
 
@@ -133,23 +123,6 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	}
 }
 
-bool	CGIExecutor::createPipes(CGIContext& cgi) {
-
-	if (pipe(cgi.pipeIn) == -1) {
-		Logger::error("pipe(pipeIn) failed");
-		return (false);
-	}
-
-	if (pipe(cgi.pipeOut) == -1) {
-		close(cgi.pipeIn[0]);
-		close(cgi.pipeIn[1]);
-		Logger::error("pipe(pipeOut) failed");
-		return (false);
-	}
-
-	return (true);
-}
-
 
 void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLoop& loop) {
 
@@ -183,8 +156,6 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLo
 		NULL
 	};
 
-	// std::cerr << RED "DEBUG\n" RESET << "cgiPath: " << req._reqLocation->cgiPath << "\nscript path: " << req._scriptPath << std::endl;
-
 	execve(argv[0], argv, &env[0]);
 
 	// if execve failed
@@ -193,45 +164,7 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLo
 	exit(EXIT_FAILURE);
 }
 
-std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Request& req) {
 
-	std::vector<std::string>	envStrings;
-
-	envStrings.push_back(buildEnvVar("REQUEST_METHOD", req._method));
-	envStrings.push_back(buildEnvVar("QUERY_STRING", req._queryString));
-	envStrings.push_back(buildEnvVar("SCRIPT_FILENAME", req._scriptPath));
-	envStrings.push_back(buildEnvVar("SERVER_PROTOCOL", "HTTP/1.1"));
-	envStrings.push_back(buildEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));
-	envStrings.push_back(buildEnvVar("REDIRECT_STATUS", "200"));
-
-	std::map<std::string, std::string>::const_iterator it;
-	it = req._headers.find("Content-Length");
-	if (it != req._headers.end()) {
-		envStrings.push_back(buildEnvVar("CONTENT_LENGTH", it->second));
-	} else {
-		envStrings.push_back(buildEnvVar("CONTENT_LENGTH", "0"));
-	}
-
-	it = req._headers.find("Content-Type");
-	if (it != req._headers.end()) {
-		envStrings.push_back(buildEnvVar("CONTENT_TYPE", it->second));
-	}
-
-	if (req._reqLocation) {
-		std::stringstream ss;
-		ss << req._reqServer->lis[0].port;
-		envStrings.push_back(buildEnvVar("SERVER_NAME", req._reqServer->serverName[0]));
-		envStrings.push_back(buildEnvVar("SERVER_PORT", ss.str()));
-
-		std::cerr <<  "HERE: " << req._reqServer->serverName[0] << "\nport: " << ss.str() << std::endl;
-	}
-
-	return (envStrings);
-}
-
-std::string	CGIExecutor::buildEnvVar(const std::string& name, const std::string& value) {
-	return (name + "=" + value);
-}
 
 bool CGIExecutor::writeBodyToCGI(CGIContext& cgi, const std::string& body) {
 
@@ -243,7 +176,7 @@ bool CGIExecutor::writeBodyToCGI(CGIContext& cgi, const std::string& body) {
 		}
 	}
 
-	close(cgi.pipeIn[1]); // sending EOF to the pipe by closing it
+	close(cgi.pipeIn[1]); // sending EOF to the pipe by closing it -> sends a signal that the request body is complete
 	cgi.pipeIn[1] = -1;
 
 	Logger::debug("Sent body to CGI and closed stdin");
@@ -260,25 +193,4 @@ ssize_t	CGIExecutor::readFromPipe(int pipeFd, std::string& buffer) {
 	}
 
 	return (bytesRead);
-}
-
-void	CGIExecutor::killProcess(pid_t pid) {
-	if (pid > 0) {
-		kill(pid, SIGKILL);
-	}
-}
-
-void	CGIExecutor::closeAllFds(EventLoop& loop) {
-
-	std::vector<int>	clientFds = loop.getAllClientFds();
-	for (size_t i = 0; i < clientFds.size(); ++i) {
-		close(clientFds[i]);
-	}
-
-	loop.closeEpollFd();
-
-	std::vector<int>	listenFds = loop.getListenSocketFds();
-	for (size_t i = 0; i < listenFds.size(); ++i) {
-		close(listenFds[i]);
-	}
 }

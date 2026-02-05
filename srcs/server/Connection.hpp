@@ -21,8 +21,8 @@ enum ConnectionState {
 
 struct CGIContext {
 	pid_t		pid;
-	int			pipeIn[2];	// stdin (server puis CGI)
-	int			pipeOut[2];	// stdout (CGI puis server)
+	int			pipeIn[2];	// stdin (server then CGI)
+	int			pipeOut[2];	// stdout (CGI then server)
 	std::string	outputBuff;
 	bool		headerParsed;
 	size_t		bodyStart;
@@ -62,8 +62,6 @@ struct CGIContext {
 // Avec l'architecture que j'ai en tete, c'est ici qu'on stock absolument toutes les donnees de chaque clients
 // Informations, etats, buffers, truc pour les CGI, tout!
 
-// note: pour les fd des CGI (pipes), ne pas oublier de les mettre dans la interest list d'epoll
-
 class Connection {
 
 	private:
@@ -82,8 +80,8 @@ class Connection {
 		std::string _serverIP;
 		int			_serverPort;
 
-		public:
-		Connection(); // cannot compile without it and I don't understand why...
+	public:
+		Connection(); // cannot compile without it
 		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir);
 		~Connection();
 

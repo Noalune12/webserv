@@ -100,4 +100,6 @@ override INHERITORSRC	:= \
 SRC += $(addprefix $(CGIDIR), $(addsuffix .cpp, $(CGISRC)))
 
 override CGISRC	:= \
-	CGIExecutor
+	CGIEnvironment \
+	CGIExecutor \
+	CGIUtils
