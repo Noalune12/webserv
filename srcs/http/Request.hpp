@@ -51,8 +51,18 @@ class Request {
 	location *_reqLocation;
         std::string _version;
         bool _cgi;
+        bool _return;
         std::string _scriptPath;
         std::string _queryString;
+        std::string _returnPath;
+        std::string _postExt;
+        std::string _postFilename;
+        std::string _postUploadDir;
+        std::string _getPath;
+        bool _indexFound;
+        bool _isMultipart;
+        std::string _multipartBoundary;
+        
 
         // PARSING
         void checkRequestSem(std::string request);
@@ -68,6 +78,7 @@ class Request {
         void findServer();
         void findLocation();
         bool bodyChecker();
+        void checkMultipart(std::string content);
 
         // CHUNK PARSING
         void parseChunk();
@@ -77,9 +88,11 @@ class Request {
         void methodHandler();
         void methodGetHandler();
         void methodDeleteHandler();
+        void methodPostHandler();
         std::string getPath(std::string folder);
         std::string getPath(std::string folder, std::string file);
         bool readFile(std::string path, struct stat buf, std::string errorPath);
+        bool handleAutoindex(std::string dirPath);
         std::string getDirectory();
         bool deleteFolder(std::string path);
 

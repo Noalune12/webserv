@@ -7,7 +7,7 @@
 
 Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false), _isMultipart(false) {}
 
 
 Request::~Request() {}
@@ -32,8 +32,15 @@ void Request::clearPreviousRequest() {
     _reqLocation = NULL;
     _trailing.clear();
     _cgi = false;
+    _return = false;
    _scriptPath.clear();
    _queryString.clear();
+   _postExt.clear();
+   _postFilename.clear();
+   _indexFound = false;
+   _getPath.clear();
+   _isMultipart = false;
+   _multipartBoundary.clear();
     // what about err and keep alive
     _method.clear();
     _uri.clear();
@@ -112,9 +119,10 @@ void Request::methodHandler() {
 	// get info
 	if (_method == "GET") {
         methodGetHandler();
-	}
-    else if (_method == "DELETE") {
+	} else if (_method == "DELETE") {
         methodDeleteHandler();
+    } else if (_method == "POST") {
+        methodPostHandler();
     }
 }
 

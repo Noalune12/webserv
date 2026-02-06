@@ -108,7 +108,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
         if (it == directives.end()) {
-            temp.ret[0] = "";
+            // temp.ret[0] = "";
         } else {
             setReturn(it, temp);
         }
@@ -227,7 +227,7 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
             getReturnFromServer(server, temp);
         } else {
             setReturn(it, temp);
-            getReturnFromServer(server, temp);
+            // getReturnFromServer(server, temp);
         }
 
         server.loc.push_back(temp);
@@ -255,13 +255,15 @@ void ConfigInheritor::getErrPageFromServer(server& server, location& location) {
 }
 
 void ConfigInheritor::getReturnFromServer(server& server, location& location) {
-    std::map<int, std::string>::iterator it = server.ret.begin();
+    // std::map<int, std::string>::iterator it = server.ret.begin();
 
-    for (; it != server.ret.end(); it++) {
-        if (location.ret.find(it->first) ==  location.ret.end()) {
-            location.ret[it->first] = it->second;
-        }
-    }
+    // for (; it != server.ret.end(); it++) {
+    //     if (location.ret.find(it->first) ==  location.ret.end()) {
+    //         location.ret[it->first] = it->second;
+    //     }
+    // }
+    location.returnPath = server.returnPath;
+    location.returnStatus = server.returnStatus;
 }
 
 void ConfigInheritor::setMethods(PairVector::iterator& it, allowMeth& methods) {
@@ -342,7 +344,10 @@ void ConfigInheritor::setReturn(PairVector::iterator& it, T& t) {
         if (*itArg == " ")
             continue;
         if (itArg->find(';') != std::string::npos) {
-            t.ret[value] = (*itArg).substr(0, (*itArg).size() - 1);
+            // t.ret[value] = (*itArg).substr(0, (*itArg).size() - 1);
+            t.returnStatus = value;
+            t.returnPath = (*itArg).substr(0, (*itArg).size() - 1);
+            break ;
         } else {
             std::istringstream iss(*itArg);
             iss >> value;
@@ -446,11 +451,11 @@ void ConfigInheritor::printContent() const {
         std::cout << std::endl;
         std::cout << "auto index : ";
         if (itt->autoIndex == true) {std::cout << "on" << std::endl;} else if (itt->autoIndex == false) {std::cout << "off" << std::endl;}
-        std::cout << "return : ";
-        it = itt->ret.begin();
-        for (; it != itt->ret.end(); it++) {
-            std::cout << it->first << " " << it->second << " -- ";
-        }
+        if (!itt->returnPath.empty()) {std::cout << "return : " << itt->returnStatus << ", " << itt->returnPath << std::endl;}
+        // it = itt->ret.begin();
+        // for (; it != itt->ret.end(); it++) {
+        //     std::cout << it->first << " " << it->second << " -- ";
+        // }
         std::cout << "\nserver name: ";
         vecstring_it = itt->serverName.begin();
         for (; vecstring_it != itt->serverName.end(); vecstring_it++)
@@ -492,11 +497,11 @@ void ConfigInheritor::printContent() const {
             std::cout << std::endl;
             std::cout << "auto index : ";
             if (itl->autoIndex == true) {std::cout << "on" << std::endl;} else if (itl->autoIndex == false) {std::cout << "off" << std::endl;}
-            std::cout << "return : ";
-            it = itl->ret.begin();
-            for (; it != itl->ret.end(); it++) {
-                std::cout << it->first << " " << it->second << " -- ";
-            }
+            if (!itl->returnPath.empty()) {std::cout << "return : " << itl->returnStatus << ", " << itl->returnPath << std::endl;}
+            // it = itl->ret.begin();
+            // for (; it != itl->ret.end(); it++) {
+            //     std::cout << it->first << " " << it->second << " -- ";
+            // }
             std::cout << std::endl;
             std::cout << "CGI : " << itl->cgiPath << " with extension " << itl->cgiExt << std::endl;
             j++;

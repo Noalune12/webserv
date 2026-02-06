@@ -6,7 +6,6 @@
 #include <iostream>
 
 #include "MimeTypes.hpp"
-#include "colors.hpp"
 
 std::map<std::string, std::string>	MimeTypes::_types;
 bool								MimeTypes::_initialized = false;

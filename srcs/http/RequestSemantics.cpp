@@ -138,7 +138,7 @@ bool Request::checkHeaders() {
 
         std::transform(name.begin(), name.end(), name.begin(), ::tolower);
         content = trimOws(content);
-        if (name != "user-agent")
+        if (name != "user-agent" && name != "content-type")
             std::transform(content.begin(), content.end(), content.begin(), ::tolower);
 
         std::cout << "NAME, CONTENT FOR HEADER = " << name << ", " << content << std::endl;

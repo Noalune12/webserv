@@ -4,7 +4,10 @@
   - (CRLF = \r\n)
 2. Headers or field line
   - name: OWF content OWF
-  - OWF = space ad tab
+
+  - Header can have empty content -> name: (followed by nothing or OWF)
+  - Content-Type , Content-Length , Transfer-Encoding - cannot be empty
+  - OWF = space and tab
   - name is case insensitive
   - content is case insensitive for host, content-type, tranfer-encoding, connection
   - Host - (Required in HTTP/1.1; used for virtual hosts)
@@ -26,6 +29,13 @@
   - if a body is present but content-type is note supported -> 415
 
 # GET
+- autoindex
+| Autoindex | Index file         | GET /test/                  |
+| --------- | ------------------ | --------------------------- |
+| Désactivé | absent             | 403 Forbidden               |
+| Activé    | absent             | 200 OK + listing HTML       |
+| Désactivé | index.html présent | 200 OK + contenu index.html |
+| Activé    | index.html présent | 200 OK + contenu index.html |
 
 # POST
 
@@ -44,3 +54,12 @@
 - 202: Accepted (Should be the response)
 - 204: No Content
 - 200: Ok
+
+| Situation                    | Status                           |
+| ---------------------------- | -------------------------------- |
+| No resource specified        | **400 Bad Request**              |
+| Resource doesn’t exist       | **404 Not Found**                |
+| Not authenticated            | **401 Unauthorized**             |
+| Authenticated, no permission | **403 Forbidden**                |
+| Delete succeeded             | **204 No Content** (most common) |
+

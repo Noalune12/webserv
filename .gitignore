@@ -47,4 +47,14 @@ servertest
 .vscode
 *.log
 
-!etc/webserv
+var/*
+out
+usr/*
+server
+*.html
+
+.gitignore
+
+config-files
+*.conf
+default.conf

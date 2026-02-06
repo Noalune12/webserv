@@ -17,8 +17,12 @@ void Request::methodDeleteHandler() {
         }
         std::cout << "error with DELETE nor file or folder mentionned" << std::endl;
         return ;
-    } else if (!_reqLocation->root.empty()) {
-        std::string  path = _reqLocation->root + _uri + _trailing;
+    } else {
+        std::string  path;
+        if (!_reqLocation->root.empty())
+            path = getPath(_reqLocation->root + _uri, _trailing);
+        else
+            path = getPath(_reqLocation->alias, _trailing);
         std::string  rootDir = getDirectory();
         if (path[0] == '/')
             path = path.substr(1, path.size());
@@ -36,6 +40,9 @@ void Request::methodDeleteHandler() {
             std::cout << "error with DELETE file or folder note found" << std::endl;
             return ;
         }
+
+        // CHECK IF rootDir is a folder ?
+
         // delete permission based on directory not file
         if (access(rootDir.c_str(), W_OK | X_OK) != 0) {
             if (!_reqLocation->root.empty()) {
@@ -67,7 +74,11 @@ void Request::methodDeleteHandler() {
                     std::string name = entry->d_name;
                     if (name == "." || name == "..")
                         continue;
-                    std::string fullPath = path + name;
+                    std::string fullPath;
+                    if (path[path.size() - 1] != '/')
+                        fullPath = path + "/" + name;
+                    else
+                        fullPath = path + name;
 
                     struct stat st;
                     stat(fullPath.c_str(), &st); // protection ??
@@ -116,9 +127,9 @@ void Request::methodDeleteHandler() {
             std::cout << "error with DELETE file or folder note found" << std::endl;
             return ;
         }
-    } else if (!_reqLocation->alias.empty()) {
-
     }
+    err = false;
+    status = 200;
 }
 
 bool Request::deleteFolder(std::string path) {
@@ -128,7 +139,11 @@ bool Request::deleteFolder(std::string path) {
             std::string name = entry->d_name;
             if (name == "." || name == "..")
                 continue;
-            std::string fullPath = path + "/" + name;
+            std::string fullPath;
+            if (path[path.size() - 1] != '/')
+                fullPath = path + "/" + name;
+            else
+                fullPath = path + name;
 
             struct stat st;
             stat(fullPath.c_str(), &st); // protection ??
@@ -169,12 +184,19 @@ bool Request::deleteFolder(std::string path) {
 
 
 std::string Request::getDirectory() {
-    std::string ret = _reqLocation->root + _uri;
+    std::string ret;
+    if (!_reqLocation->root.empty()) 
+        ret = _reqLocation->root + _uri;
+    else
+        ret = _reqLocation->alias;
     std::string trail = _trailing;
     size_t index = trail.find('/');
     while (index != std::string::npos) {
         std::cout << "INDEX = " << index << std::endl;
-        ret += trail.substr(0, index + 1);
+        if (ret[ret.size() - 1] != '/')
+            ret = ret + "/" + trail.substr(0, index + 1);
+        else
+            ret += trail.substr(0, index + 1);
         trail = trail.substr(index + 1);
         std::cout << RED "NEW DIR = " << ret << " and TRAIL = " << trail << RESET << std::endl;
         index = trail.find('/');

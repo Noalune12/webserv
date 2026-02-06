@@ -63,7 +63,8 @@ override HTTPSRC	:= \
 	ResponseSender \
 	StatusCodes \
 	RequestGetHandler \
-	RequestDeleteHandler
+	RequestDeleteHandler \
+	RequestPostHandler
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 

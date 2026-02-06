@@ -236,6 +236,7 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev) {
 
 	if (ev & EPOLLIN) {
+		Logger::debug("READING_BODY state");
 		size_t	bytesRead = readFromClient(clientFd, client);
 		if (bytesRead == 0) {
 			closeConnection(clientFd);
@@ -247,6 +248,8 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 
 	client._request.parseChunk();
 
+
+	// old block -> keeping it for now to not break the conditionnal changes
 	if (!client._request.chunkRemaining) {
 		if (client._request._cgi && !client._request.err) {
 			transitionToCGI(client, clientFd);
@@ -259,6 +262,16 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	} else if (client._request.err) {
 		transitionToSendingResponse(client, clientFd);
 	}
+
+	// if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return) {
+	// 	client._request.methodHandler();
+	// 	transitionToSendingResponse(client, clientFd);
+	// } else if (client._request._cgi && !client._request.err) {
+	// 	transitionToCGI(client, clientFd);
+	// }
+	// if (!client._request.chunkRemaining || client._request.err) {
+	// 	transitionToSendingResponse(client, clientFd);
+	// }
 }
 
 void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) {
@@ -267,6 +280,7 @@ void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) 
 			kill(client._cgi.pid, SIGKILL);
 		}
 		Logger::debug("Client disconnection while CGI running");
+		// client._request.status = 500; -> sending 500 or 504 ?
 		_cgiExecutor.cleanup(client._cgi);
 		closeConnection(clientFd);
 		return ;
@@ -321,7 +335,7 @@ void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
 
 void	EventLoop::transitionToReadingBody(Connection& client, int clientFd) {
 	client.setState(READING_BODY);
-	client.startTimer(2, CLIENT_TIMEOUT - 4);
+	client.startTimer(2, CLIENT_TIMEOUT - 4); // need explaination on the -4
 	modifyEpoll(clientFd, EPOLLIN);
 	Logger::debug("-> READING_BODY (chunked)");
 }
@@ -330,6 +344,7 @@ void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
 	if (_cgiExecutor.start(client, clientFd, *this)) {
 		client.setState(CGI_RUNNING);
 		client.startTimer(3, CGI_TIMEOUT);
+		// modifyEpoll(clientFd, EPOLLOUT) -> need to check if this is still needed, for now it should not
 		Logger::debug("-> CGI_RUNNING");
 	} else {
 		client._request.err = true;
@@ -349,6 +364,10 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
 	char	buffer[4096];
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
+
+	if (bytesRead == -1) {
+		std::cerr << "recv failed: " << strerror(errno) << std::endl; // not checking errno, only logging it for now (this check might be deleted)
+	}
 
 	if (bytesRead > 0) {
 		client.setBuffer(std::string(buffer, bytesRead));
@@ -381,6 +400,10 @@ bool	EventLoop::checkTimeout(Connection& client, int clientFd) {
 	int	timerIdx = getActiveTimer(client.getState());
 	if (timerIdx >= 0 && client.isTimedOut(timerIdx)) {
 		Logger::warn("Timeout");
+		// if client is in IDLE mode, do not send anything just close,
+		// (Note: Some servers will shut down a connection without sending this message.
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/408)
+		// otherwise we will send a 408 Request Timeout
 		closeConnection(clientFd);
 		return (true);
 	}
