@@ -7,7 +7,7 @@
 
 Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false), _isMultipart(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false), _isMultipart(false), _multipartRemaining(false) {}
 
 
 Request::~Request() {}
@@ -41,6 +41,9 @@ void Request::clearPreviousRequest() {
    _getPath.clear();
    _isMultipart = false;
    _multipartBoundary.clear();
+   _multipartContent.clear();
+   _fullBody.clear();
+   _multipartRemaining = false;
     // what about err and keep alive
 }
 

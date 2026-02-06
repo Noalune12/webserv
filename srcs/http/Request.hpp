@@ -13,6 +13,24 @@ enum ChunckState {
     IS_END,
 };
 
+enum BodyState {
+    GETTING_BODY,
+    END_BODY,
+};
+
+enum MultipartState {
+    GETTING_FIRST_BOUNDARY,
+    WAITING_BOUNDARY,
+    IS_HEADERS,
+    IS_BODY,
+    IS_MULTI_END,
+};
+
+struct Multipart {
+    std::map<std::string, std::string> headers;
+    std::string                         body;
+};
+
 
 class Request {
     private:
@@ -27,6 +45,7 @@ class Request {
 
         double _chunkSize;
         int _chunkState;
+        int _multipartState;
 
         int _serverPort;
         std::string _serverIp;
@@ -60,7 +79,9 @@ class Request {
         bool _indexFound;
         bool _isMultipart;
         std::string _multipartBoundary;
-        
+        std::vector<Multipart> _multipartContent;
+        std::string _fullBody;
+        bool _multipartRemaining;
 
         // PARSING
         void checkRequestSem(std::string request);
@@ -76,7 +97,11 @@ class Request {
         void findServer();
         void findLocation();
         bool bodyChecker();
+
+        // MULTIPART
         void checkMultipart(std::string content);
+        bool isMultipartCarac(std::string &boundary);
+        bool parseMultipart();
 
         // CHUNK PARSING
         void parseChunk();

@@ -28,6 +28,9 @@ void Request::methodPostHandler() {
         std::cout << "error with POST, trailing after location not handled --> NOT SURE" << std::endl;
         return ;   
     }
+
+    //if multipart --> loop on vector
+
     std::map<std::string, std::string>::iterator it = _headers.find("content-type");
     if (it == _headers.end()) {
         _postExt = ".txt"; // not sure
@@ -35,7 +38,7 @@ void Request::methodPostHandler() {
         // set extenstion
 
         // check is valid extension in mime types ?
-        if (!MimeTypes::isSupportedType(it->second)) {
+        if (_isMultipart == false &&  !MimeTypes::isSupportedType(it->second)) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
