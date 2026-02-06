@@ -83,6 +83,18 @@ std::string Request::trimOws(const std::string& s)
     return s.substr(start, end - start);
 }
 
+std::string Request::trimFirstCRLF(const std::string& s)
+{
+    std::string::size_type start = 0;
+    std::string::size_type end = s.size();
+
+    while (start < end && (s[start] == '\r' || s[start] == '\n'))
+        ++start;
+
+    return s.substr(start, end - start);
+}
+
+
 void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
     err = true;
     status = code;

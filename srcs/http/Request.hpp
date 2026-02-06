@@ -121,6 +121,7 @@ class Request {
 
         // UTILS
         std::string trimOws(const std::string& s);
+        std::string trimFirstCRLF(const std::string& s);
         void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
         void clearPreviousRequest();
         bool hasWS(const std::string& line) const;
