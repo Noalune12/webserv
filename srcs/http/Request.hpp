@@ -27,8 +27,10 @@ enum MultipartState {
 };
 
 struct Multipart {
-    std::map<std::string, std::string> headers;
+    std::map<std::string, std::string>  headers;
     std::string                         body;
+    std::string                         filename;
+    std::string                         name;
 };
 
 
