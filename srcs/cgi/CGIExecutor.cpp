@@ -35,7 +35,7 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	}
 
 	if (cgi.pid == 0) {
-		setupChildProcess(cgi, client._request, loop);
+		setupChildProcess(cgi, client, loop);
 	}
 
 	close(cgi.pipeIn[0]);	// Close read end of stdin
@@ -126,7 +126,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 }
 
 
-void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLoop& loop) {
+void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Connection& conn, EventLoop& loop) {
 
 	// close unused pipe
 	close(cgi.pipeIn[1]);	// Close write end of stdin
@@ -144,7 +144,7 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLo
 	closeAllFds(loop);
 
 	// Build environment
-	std::vector<std::string> envStrings = buildEnvironmentStrings(req);
+	std::vector<std::string> envStrings = buildEnvironmentStrings(conn);
 
 	std::vector<char*> env(envStrings.size() + 1);
     for (size_t i = 0; i < envStrings.size(); ++i) {
@@ -153,8 +153,8 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Request& req, EventLo
     env[envStrings.size()] = NULL;
 
 	char* argv[] = {
-		const_cast<char*>(req._reqLocation->cgiPath.c_str()),
-		const_cast<char*>(req._scriptPath.c_str()),
+		const_cast<char*>(conn._request._reqLocation->cgiPath.c_str()),
+		const_cast<char*>(conn._request._scriptPath.c_str()),
 		NULL
 	};
 
