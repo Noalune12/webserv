@@ -127,7 +127,7 @@ void Request::methodGetHandler() {
                 }
 
             } else if (S_ISREG(buf.st_mode)) {
-                if (!readFile(_getPath, buf, _reqLocation->root)) {
+                if (readFile(_getPath, buf, _reqLocation->root)) {
                     return ;
                 } else {
                     if (!_reqLocation->root.empty()) {
