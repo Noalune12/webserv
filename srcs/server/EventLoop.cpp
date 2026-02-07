@@ -228,7 +228,7 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 	}
 
 	// Normal request
-	if (!client._request.err && !client._request._cgi) {
+	if (!client._request.err && !client._request._cgi && !client._request._return) {
 		client._request.methodHandler();
 	}
 
@@ -250,30 +250,15 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 
 	client._request.parseChunk();
 
-
-	// old block -> keeping it for now to not break the conditionnal changes
-	if (!client._request.chunkRemaining) {
-		if (client._request._cgi && !client._request.err) {
-			transitionToCGI(client, clientFd);
-		} else if (!client._request.err) {
-			client._request.methodHandler();
-			transitionToSendingResponse(client, clientFd);
-		} else {
-			transitionToSendingResponse(client, clientFd);
-		}
-	} else if (client._request.err) {
+	if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return) {
+		client._request.methodHandler();
+		transitionToSendingResponse(client, clientFd);
+	} else if (client._request._cgi && !client._request.err) {
+		transitionToCGI(client, clientFd);
+	}
+	if (!client._request.chunkRemaining || client._request.err) {
 		transitionToSendingResponse(client, clientFd);
 	}
-
-	// if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return) {
-	// 	client._request.methodHandler();
-	// 	transitionToSendingResponse(client, clientFd);
-	// } else if (client._request._cgi && !client._request.err) {
-	// 	transitionToCGI(client, clientFd);
-	// }
-	// if (!client._request.chunkRemaining || client._request.err) {
-	// 	transitionToSendingResponse(client, clientFd);
-	// }
 }
 
 void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) {

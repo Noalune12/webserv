@@ -18,6 +18,13 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 
 	initializeResponse(resp, req);
 
+	if (req._return) {
+		setStatus(resp, req.status);
+		resp._headers["Location"] = req._returnPath;
+		resp._headers["Content-Type"] = "text/html";
+		return (resp);
+	}
+
 	if (req.err) {
 		setStatus(resp, req.status);
 		if (!req.htmlPage.empty()) {
@@ -56,8 +63,6 @@ Response	ResponseBuilder::buildError(int statusCode, bool keepAlive) {
 	Response	resp;
 
 	setCommonHeaders(resp, keepAlive);
-	setStatus(resp, statusCode);
-
 	setStatus(resp, statusCode);
 
 	std::string errorPage = StatusCodes::generateDefaultErrorPage(statusCode);
