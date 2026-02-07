@@ -357,10 +357,11 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 	}
 
 	if (bytesRead > 0) {
-		client.setBuffer(std::string(buffer, bytesRead));
+		std::string	currentBuffer = client.getBuffer();
+		currentBuffer.append(buffer, bytesRead);
+		client.setBuffer(currentBuffer);
 		return (static_cast<size_t>(bytesRead));
 	}
-
 	return (0);
 }
 
