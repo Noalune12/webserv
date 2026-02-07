@@ -173,7 +173,7 @@ bool Request::parseMultipart() {
                     if (it != multi.headers.end()) {
                         std::string contentType = it->second;
                         if (!MimeTypes::isSupportedType(it->second)) {
-                            findErrorPage(400, "/", _globalDir.errPage); // host identified
+                            findErrorPage(415, "/", _globalDir.errPage); // host identified
                             std::cout << "error with multipart  Content Type not supported" << std::endl;
                             return false;
                         } else if (!multi.filename.empty()) {
