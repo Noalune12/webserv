@@ -1,10 +1,12 @@
+#include <fstream>
 #include <sstream>
+
+#include "colors.hpp"
 
 #include "MimeTypes.hpp"
 #include "ResponseBuilder.hpp"
 #include "StatusCodes.hpp"
 #include "Logger.hpp"
-#include "fstream"
 
 ResponseBuilder::ResponseBuilder() {}
 
@@ -130,7 +132,28 @@ void	ResponseBuilder::parseCGIHeaders(const std::string& cgiOutput, Response& re
 				value = value.substr(start);
 			}
 
-			resp._headers[name] = value;
+			if (name == "Status") {
+				std::istringstream	ss(value);
+				int					statusCode;
+				ss >> statusCode;
+
+				if (ss) {
+					resp._statusCode = statusCode;
+
+					std::string	statusText;
+					std::getline(ss, statusText);
+					if (!statusText.empty() && statusText[0] == ' ') {
+						statusText = statusText.substr(1);
+					}
+					if (!statusText.empty()) {
+						resp._statusText = statusText;
+					} else {
+						resp._statusText = StatusCodes::getReasonPhrase(statusCode);
+					}
+				}
+			} else {
+				resp._headers[name] = value;
+			}
 		}
 	}
 }

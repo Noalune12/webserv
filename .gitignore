@@ -47,7 +47,6 @@ servertest
 .vscode
 *.log
 
-var/*
 out
 usr/*
 server
