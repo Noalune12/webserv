@@ -26,6 +26,14 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 		return (false);
 	}
 
+	if (!verifyCGIScript(client._request._scriptPath, client)) {
+		return (false);
+	}
+
+	if (!verifyCGIPath(client._request._reqLocation->cgiPath.c_str(), client)) {
+		return (false);
+	}
+
 	cgi.pid = fork();
 
 	if (cgi.pid == -1) {
@@ -168,7 +176,6 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 		const_cast<char*>(client._request._scriptPath.c_str()),
 		NULL
 	};
-
 	execve(argv[0], argv, &env[0]);
 
 	// if execve failed

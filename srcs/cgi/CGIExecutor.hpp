@@ -38,8 +38,8 @@ class CGIExecutor {
 
 		std::string	getDirectoryFromPath(const std::string& path);
 
-		bool	verifyCGIPath(const std::string& path);
-		bool	verifyCGIScript(const std::string& scriptPath);
+		bool	verifyCGIPath(const std::string& path, Connection& client);
+		bool	verifyCGIScript(const std::string& scriptPath, Connection& client);
 };
 
 #endif
