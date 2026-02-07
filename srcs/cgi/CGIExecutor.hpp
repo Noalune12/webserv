@@ -18,7 +18,7 @@ class CGIExecutor {
 		~CGIExecutor();
 
 		bool	start(Connection& client, int clientFd, EventLoop& loop);
-		void	cleanup(CGIContext& cgi);
+		void	cleanup(CGIContext& cgi, EventLoop& loop);
 		void	handlePipeEvent(Connection& client, int clientFd, int pipeFd, uint32_t events, EventLoop& loop);
 
 	private:

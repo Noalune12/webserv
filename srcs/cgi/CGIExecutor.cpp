@@ -27,17 +27,19 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	}
 
 	if (!verifyCGIScript(client._request._scriptPath, client)) {
+		cleanup(cgi, loop);
 		return (false);
 	}
 
 	if (!verifyCGIPath(client._request._reqLocation->cgiPath.c_str(), client)) {
+		cleanup(cgi, loop);
 		return (false);
 	}
 
 	cgi.pid = fork();
 
 	if (cgi.pid == -1) {
-		cleanup(cgi); // add loop as parameter to removeFromEpoll properly
+		cleanup(cgi, loop); // add loop as parameter to removeFromEpoll properly
 		Logger::error("fork() failed");
 		return (false);
 	}
@@ -52,12 +54,12 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	cgi.pipeOut[1] = -1;
 
 	if (!writeBodyToCGI(cgi, client._request._body)) {
-		cleanup(cgi);
+		cleanup(cgi, loop);
 		return (false);
 	}
 
 	if (!loop.addToEpoll(cgi.pipeOut[0], EPOLLIN)) {
-		cleanup(cgi);
+		cleanup(cgi, loop);
 		return (false);
 	}
 
@@ -74,7 +76,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	if (events & EPOLLERR) {
 		std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
 		Logger::error("CGI pipe error");
-		cleanup(cgi);
+		cleanup(cgi, loop);
 		client._request.err = true;
 		client._request.status = 502;
 		client.setState(SENDING_RESPONSE);
@@ -97,7 +99,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 			oss << cgi.outputBuff.size();
 			Logger::debug("CGI finished (EOF), output size: " + oss.str());
 
-			cleanup(cgi);
+			cleanup(cgi, loop);
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, 5); // CLIENT_TIMEOUT
 			loop.modifyEpoll(clientFd, EPOLLOUT);
@@ -105,7 +107,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		}
 		else if (errno != EAGAIN && errno != EWOULDBLOCK) {
 			Logger::error("CGI read error: " + std::string(strerror(errno)));
-			cleanup(cgi);
+			cleanup(cgi, loop);
 			client._request.err = true;
 			client._request.status = 502;
 			client.setState(SENDING_RESPONSE);
@@ -125,7 +127,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		oss << cgi.outputBuff.size();
 		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
 
-		cleanup(cgi);
+		cleanup(cgi, loop);
 		client.setState(SENDING_RESPONSE);
 		client.startTimer(4, 5);
 		loop.modifyEpoll(clientFd, EPOLLOUT);

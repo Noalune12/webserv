@@ -5,7 +5,12 @@
 #include "Logger.hpp"
 
 
-void	CGIExecutor::cleanup(CGIContext& cgi) {
+void	CGIExecutor::cleanup(CGIContext& cgi, EventLoop& loop) {
+
+	if (cgi.pipeOut[0] != -1) {
+		loop.removeFromEpoll(cgi.pipeOut[0]);
+		loop.unregisterPipe(cgi.pipeOut[0]);
+	}
 
 	cgi.closePipes();
 

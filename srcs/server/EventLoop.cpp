@@ -19,19 +19,21 @@ EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(fals
 
 EventLoop::~EventLoop() {
 
-	if (_epollFd >= 0) {
-		close(_epollFd);
-		_epollFd = -1;
-	}
 
-		std::map<int, Connection>::iterator it;
-
+	std::map<int, Connection>::iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
+		Connection& client = it->second;
+        if (client._cgi.isActive()) {
+            _cgiExecutor.cleanup(client._cgi, *this);
+        }
 		close(it->first);
 	}
 	_connections.clear();
 
-	// // cgi fds cleanup ?
+	if (_epollFd >= 0) {
+		close(_epollFd);
+		_epollFd = -1;
+	}
 }
 
 bool	EventLoop::init(void) {
@@ -281,7 +283,7 @@ void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) 
 		}
 		Logger::debug("Client disconnection while CGI running");
 		// client._request.status = 500; -> sending 500 or 504 ?
-		_cgiExecutor.cleanup(client._cgi);
+		_cgiExecutor.cleanup(client._cgi, *this);
 		closeConnection(clientFd);
 		return ;
 	}

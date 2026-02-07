@@ -71,7 +71,7 @@ void	EventLoop::closeConnection(int clientFd) {
 	Connection& client = it->second;
 
 	if (client._cgi.isActive()) {
-		_cgiExecutor.cleanup(client._cgi);
+		_cgiExecutor.cleanup(client._cgi, *this);
 	}
 
 	std::ostringstream	oss;

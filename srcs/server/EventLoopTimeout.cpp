@@ -54,7 +54,7 @@ void	EventLoop::checkTimeouts(void) {
 			if (client._cgi.pid > 0) {
 				kill(client._cgi.pid, SIGKILL);
 			}
-			_cgiExecutor.cleanup(client._cgi);
+			_cgiExecutor.cleanup(client._cgi, *this);
 			client._request.err = true;
 			client._request.status = 504;
 			transitionToSendingResponse(client, clientFd);
