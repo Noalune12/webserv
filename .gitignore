@@ -57,3 +57,4 @@ server
 config-files
 *.conf
 default.conf
+upload*
