@@ -1,14 +1,15 @@
 #ifndef CGIEXECUTOR_HPP
 # define CGIEXECUTOR_HPP
 
+# include <stdint.h>
 # include <string>
 # include <vector>
 
-# include "EventLoop.hpp"
 # include "Connection.hpp"
 # include "Request.hpp"
 
 class EventLoop;
+class Connection;
 
 class CGIExecutor {
 
@@ -22,7 +23,7 @@ class CGIExecutor {
 
 	private:
 		bool	createPipes(CGIContext& cgi);
-		void	setupChildProcess(CGIContext& cgi, const Connection& conn, EventLoop& loop);
+		void	setupChildProcess(CGIContext& cgi, Connection& client, EventLoop& loop);
 
 		std::vector<std::string>	buildEnvironmentStrings(const Connection& conn);
 		std::string					buildEnvVar(const std::string& name, const std::string& value);
@@ -34,6 +35,11 @@ class CGIExecutor {
 		void	killProcess(pid_t pid);
 
 		void	closeAllFds(EventLoop& loop);
+
+		std::string	getDirectoryFromPath(const std::string& path);
+
+		bool	verifyCGIPath(const std::string& path);
+		bool	verifyCGIScript(const std::string& scriptPath);
 };
 
 #endif

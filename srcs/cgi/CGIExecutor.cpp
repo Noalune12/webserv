@@ -125,8 +125,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	}
 }
 
-
-void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Connection& conn, EventLoop& loop) {
+void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLoop& loop) {
 
 	// close unused pipe
 	close(cgi.pipeIn[1]);	// Close write end of stdin
@@ -143,30 +142,39 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, const Connection& conn, Eve
 	// close all server file descriptors
 	closeAllFds(loop);
 
+	std::string scriptDir = getDirectoryFromPath(client._request._scriptPath);  // "var/www/cgi-bin-py"
+	std::string scriptFile = client._request._scriptPath.substr(scriptDir.length() + 1);  // "show-env.py"
+
+	// chdir to cgi binary
+	if (chdir(scriptDir.c_str()) != 0) {
+		std::cerr << "chdir() failed: " << strerror(errno) << std::endl;
+		// leak fd, need to close first
+		exit(EXIT_FAILURE);
+	}
+
+	client._request._scriptPath = scriptFile;
+
 	// Build environment
-	std::vector<std::string> envStrings = buildEnvironmentStrings(conn);
+	std::vector<std::string> envStrings = buildEnvironmentStrings(client);
 
 	std::vector<char*> env(envStrings.size() + 1);
-    for (size_t i = 0; i < envStrings.size(); ++i) {
-        env[i] = const_cast<char*>(envStrings[i].c_str());
-    }
-    env[envStrings.size()] = NULL;
+	for (size_t i = 0; i < envStrings.size(); ++i) {
+		env[i] = const_cast<char*>(envStrings[i].c_str());
+	}
+	env[envStrings.size()] = NULL;
 
 	char* argv[] = {
-		const_cast<char*>(conn._request._reqLocation->cgiPath.c_str()),
-		const_cast<char*>(conn._request._scriptPath.c_str()),
+		const_cast<char*>(client._request._reqLocation->cgiPath.c_str()),
+		const_cast<char*>(client._request._scriptPath.c_str()),
 		NULL
 	};
 
 	execve(argv[0], argv, &env[0]);
 
 	// if execve failed
-	env.clear();
 	std::cerr << "execve failed: " << strerror(errno) << std::endl;
 	exit(EXIT_FAILURE);
 }
-
-
 
 bool CGIExecutor::writeBodyToCGI(CGIContext& cgi, const std::string& body) {
 

@@ -103,4 +103,5 @@ SRC += $(addprefix $(CGIDIR), $(addsuffix .cpp, $(CGISRC)))
 override CGISRC	:= \
 	CGIEnvironment \
 	CGIExecutor \
-	CGIUtils
+	CGIUtils \
+	CGIVerification
