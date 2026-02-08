@@ -12,6 +12,8 @@ class ResponseBuilder {
 		std::string	getCustomErrorPage(int statusCode, const Request& req);
 		std::string	loadErrorPageFile(const std::string& path, const Request& req);
 
+		void	setAllow(Response& resp, const Request& req);
+
 	public:
 		ResponseBuilder();
 		~ResponseBuilder();

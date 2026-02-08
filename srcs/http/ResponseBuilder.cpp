@@ -88,7 +88,8 @@ void	ResponseBuilder::setBodyFromFile(Response& resp, const Request& req) {
 	setContentType(resp, req._trailing);
 }
 
-void ResponseBuilder::setBodyFromError(Response& resp, int statusCode, const Request& req) {
+
+void	ResponseBuilder::setBodyFromError(Response& resp, int statusCode, const Request& req) {
 
 	std::string customErrorPath = getCustomErrorPage(statusCode, req);
 
@@ -100,6 +101,10 @@ void ResponseBuilder::setBodyFromError(Response& resp, int statusCode, const Req
 			Logger::debug("Loaded custom error page: " + customErrorPath);
 			return ;
 		}
+	}
+
+	if (statusCode == 405) {
+		setAllow(resp, req);
 	}
 
 	// Fallback to default error page
@@ -193,7 +198,7 @@ size_t	ResponseBuilder::findHeaderEnd(const std::string& cgiOutput) {
 	return (std::string::npos);
 }
 
-void ResponseBuilder::setCommonHeaders(Response& resp, bool keepAlive) {
+void	ResponseBuilder::setCommonHeaders(Response& resp, bool keepAlive) {
 	resp._headers["Server"] = "webserv/1.0";
 	resp._headers["Connection"] = keepAlive ? "keep-alive" : "close";
 }
@@ -209,11 +214,32 @@ void	ResponseBuilder::setContentTypeFromCGI(Response& resp) {
 	}
 }
 
-void ResponseBuilder::setStatus(Response& resp, int code) {
+void	ResponseBuilder::setStatus(Response& resp, int code) {
 	resp._statusCode = code;
 	resp._statusText = StatusCodes::getReasonPhrase(code);
 }
 
+void	ResponseBuilder::setAllow(Response& resp, const Request& req) {
+
+	std::string	allowedMethods = "";
+
+	if (req._reqLocation->methods.get)
+		allowedMethods += "GET";
+
+	if (req._reqLocation->methods.post) {
+		if (!allowedMethods.empty())
+			allowedMethods += ", ";
+		allowedMethods += "POST";
+	}
+
+	if (req._reqLocation->methods.del) {
+		if (!allowedMethods.empty())
+			allowedMethods += ", ";
+		allowedMethods += "DELETE";
+	}
+
+	resp._headers["Allow"] = allowedMethods;
+}
 
 /* private methods */
 std::string	ResponseBuilder::getCustomErrorPage(int statusCode, const Request& req) {
@@ -232,9 +258,7 @@ std::string	ResponseBuilder::getCustomErrorPage(int statusCode, const Request& r
 	return ("");
 }
 
-
-// todo: fix si error_page existe
-std::string ResponseBuilder::loadErrorPageFile(const std::string& uriPath, const Request& req) {
+std::string	ResponseBuilder::loadErrorPageFile(const std::string& uriPath, const Request& req) {
 
 	if (req._reqLocation == NULL) {
 		return ("");
