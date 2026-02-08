@@ -57,6 +57,13 @@ void Request::findLocation() {
     //     _trailing = _uri.substr(index + 1, _uri.size());
     //     _uri = _uri.substr(0, index + 1);
     // }
+    size_t  query_pos = _uri.find('?');
+    if (query_pos != std::string::npos) {
+        _queryString = _uri.substr(query_pos + 1);
+        _uri = _uri.substr(0, query_pos);
+        std::cout << "EXTRACTED QUERY: '" << _queryString << "' CLEAN URI: '" << _uri << "'" << std::endl;
+    }
+
     std::cout << "before loop URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
     while (!_uri.empty()) {
         std::vector<location>::iterator itLocation = _reqServer->loc.begin();
@@ -185,11 +192,11 @@ void Request::checkRequestContent() {
     if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
         if (_trailing.empty() /*|| _method != "POST" */) // IMPORTANT -> discussion about that method check
             return;
-        size_t index = _trailing.find('?'); //what if the folder has a ?
-        if (index != std::string::npos) {
-            _queryString = _trailing.substr(index);
-            _trailing = _trailing.substr(0, index);
-        }
+        // size_t index = _trailing.find('?'); //what if the folder has a ?
+        // if (index != std::string::npos) {
+        //     _queryString = _trailing.substr(index);
+        //     _trailing = _trailing.substr(0, index);
+        // }
         if (!_reqLocation->root.empty())
             _scriptPath = getPath(_reqLocation->root + _uri, _trailing);
         else
