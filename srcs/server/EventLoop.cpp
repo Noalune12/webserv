@@ -343,7 +343,7 @@ void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
 void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 	client.setState(SENDING_RESPONSE);
 	client.startTimer(4, CLIENT_TIMEOUT);
-	modifyEpoll(clientFd, EPOLLOUT);
+	modifyEpoll(clientFd, EPOLLIN | EPOLLOUT); // both EPOLLIN and EPOLLOUT here to make sure no new incoming data will not wake the event loop because EPOLLIN is no longer set on the socket.
 	Logger::debug("-> SENDING_RESPONSE");
 }
 
