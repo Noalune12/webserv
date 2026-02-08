@@ -183,6 +183,14 @@ bool Request::checkHeaders() {
     return true;
 }
 
+static bool validateHTTPVersion(const std::string& version) {
+
+    if (version.size() != 3)
+        return (false);
+
+    return (std::isdigit(version[0]) && version[1] == '.' && std::isdigit(version[2]));
+}
+
 bool Request::checkRequestLine(std::string& method, std::string& uri, std::string& http) {
     if (method != "GET" && method != "POST" && method != "DELETE"
             && method != "HEAD" && method != "OPTIONS"
@@ -203,16 +211,29 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
         std::cout << "error with http index is not 0" << std::endl;
         return false;
     }
-    std::string version = http.substr(index + 5, http.length());
+    // std::string version = http.substr(index + 5, http.length());
+    // std::cout << "VERSION = " << version << std::endl;
+    // if (version == "2" || version == "3") {
+    //     findErrorPage(505, "/", _globalDir.errPage);
+    //     std::cout << "error with http not the real version" << std::endl;
+    //     return false;
+    // }
+    // if (version != "1.1" && version != "1.0") {
+    //     findErrorPage(400, "/", _globalDir.errPage); // doubt here, why is it a 400
+    //     std::cout << "error with http" << std::endl;
+    //     return false;
+    // }
+
+    std::string version = http.substr(5);
     std::cout << "VERSION = " << version << std::endl;
-    if (version == "2" || version == "3") {
-        findErrorPage(505, "/", _globalDir.errPage);
-        std::cout << "error with http not the real version" << std::endl;
+    if (!validateHTTPVersion(version)) {
+        findErrorPage(400, "/", _globalDir.errPage);
+        std::cout << "error with http syntax" << std::endl;
         return false;
     }
     if (version != "1.1" && version != "1.0") {
-        findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with http" << std::endl;
+        findErrorPage(505, "/", _globalDir.errPage);
+        std::cout << "error with http version" << std::endl;
         return false;
     }
     _method = method;
