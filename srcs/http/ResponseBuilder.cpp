@@ -25,6 +25,10 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 		return (resp);
 	}
 
+	if (req.err && req.status == 405) {
+		setAllow(resp, req);
+	}
+
 	if (req.err) {
 		setStatus(resp, req.status);
 		if (!req.htmlPage.empty()) {
@@ -101,10 +105,6 @@ void	ResponseBuilder::setBodyFromError(Response& resp, int statusCode, const Req
 			Logger::debug("Loaded custom error page: " + customErrorPath);
 			return ;
 		}
-	}
-
-	if (statusCode == 405) {
-		setAllow(resp, req);
 	}
 
 	// Fallback to default error page
