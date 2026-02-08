@@ -200,6 +200,12 @@ bool Request::readFile(std::string path, struct stat buf ,std::string errorPath)
         return false;
     }
 
+    // added this check in case of file without reading rights, we were returning a 500 instead
+    if (!access(path.c_str(), R_OK | X_OK)) {
+        findErrorPage(403, errorPath, _reqLocation->errPage);
+        return false;
+    }
+
     if (buf.st_mode & S_IRUSR) {
         std::ifstream file(path.c_str());
         std::cout << "File found" << std::endl;
