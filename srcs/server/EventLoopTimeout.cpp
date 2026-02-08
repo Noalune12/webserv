@@ -1,12 +1,13 @@
+#include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
-// #include <stdlib.h>
-#include <cstdlib>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -88,15 +89,18 @@ int	EventLoop::calculateEpollTimeout(void) {
 	if (_connections.empty())
 		return (5);
 
-	int min_sec = 5;
+	int min_sec = INT_MAX;
 
 	std::map<int, Connection>::const_iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
 
 		long rem = it->second.secondsToClosestTimeout();
-		if (rem < min_sec) {
+		if (rem > 0 && static_cast<int>(rem) < min_sec) {
 			min_sec = static_cast<int>(rem);
 		}
 	}
-	return (min_sec);
+	if (min_sec == INT_MAX)
+		return (5);
+
+	return (std::max(1, min_sec));
 }
