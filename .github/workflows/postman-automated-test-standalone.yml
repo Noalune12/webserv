@@ -45,7 +45,7 @@ jobs:
         id: tests
         continue-on-error: true
         run: |
-          postman collection run "52021088-0ff5ccb2-57f6-4b42-a0a1-da75fb99035b" \
+          postman collection run "52021088-71de474d-a92c-437b-99d7-5cc6eee513a8" \
             -e "52021088-580ece52-37d3-4dd2-9ca1-a242d70d68b0" \
             -r cli,json --reporter-json-export report.json
 
