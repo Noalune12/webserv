@@ -188,7 +188,7 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
             && method != "HEAD" && method != "OPTIONS"
             && method != "TRACE" && method != "PUT"
             && method != "PATCH" && method != "CONNECT") {
-        findErrorPage(400, "/", _globalDir.errPage);
+        findErrorPage(501, "/", _globalDir.errPage);
         std::cout << "error with method" << std::endl;
         return false;
     }
