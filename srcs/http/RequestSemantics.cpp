@@ -183,7 +183,7 @@ bool Request::checkHeaders() {
     return true;
 }
 
-static bool validateHTTPVersion(const std::string& version) {
+static bool isValidHTTPVersion(const std::string& version) {
 
     if (version.size() != 3)
         return (false);
@@ -226,7 +226,7 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
 
     std::string version = http.substr(5);
     std::cout << "VERSION = " << version << std::endl;
-    if (!validateHTTPVersion(version)) {
+    if (!isValidHTTPVersion(version)) {
         findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with http syntax" << std::endl;
         return false;
