@@ -31,7 +31,7 @@ void Request::methodGetHandler() {
         if (_trailing.empty()) {
             if (S_ISDIR(buf.st_mode)) {
                 std::cout << "no trailing: path is a folder" << std::endl;
-                if (access(_getPath.c_str(), W_OK | X_OK) != 0) {
+                if (access(_getPath.c_str(), R_OK | X_OK) != 0) {
                     if (!_reqLocation->root.empty()) {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
@@ -48,7 +48,7 @@ void Request::methodGetHandler() {
                     struct stat st;
 
                     if (stat(path.c_str(), &st) == 0) {
-                        if (readFile(path, st, _reqLocation->root))
+                        if (readFile(path, st))
                             return ;
                     }
                 }
@@ -85,7 +85,7 @@ void Request::methodGetHandler() {
         } else {
             if (S_ISDIR(buf.st_mode)) {
                 std::cout << "trailing: path is a folder" << std::endl;
-                if (access(_getPath.c_str(), W_OK | X_OK) != 0) {
+                if (access(_getPath.c_str(), R_OK | X_OK) != 0) {
                     if (!_reqLocation->root.empty()) {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
@@ -102,7 +102,7 @@ void Request::methodGetHandler() {
                     struct stat st;
 
                     if (stat(path.c_str(), &st) == 0) {
-                        if (readFile(path, st, _reqLocation->root))
+                        if (readFile(path, st))
                             return ;
                     }
                 }
@@ -127,18 +127,18 @@ void Request::methodGetHandler() {
                 }
 
             } else if (S_ISREG(buf.st_mode)) {
-                if (readFile(_getPath, buf, _reqLocation->root)) {
-                    return ;
-                } else {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
-                    }
-                    else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
-                    }
-                    std::cout << "error no file found for trailing file" << std::endl;
-                    return ;
-                }
+                readFile(_getPath, buf);
+                return ;
+                // } else {
+                //     if (!_reqLocation->root.empty()) {
+                //         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                //     }
+                //     else {
+                //         findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+                //     }
+                //     std::cout << "error no file found for trailing file" << std::endl;
+                //     return ;
+                // }
             }
         }
 
@@ -181,6 +181,8 @@ std::string Request::getPath(std::string folder) {
 std::string Request::getPath(std::string folder, std::string file) {
     std::cout << "ENTERING get Path with  folder " << folder << " and trailing " << file << std::endl;
     std::string path;
+    if (folder[folder.size() - 1] == '/' && file[0] == '/')
+        file = file.substr(1);
     if (folder[folder.size() - 1] == '/')
         path = folder + file;
     else
@@ -191,18 +193,29 @@ std::string Request::getPath(std::string folder, std::string file) {
     return path;
 }
 
-bool Request::readFile(std::string path, struct stat buf ,std::string errorPath) {
+bool Request::readFile(std::string path, struct stat buf) {
 
 
     if (!S_ISREG(buf.st_mode)) {
-        findErrorPage(403, errorPath, _reqLocation->errPage);
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        }
+        else {
+            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+        }
         std::cout << "error file is not regular" << std::endl;
         return false;
     }
 
     // added this check in case of file without reading rights, we were returning a 500 instead
     if (!access(path.c_str(), R_OK | X_OK)) {
-        findErrorPage(403, errorPath, _reqLocation->errPage);
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        }
+        else {
+            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+        }
+        std::cout << "error file no rights" << std::endl;
         return false;
     }
 
@@ -216,7 +229,12 @@ bool Request::readFile(std::string path, struct stat buf ,std::string errorPath)
         status = 200;
         return true;
     } else {
-        findErrorPage(403, errorPath, _reqLocation->errPage);
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        }
+        else {
+            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+        }
         std::cout << "error file found but no rights" << std::endl;
         _indexFound = true;
         return false;
@@ -225,7 +243,7 @@ bool Request::readFile(std::string path, struct stat buf ,std::string errorPath)
 
 bool Request::handleAutoindex(std::string dirPath) {
 
-    if (access(dirPath.c_str(), W_OK | X_OK) != 0) {
+    if (access(dirPath.c_str(), R_OK | X_OK) != 0) {
         if (!_reqLocation->root.empty()) {
             findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
         }

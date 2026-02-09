@@ -118,7 +118,7 @@ class Request {
         void methodPostHandler();
         std::string getPath(std::string folder);
         std::string getPath(std::string folder, std::string file);
-        bool readFile(std::string path, struct stat buf, std::string errorPath);
+        bool readFile(std::string path, struct stat buf);
         bool handleAutoindex(std::string dirPath);
         std::string getDirectory();
         bool deleteFolder(std::string path);
