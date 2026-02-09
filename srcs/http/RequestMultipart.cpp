@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <sstream>
 #include "MimeTypes.hpp"
+#include "colors.hpp"
 
 void Request::checkMultipart(std::string content) {
     std::cout << "\nCHECK MULTIPART : " << content << std::endl;
@@ -84,7 +85,33 @@ void printRNPositions(const std::string& str) {
 
 bool Request::parseMultipart() {
 
-    _fullBody += _chunk;
+    // _fullBody += _chunk;
+    std::cout << RED "\nENTERING MULTIPART\n\n" RESET;
+    
+    // std::cout << "CHUNK = " << _chunk << std::endl << std::endl;
+    // std::string finalBoundary = "\r\n--" + _multipartBoundary + "--";
+    // size_t endIndex = _chunk.find(finalBoundary);
+    // if (endIndex != std::string::npos) {
+    //     std::string b = _chunk.substr(0, endIndex);
+    //     _chunk = _chunk.substr(endIndex + finalBoundary.size());
+    //     // printRNPositions(_chunk);
+    //     _chunk = trimFirstCRLF(_chunk);
+    //     std::cout << "B IS \'" << b << "\'" << std::endl; 
+    //     std::cout << "REMAINING BODY IS \'" << _chunk << "\'" << std::endl; 
+    //     if (!_chunk.empty()) {
+    //         findErrorPage(400, "/", _globalDir.errPage);
+    //         std::cout << "error remaining body after end boundary" << std::endl;
+    //         return false;
+    //     }
+
+    //     _multiTemp.body = b;
+    //     _multipartState = IS_MULTI_END;
+    //     _multipartRemaining = false;
+    //     _multipartContent.push_back(_multiTemp);
+    //     return true ;
+    // } else {
+    //     _multipartRemaining = true;
+    // }
     // check if full body > client max body size + if content len exist compare (if not chunked)
     // printRNPositions(_chunk);
     if (_multipartState == GETTING_FIRST_BOUNDARY) {
@@ -297,7 +324,7 @@ bool Request::parseMultipart() {
             }
             std::cout << "waiting for final or intermediate boundary" << std::endl;
             _multipartRemaining = true;
-            break;
+            return true;
         }
     }
     return true;

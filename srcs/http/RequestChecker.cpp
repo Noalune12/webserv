@@ -259,6 +259,8 @@ bool Request::bodyChecker() {
                 _multipartState = GETTING_FIRST_BOUNDARY;
                 // _fullBody = _body;
                 _chunk = _body;
+                _fullBody = _body;
+
                 if (!parseMultipart())
                     return false;
                 return true;

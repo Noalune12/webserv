@@ -245,6 +245,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 			return ;
 		}
 		client._request._chunk += client.getChunkBuffer();
+		client.clearChunkBuffer();
 		client.startTimer(2, CLIENT_TIMEOUT - 4);
 	}
 	if (client._request._isChunked)
@@ -257,12 +258,14 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 		client._request.methodHandler();
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
+		// std::cout << "FULL BODY = " << client._request._fullBody << std::endl;
 	} else if (client._request._cgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 	}
-	if ((!client._request.chunkRemaining && !client._request._multipartRemaining) || client._request.err) {
+	else if ((!client._request.chunkRemaining && !client._request._multipartRemaining) || client._request.err) {
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
+		// std::cout << "FULL BODY = " << client._request._fullBody << std::endl;
 	}
 }
 
@@ -363,9 +366,10 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
 	if (bytesRead > 0) {
 		if (client.getState() == READING_BODY) {
-			buffer[bytesRead] = '\0';
+			// buffer[bytesRead] = '\0';
+			std::string chunk(buffer, bytesRead);
 			std::cout << "CHUNK BUFFER WHEN READING BODY = " << buffer << std::endl;
-			client.setChunkBuffer(buffer);
+			client.setChunkBuffer(chunk);
 		}
 		std::string	currentBuffer = client.getBuffer();
 		currentBuffer.append(buffer, bytesRead);

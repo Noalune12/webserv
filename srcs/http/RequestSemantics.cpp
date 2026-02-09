@@ -15,6 +15,8 @@ void Request::checkRequestSem(std::string request) {
         return ;
     }
 
+    std::cout << "REQUEST = " << request << std::endl;
+
     std::string method, uri, http;
 
     if (!extractRequestInfo() || !extractRequestLineInfo(method, uri, http)
@@ -24,7 +26,7 @@ void Request::checkRequestSem(std::string request) {
 
     printWithoutR("METHOD", _method);
     printWithoutR("URI", _uri);
-    printWithoutR("BODY", _body);
+    // printWithoutR("BODY", _body);
 
     status = 200;
 }
