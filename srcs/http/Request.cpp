@@ -7,7 +7,7 @@
 
 Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false), _isMultipart(false), _multipartRemaining(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _isChunked(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false), _isMultipart(false), _multipartRemaining(false) {}
 
 
 Request::~Request() {}
@@ -52,6 +52,7 @@ void Request::clearPreviousRequest() {
     _keepAlive = false;
     chunkRemaining = false;
     status = 200;
+    _isChunked = false;
 }
 
 bool Request::hasWS(const std::string& line) const {

@@ -54,5 +54,38 @@
 		<p>Message to be defined</p>
 		<a href="/" class="button">← Return to homepage</a>
 	</div>
+
+<h2>Upload de fichier</h2>
+
+<form id="uploadForm">
+    <input type="file" id="fileInput" required>
+    <br><br>
+    <button type="submit">Envoyer</button>
+</form>
+
+<p id="result"></p>
+
+<script>
+document.getElementById("uploadForm").addEventListener("submit", function(e) {
+    e.preventDefault(); // ⛔ empêche la redirection
+
+    const file = document.getElementById("fileInput").files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch("http://localhost:8080/api/", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => {
+        document.getElementById("result").innerText =
+            "HTTP status: " + response.status;
+    })
+    .catch(err => {
+        document.getElementById("result").innerText =
+            "Erreur réseau";
+    });
+});
+</script>
 </body>
 </html>

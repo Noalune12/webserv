@@ -240,6 +240,7 @@ bool Request::bodyChecker() {
         //         _chunkState = GETTING_FIRST_SIZE;
         //         parseChunk();
         // } else {
+            _isChunked = true;
             chunkRemaining = true;
             _chunk = _body;
             _body.clear();
@@ -256,7 +257,8 @@ bool Request::bodyChecker() {
             if (_isMultipart) {
                 std::cout << "\nMULTIPART PARSING" << std::endl;
                 _multipartState = GETTING_FIRST_BOUNDARY;
-                _fullBody = _body;
+                // _fullBody = _body;
+                _chunk = _body;
                 if (!parseMultipart())
                     return false;
                 return true;

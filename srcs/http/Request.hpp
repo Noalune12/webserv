@@ -51,6 +51,8 @@ class Request {
         int _serverPort;
         std::string _serverIp;
 
+        Multipart _multiTemp;
+
     public:
         Request();
         Request(std::vector<server>	servers, globalDir globalDir);
@@ -59,6 +61,7 @@ class Request {
         bool err;
         int status;
         bool chunkRemaining;
+        bool _isChunked;
         std::string _method;
         std::string _uri;
         // _http

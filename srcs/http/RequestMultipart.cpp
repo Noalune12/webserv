@@ -84,38 +84,42 @@ void printRNPositions(const std::string& str) {
 
 bool Request::parseMultipart() {
 
+    _fullBody += _chunk;
     // check if full body > client max body size + if content len exist compare (if not chunked)
-    printRNPositions(_body);
+    // printRNPositions(_chunk);
     if (_multipartState == GETTING_FIRST_BOUNDARY) {
-        size_t index = _body.find("--" + _multipartBoundary + "\r\n");
-        if (index != 0 && _body.size() > _multipartBoundary.size() + 4 ) {
+        size_t index = _chunk.find("--" + _multipartBoundary + "\r\n");
+        if (index != 0 && _chunk.size() > _multipartBoundary.size() + 4 ) {
             // error
             std::cout << "multipart: no first boundary" << std::endl; // to test
             return false;
+        } else if (_chunk.size() < _multipartBoundary.size() + 4) {
+            _multipartRemaining = true;
+            return true;
         } else {
-            _body = _body.substr(index + _multipartBoundary.size() + 4);
-            std::cout << "body is after 1st boundary = " << _body << std::endl;
+            _chunk = _chunk.substr(index + _multipartBoundary.size() + 4);
+            std::cout << "body is after 1st boundary = " << _chunk << std::endl;
             _multipartState = IS_HEADERS;
         }
     }
 
-    Multipart multi;
+    
     while (_multipartState != IS_MULTI_END) {
         if (_multipartState == IS_HEADERS) {
             // case sensitive, only Content-Disposition and Content-Type -> 400 invalid multipart header or ignore
-            size_t index = _body.find("\r\n");
+            size_t index = _chunk.find("\r\n");
             if (index == std::string::npos) {
                 std::cout << "waiting for headers" << std::endl;
                 _multipartRemaining = true;
                 return true;
             } else if (index == 0) {
                 std::cout << "end of headers" << std::endl;
-                _body = _body.substr(index + 2);
+                _chunk = _chunk.substr(index + 2);
                 // check if Content-Disposition is here and if it is well formated + si content-type correspond a l'extension
 
-                std::map<std::string, std::string>::iterator it = multi.headers.find("Content-Disposition");
+                std::map<std::string, std::string>::iterator it = _multiTemp.headers.find("Content-Disposition");
 
-                if (it == multi.headers.end()) {
+                if (it == _multiTemp.headers.end()) {
                     findErrorPage(400, "/", _globalDir.errPage); // host identified
                     std::cout << "error with multipart no Content Disposition" << std::endl;
                     return false;
@@ -143,20 +147,20 @@ bool Request::parseMultipart() {
                     while (std::getline(ss, token, ';')) {
                         std::cout << token << std::endl;
                         token = trimOws(token);
-                        if (token.find("name=") == 0 && multi.name.empty()) {
+                        if (token.find("name=") == 0 && _multiTemp.name.empty()) {
                             std::string val = token.substr(5);
                             if (val.size() >= 2 && val[0] == '"' && val[val.size()-1] == '"') {
-                                multi.name = val.substr(1, val.size()-2);
+                                _multiTemp.name = val.substr(1, val.size()-2);
                             } else {
                                 findErrorPage(400, "/", _globalDir.errPage); // host identified
                                 std::cout << "error with multipart  Content Disposition wrong format after name" << std::endl;
                                 return false;
                             }
                         }
-                        else if (token.find("filename=") == 0 && multi.filename.empty()) {
+                        else if (token.find("filename=") == 0 && _multiTemp.filename.empty()) {
                             std::string val = token.substr(9);
                             if (val.size() >= 2 && val[0] == '"' && val[val.size()-1] == '"') {
-                                multi.filename = val.substr(1, val.size()-2);
+                                _multiTemp.filename = val.substr(1, val.size()-2);
                             } else {
                                 findErrorPage(400, "/", _globalDir.errPage); // host identified
                                 std::cout << "error with multipart  Content Disposition wrong format after filename" << std::endl;
@@ -169,21 +173,22 @@ bool Request::parseMultipart() {
                         }
                     }
 
-                    it = multi.headers.find("Content-Type");
-                    if (it != multi.headers.end()) {
+                    it = _multiTemp.headers.find("Content-Type");
+                    if (it != _multiTemp.headers.end()) {
                         std::string contentType = it->second;
                         if (!MimeTypes::isSupportedType(it->second)) {
                             findErrorPage(415, "/", _globalDir.errPage); // host identified
                             std::cout << "error with multipart  Content Type not supported" << std::endl;
                             return false;
-                        } else if (!multi.filename.empty()) {
-                            std::string filenameExt = MimeTypes::getExtension(multi.filename);
-                            size_t		lastSlash = it->second.find_last_of('/');
-                            std::string typeExt = ".";
-                            if (lastSlash != std::string::npos) {
-                                typeExt += it->second.substr(lastSlash + 1);
-                            }
-                            if (typeExt != filenameExt) {
+                        } else if (!_multiTemp.filename.empty()) {
+                            // std::string filenameExt = MimeTypes::getExtension(_multiTemp.filename);
+                            // size_t		lastSlash = it->second.find_last_of('/');
+                            std::string typeExt = MimeTypes::getType(_multiTemp.filename);
+                            // if (lastSlash != std::string::npos) {
+                            //     typeExt += it->second.substr(lastSlash + 1);
+                            // }
+                            std::cout << "type Ext = " << typeExt << std::endl;
+                            if (typeExt != it->second) {
                                 findErrorPage(400, "/", _globalDir.errPage); // host identified
                                 std::cout << "error with multipart  Content Type extension not same as filename" << std::endl;
                                 return false;
@@ -195,16 +200,16 @@ bool Request::parseMultipart() {
 
 
                 std::cout << "\nMULTIPART HEADER MAP\n" << std::endl;
-                std::map<std::string, std::string>::iterator itmap = multi.headers.begin();
-                for (; itmap != multi.headers.end(); itmap++) {
+                std::map<std::string, std::string>::iterator itmap = _multiTemp.headers.begin();
+                for (; itmap != _multiTemp.headers.end(); itmap++) {
                     std::cout << "[" << itmap->first << ", " << itmap->second << "]" << std::endl;
                 }
-                std::cout << "NAME = " << multi.name << "and FILENAME = " << multi.filename << std::endl;
+                std::cout << "NAME = " << _multiTemp.name << "and FILENAME = " << _multiTemp.filename << std::endl;
                 _multipartState = IS_BODY;
             } else {
-                std::string header = _body.substr(0, index);
-                _body = _body.substr(index + 2);
-                std::cout << "Getting header = " << header << "and remaining body is " << _body <<std::endl;
+                std::string header = _chunk.substr(0, index);
+                _chunk = _chunk.substr(index + 2);
+                std::cout << "Getting header = " << header << "and remaining body is " << _chunk <<std::endl;
 
                 size_t index = header.find(":");
                 if (index == 0 || index == std::string::npos) {
@@ -235,8 +240,8 @@ bool Request::parseMultipart() {
                 }
                 content = trimOws(content);
                 std::cout << "HEADER CONTENT " << content << std::endl;
-                if ((name == "Content-Disposition" && multi.headers.find("Content-Disposition") != multi.headers.end()) 
-                        || (name == "Content-Type" && multi.headers.find("Content-Type") != multi.headers.end())) {
+                if ((name == "Content-Disposition" && _multiTemp.headers.find("Content-Disposition") != _multiTemp.headers.end()) 
+                        || (name == "Content-Type" && _multiTemp.headers.find("Content-Type") != _multiTemp.headers.end())) {
                     findErrorPage(400, "/", _globalDir.errPage); // host identified
                     std::cout << "error with duplicate multipart headers : " << name << std::endl;
                     return false;  
@@ -248,46 +253,46 @@ bool Request::parseMultipart() {
                     return false;
                 }
 
-                multi.headers[name] = content;
+                _multiTemp.headers[name] = content;
 
             }
         }
         if (_multipartState == IS_BODY) {
-            std::cout  << "IS BODY = " << _body << std::endl;
+            std::cout  << "IS BODY = " << _chunk << std::endl;
             std::string interBoundary = "\r\n--" + _multipartBoundary + "\r\n";
-            size_t index = _body.find(interBoundary);
+            size_t index = _chunk.find(interBoundary);
             if (index != std::string::npos) {
-                std::string b = _body.substr(0, index);
+                std::string b = _chunk.substr(0, index);
                 std::cout << "BODY B IS = " << b << std::endl;
-                _body = _body.substr(index + interBoundary.size());
-                multi.body = b;
+                _chunk = _chunk.substr(index + interBoundary.size());
+                _multiTemp.body = b;
                 _multipartState = IS_HEADERS;
-                _multipartContent.push_back(multi);
-                multi.headers.clear();
-                multi.body.clear();
-                multi.name.clear();
-                multi.filename.clear();
+                _multipartContent.push_back(_multiTemp);
+                _multiTemp.headers.clear();
+                _multiTemp.body.clear();
+                _multiTemp.name.clear();
+                _multiTemp.filename.clear();
                 continue ;
             }
             std::string finalBoundary = "\r\n--" + _multipartBoundary + "--";
-            size_t endIndex = _body.find(finalBoundary);
+            size_t endIndex = _chunk.find(finalBoundary);
             if (endIndex != std::string::npos) {
-                std::string b = _body.substr(0, endIndex);
-                _body = _body.substr(endIndex + finalBoundary.size());
-                // printRNPositions(_body);
-                _body = trimFirstCRLF(_body);
+                std::string b = _chunk.substr(0, endIndex);
+                _chunk = _chunk.substr(endIndex + finalBoundary.size());
+                // printRNPositions(_chunk);
+                _chunk = trimFirstCRLF(_chunk);
                 std::cout << "B IS \'" << b << "\'" << std::endl; 
-                std::cout << "REMAINING BODY IS \'" << _body << "\'" << std::endl; 
-                if (!_body.empty()) {
+                std::cout << "REMAINING BODY IS \'" << _chunk << "\'" << std::endl; 
+                if (!_chunk.empty()) {
                     findErrorPage(400, "/", _globalDir.errPage);
                     std::cout << "error remaining body after end boundary" << std::endl;
                     return false;
                 }
 
-                multi.body = b;
+                _multiTemp.body = b;
                 _multipartState = IS_MULTI_END;
                 _multipartRemaining = false;
-                _multipartContent.push_back(multi);
+                _multipartContent.push_back(_multiTemp);
                 continue ;
             }
             std::cout << "waiting for final or intermediate boundary" << std::endl;

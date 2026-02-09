@@ -49,7 +49,6 @@ servertest
 
 out
 usr/*
-server
 *.html
 
 .gitignore
