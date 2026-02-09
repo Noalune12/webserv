@@ -103,8 +103,22 @@ void Connection::setBuffer(std::string request) {
 	_buffer = request;
 }
 
+void Connection::setChunkBuffer(std::string request) {
+	_chunkBuffer = request;
+}
+
 std::string Connection::getBuffer(void) const {
 	return _buffer;
+}
+
+std::string Connection::getChunkBuffer(void) const {
+	return _chunkBuffer;
+}
+
+
+
+void	Connection::clearChunkBuffer() {
+	_chunkBuffer.clear();
 }
 
 void Connection::parseRequest() {

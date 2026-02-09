@@ -244,7 +244,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 			closeConnection(clientFd);
 			return ;
 		}
-		client._request._chunk += client.getBuffer();
+		client._request._chunk += client.getChunkBuffer();
 		client.startTimer(2, CLIENT_TIMEOUT - 4);
 	}
 
@@ -257,6 +257,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 		transitionToCGI(client, clientFd);
 	}
 	if (!client._request.chunkRemaining || client._request.err) {
+		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
 	}
 }
@@ -357,6 +358,11 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 	}
 
 	if (bytesRead > 0) {
+		if (client.getState() == READING_BODY) {
+			buffer[bytesRead] = '\0';
+			std::cout << "CHUNK BUFFER WHEN READING BODY = " << buffer << std::endl;
+			client.setChunkBuffer(buffer);
+		}
 		std::string	currentBuffer = client.getBuffer();
 		currentBuffer.append(buffer, bytesRead);
 		client.setBuffer(currentBuffer);

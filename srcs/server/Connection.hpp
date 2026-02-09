@@ -73,6 +73,7 @@ class Connection {
 		std::string			_buffer;
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
 		bool				_keepAlive;
+		std::string			_chunkBuffer;
 		// bool				_chunked;
 
 		std::vector<server>	_servers;
@@ -94,10 +95,14 @@ class Connection {
 		const std::string&	getIP(void) const;
 		ConnectionState		getState(void) const;
 		std::string			getBuffer(void) const;
-
+		std::string 		getChunkBuffer(void) const;
+		
 		/* setters */
 		void				setState(ConnectionState s);
 		void				setBuffer(std::string request);
+		void				setChunkBuffer(std::string request);
+		
+		void				clearChunkBuffer();
 
 		void parseRequest();
 		// bool				err;
