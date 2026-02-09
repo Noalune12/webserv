@@ -9,7 +9,7 @@
 void Request::methodGetHandler() {
     if (_reqLocation->autoIndex == true)
         std::cout << "\nAUTOINDEX IS ON" << std::endl;
-    else   
+    else
         std::cout << "\nAUTOINDEX IS OFF" << std::endl;
 
     if (!_reqLocation->root.empty() && !_trailing.empty()) {
@@ -36,7 +36,7 @@ void Request::methodGetHandler() {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
                     }
                     std::cout << "error with GET (not trailing) -> no right on folder" << std::endl;
                     return ;
@@ -50,7 +50,7 @@ void Request::methodGetHandler() {
                     if (stat(path.c_str(), &st) == 0) {
                         if (readFile(path, st, _reqLocation->root))
                             return ;
-                    } 
+                    }
                 }
 
                 if (err == true && _indexFound == true)
@@ -66,7 +66,7 @@ void Request::methodGetHandler() {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
                     }
                     std::cout << "error with GET no file found" << std::endl;
                     return ;
@@ -77,7 +77,7 @@ void Request::methodGetHandler() {
                     findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                 }
                 else {
-                    findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                    findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
                 }
                 std::cout << "error with GET not a directory set as the path looking for index" << std::endl;
                 return ;
@@ -90,7 +90,7 @@ void Request::methodGetHandler() {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
                     }
                     std::cout << "error with GET (trailing) -> no right on folder" << std::endl;
                     return ;
@@ -104,7 +104,7 @@ void Request::methodGetHandler() {
                     if (stat(path.c_str(), &st) == 0) {
                         if (readFile(path, st, _reqLocation->root))
                             return ;
-                    } 
+                    }
                 }
 
                 if (err == true && _indexFound == true)
@@ -120,21 +120,21 @@ void Request::methodGetHandler() {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
                     }
                     std::cout << "error with GET no file found" << std::endl;
                     return ;
                 }
 
             } else if (S_ISREG(buf.st_mode)) {
-                if (!readFile(_getPath, buf, _reqLocation->root)) {
+                if (readFile(_getPath, buf, _reqLocation->root)) {
                     return ;
-                } else { 
+                } else {
                     if (!_reqLocation->root.empty()) {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
                     }
                     std::cout << "error no file found for trailing file" << std::endl;
                     return ;
@@ -147,7 +147,7 @@ void Request::methodGetHandler() {
             findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
         }
         std::cout << "error with GET no trailing, non existing path" << std::endl;
         return ;
@@ -157,7 +157,7 @@ void Request::methodGetHandler() {
             findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
         }
         else {
-            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
         }
         std::cout << "error with GET trailing, non existing path" << std::endl;
         return ;
@@ -200,6 +200,12 @@ bool Request::readFile(std::string path, struct stat buf ,std::string errorPath)
         return false;
     }
 
+    // added this check in case of file without reading rights, we were returning a 500 instead
+    if (!access(path.c_str(), R_OK | X_OK)) {
+        findErrorPage(403, errorPath, _reqLocation->errPage);
+        return false;
+    }
+
     if (buf.st_mode & S_IRUSR) {
         std::ifstream file(path.c_str());
         std::cout << "File found" << std::endl;
@@ -214,7 +220,7 @@ bool Request::readFile(std::string path, struct stat buf ,std::string errorPath)
         std::cout << "error file found but no rights" << std::endl;
         _indexFound = true;
         return false;
-    } 
+    }
 }
 
 bool Request::handleAutoindex(std::string dirPath) {
@@ -224,7 +230,7 @@ bool Request::handleAutoindex(std::string dirPath) {
             findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
         }
         std::cout << "error with GET AUTOINDEX no rights on a directory" << std::endl;
         return false;
@@ -249,16 +255,15 @@ bool Request::handleAutoindex(std::string dirPath) {
         stat(fullPath.c_str(), &st); // protection ??
         if (S_ISDIR(st.st_mode)) {
             std::cout << YELLOW "folder : " << fullPath << RESET << std::endl;
-            htmlPage += "<p>📁 /" + name + "</p>";
+            htmlPage += "<a href=\"" + name + "/\">📁 " + name + "</a><br>\n";
         } else if (S_ISREG(st.st_mode)) {
-            htmlPage += "<p>📄 " + name + "</p>";
+            htmlPage += "<a href=\"" + name + "\">📄 " + name + "</a><br>\n";
             std::cout << BLUE "regular file :" << fullPath << RESET << std::endl;
 
         } else {
             // what do I do ?
             std::cout << GREEN "not regular file " << fullPath << RESET << std::endl;
         }
-
     }
     closedir(dir);
 

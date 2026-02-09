@@ -41,8 +41,7 @@ class Request {
         std::string _requestLine;
         std::vector<server>	_servers;
         globalDir _globalDir;
-        server *_reqServer;
-	    location *_reqLocation;
+
         std::string _serverName;
 
         double _chunkSize;
@@ -69,6 +68,9 @@ class Request {
         std::string _chunk;
         std::string _trailing;
         bool _keepAlive;
+        server *_reqServer;
+	location *_reqLocation;
+        std::string _version;
         bool _cgi;
         bool _return;
         std::string _scriptPath;
@@ -92,7 +94,7 @@ class Request {
         bool extractRequestLineInfo(std::string& method, std::string& uri, std::string& http);
         bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
         bool checkHeaders();
-        
+
         void checkRequestContent();
 
         bool hostChecker();

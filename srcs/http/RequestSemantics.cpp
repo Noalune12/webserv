@@ -5,7 +5,7 @@
 #include <sstream>
 
 void Request::checkRequestSem(std::string request) {
-    
+
     err = false;
     _req = request;
 
@@ -37,7 +37,7 @@ bool Request::extractRequestInfo() {
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with request line : not finished with rn" << std::endl;
-        return false;  
+        return false;
     }
 
     _requestLine = _req.substr(0, index);
@@ -49,7 +49,7 @@ bool Request::extractRequestInfo() {
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error no header or final WS" << std::endl;
-        return false;  
+        return false;
     }
 
     _headersStr = _req.substr(0, index + 1);
@@ -57,15 +57,15 @@ bool Request::extractRequestInfo() {
 
     // Extract body
     _body = _req;
-    
+
     return true;
 }
 
 
  bool Request::extractRequestLineInfo(std::string& method, std::string& uri, std::string& http) {
-    
+
     // method
-    
+
     size_t index = _requestLine.find(' ');
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
@@ -128,7 +128,7 @@ bool Request::checkHeaders() {
 
 
         std::string content = line.substr(index + 1);
-        
+
         if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
             std::cout << "CONTENT = \'" << content << "\'" << std::endl;
             findErrorPage(400, "/", _globalDir.errPage);
@@ -140,9 +140,9 @@ bool Request::checkHeaders() {
         content = trimOws(content);
         if (name != "user-agent" && name != "content-type")
             std::transform(content.begin(), content.end(), content.begin(), ::tolower);
-        
+
         std::cout << "NAME, CONTENT FOR HEADER = " << name << ", " << content << std::endl;
-        if ((name == "host" && _headers.find("host") != _headers.end()) 
+        if ((name == "host" && _headers.find("host") != _headers.end())
                 || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
                 || (name == "content-length" && _headers.find("content-length") != _headers.end())
                 || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())
@@ -150,7 +150,7 @@ bool Request::checkHeaders() {
                 || (name == "connection" && _headers.find("connection") != _headers.end())) {
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with duplicate headers : " << name << std::endl;
-            return false;  
+            return false;
         }
         if ((name == "host") && hasWS(content)) {
             findErrorPage(400, "/", _globalDir.errPage);
@@ -183,6 +183,14 @@ bool Request::checkHeaders() {
     return true;
 }
 
+static bool isValidHTTPVersion(const std::string& version) {
+
+    if (version.size() != 3)
+        return (false);
+
+    return (std::isdigit(version[0]) && version[1] == '.' && std::isdigit(version[2]));
+}
+
 bool Request::checkRequestLine(std::string& method, std::string& uri, std::string& http) {
     if (method != "GET" && method != "POST" && method != "DELETE"
             && method != "HEAD" && method != "OPTIONS"
@@ -192,7 +200,7 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
         std::cout << "error with method" << std::endl;
         return false;
     }
-    if (uri[0] != '/') { 
+    if (uri[0] != '/') {
         findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with uri" << std::endl;
         return false;
@@ -203,19 +211,33 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
         std::cout << "error with http index is not 0" << std::endl;
         return false;
     }
-    std::string version = http.substr(index + 5, http.length());
+    // std::string version = http.substr(index + 5, http.length());
+    // std::cout << "VERSION = " << version << std::endl;
+    // if (version == "2" || version == "3") {
+    //     findErrorPage(505, "/", _globalDir.errPage);
+    //     std::cout << "error with http not the real version" << std::endl;
+    //     return false;
+    // }
+    // if (version != "1.1" && version != "1.0") {
+    //     findErrorPage(400, "/", _globalDir.errPage); // doubt here, why is it a 400
+    //     std::cout << "error with http" << std::endl;
+    //     return false;
+    // }
+
+    std::string version = http.substr(5);
     std::cout << "VERSION = " << version << std::endl;
-    if (version == "2" || version == "3") {
-        findErrorPage(505, "/", _globalDir.errPage);
-        std::cout << "error with http not the real version" << std::endl;
+    if (!isValidHTTPVersion(version)) {
+        findErrorPage(400, "/", _globalDir.errPage);
+        std::cout << "error with http syntax" << std::endl;
         return false;
     }
     if (version != "1.1" && version != "1.0") {
-        findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with http" << std::endl;
+        findErrorPage(505, "/", _globalDir.errPage);
+        std::cout << "error with http version" << std::endl;
         return false;
     }
     _method = method;
     _uri = uri;
+    _version = version;
     return true;
 }

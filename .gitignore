@@ -47,7 +47,6 @@ servertest
 .vscode
 *.log
 
-var/*
 out
 usr/*
 server
@@ -58,3 +57,4 @@ server
 config-files
 *.conf
 default.conf
+upload*

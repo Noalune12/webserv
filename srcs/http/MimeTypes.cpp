@@ -42,7 +42,7 @@ std::string	MimeTypes::getType(const std::string& extensionOrFilename) {
 
 	if (!_initialized) {
 		if (!load(_defaultPath)) {
-			return ("application/octet-stream");
+			return ("");
 		}
 	}
 
@@ -65,7 +65,7 @@ std::string	MimeTypes::getType(const std::string& extensionOrFilename) {
 	if (it != _types.end())
 		return (it->second);
 
-	return ("application/octet-stream");
+	return ("");
 }
 
 void	MimeTypes::parseLine(const std::string& line) {

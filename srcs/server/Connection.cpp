@@ -22,7 +22,7 @@ Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<se
 
 	if (local_addr.ss_family == AF_INET) {
 		struct sockaddr_in* addr = (struct sockaddr_in*)&local_addr;
-		
+
 		unsigned char* bytes = (unsigned char*)&addr->sin_addr; // protect ???
 		std::stringstream ss;
 		ss << (int)bytes[0] << "." << (int)bytes[1] << "." << (int)bytes[2] << "." << (int)bytes[3];
@@ -66,8 +66,7 @@ void	Connection::startTimer(int index, time_t duration) {
 long	Connection::secondsToClosestTimeout() const {
 
 	time_t	curr = time(NULL);
-	long	min_rem = 5;
-	int		active_idx;
+	int		active_idx = -1;
 
 	switch (_state) {
 		case IDLE:
@@ -89,12 +88,15 @@ long	Connection::secondsToClosestTimeout() const {
 			return 5;
 	}
 
-	long	rem = _timers[active_idx] - curr;
+	if (active_idx < 0)
+		return (5);
 
-	if (rem > 0 && rem < min_rem)
-		return (rem);
+	long	rem = static_cast<long>(_timers[active_idx] - curr);
 
-	return(min_rem);
+	if (rem <= 0)
+		return (1);
+
+	return(rem);
 }
 
 void Connection::setBuffer(std::string request) {
@@ -117,7 +119,7 @@ void Connection::parseRequest() {
 
 	std::cout << _request.err << " &&&&& " << _request.status << std::endl;
 	_buffer.clear();
-	if (_request._keepAlive == true) 
+	if (_request._keepAlive == true)
         std::cout << "keep alive is true" << std::endl;
     else
         std::cout << "no keep alive" << std::endl;

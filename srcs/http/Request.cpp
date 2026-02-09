@@ -45,6 +45,13 @@ void Request::clearPreviousRequest() {
    _fullBody.clear();
    _multipartRemaining = false;
     // what about err and keep alive
+    _method.clear();
+    _uri.clear();
+    _version.clear();
+    err = false;
+    _keepAlive = false;
+    chunkRemaining = false;
+    status = 200;
 }
 
 bool Request::hasWS(const std::string& line) const {

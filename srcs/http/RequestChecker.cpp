@@ -26,15 +26,15 @@ void Request::findServer() {
     for (size_t i = 0; i < possibleServerIndices.size(); i++) {
         size_t serverIndex = possibleServerIndices[i];
         server& candidateServer = _servers[serverIndex];
-        
+
         std::vector<std::string>::iterator itServerName = candidateServer.serverName.begin();
         for (; itServerName != candidateServer.serverName.end(); itServerName++) {
             if (*itServerName == _serverName) {
                 std::cout << "server found with " << _serverName << std::endl;
-                _reqServer = &_servers[serverIndex]; 
+                _reqServer = &_servers[serverIndex];
                 break;
             }
-        }    
+        }
         if (_reqServer != NULL)
             break;
     }
@@ -42,7 +42,7 @@ void Request::findServer() {
     // std::cout << "SERVER FOUND = " << serverFound << std::endl;
     if (_reqServer == NULL && possibleServerIndices.size() > 0) { // how to decide which server to chose, by default I set the 1st one
         size_t serverIndex = possibleServerIndices[0];
-        _reqServer = &_servers[serverIndex]; 
+        _reqServer = &_servers[serverIndex];
         std::cout << "default server is set" << std::endl;
     }
     // _reqServer = NULL;
@@ -57,6 +57,13 @@ void Request::findLocation() {
     //     _trailing = _uri.substr(index + 1, _uri.size());
     //     _uri = _uri.substr(0, index + 1);
     // }
+    size_t  query_pos = _uri.find('?');
+    if (query_pos != std::string::npos) {
+        _queryString = _uri.substr(query_pos + 1);
+        _uri = _uri.substr(0, query_pos);
+        std::cout << "EXTRACTED QUERY: '" << _queryString << "' CLEAN URI: '" << _uri << "'" << std::endl;
+    }
+
     std::cout << "before loop URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
     while (!_uri.empty()) {
         std::vector<location>::iterator itLocation = _reqServer->loc.begin();
@@ -183,13 +190,13 @@ void Request::checkRequestContent() {
     }
 
     if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
-        if (_trailing.empty() || _method != "POST")
+        if (_trailing.empty() /*|| _method != "POST" */) // IMPORTANT -> discussion about that method check
             return;
-        size_t index = _trailing.find('?'); //what if the folder has a ?
-        if (index != std::string::npos) {
-            _queryString = _trailing.substr(index);
-            _trailing = _trailing.substr(0, index);
-        }
+        // size_t index = _trailing.find('?'); //what if the folder has a ?
+        // if (index != std::string::npos) {
+        //     _queryString = _trailing.substr(index);
+        //     _trailing = _trailing.substr(0, index);
+        // }
         if (!_reqLocation->root.empty())
             _scriptPath = getPath(_reqLocation->root + _uri, _trailing);
         else
@@ -205,7 +212,7 @@ void Request::checkRequestContent() {
                 findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
             }
             else {
-                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error with CGI file or folder note found" << std::endl;
         }
@@ -265,17 +272,17 @@ bool Request::bodyChecker() {
             else
                 findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
             std::cout << "error body is higher that client max body size" << std::endl;
-            return false;   
+            return false;
         }
 
         // find content length
-        
+
         it = _headers.find("content-length");
         if (it == _headers.end() && !_body.empty()) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);            
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error no content length but existing body" << std::endl;
             return false;
@@ -289,7 +296,7 @@ bool Request::bodyChecker() {
                 if (!_reqLocation->root.empty()) {
                     findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
                 } else {
-                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);                
+                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
                 std::cout << "error  content length is not equal to existing body size" << std::endl;
                 return false;

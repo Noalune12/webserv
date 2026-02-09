@@ -4,18 +4,15 @@ on:
   pull_request:
     branches:
       - '*'
-    paths:
-      - 'srcs/config/**'
-      - 'config-files/**'
-      - 'config/**'
-      - 'scripts/test_parser.sh'
+    # paths:
+    #   - 'srcs/config/**'
+    #   - 'config-files/**'
+    #   - 'config/**'
+    #   - 'scripts/test_parser.sh'
   push:
     branches:
       - 'main'
-
-# The paths directive could make us remove branch name checks (below).
-# I'd like to make the parsing test only if the configuration parsing files are modified.
-# To prevent extra layers of actions on code that does not need it... Cannot test it rn anyway it is too early
+  workflow_dispatch:
 
 jobs:
   check-branch:
@@ -26,7 +23,6 @@ jobs:
       - name: Check branch name
         id: check
         run: |
-          # Get the source branch name
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BRANCH_NAME="${{ github.head_ref }}"
           else
@@ -35,7 +31,6 @@ jobs:
 
           echo "Branch name: $BRANCH_NAME"
 
-          # Check if branch name contains parser, parsing, or parse
           if [[ "$BRANCH_NAME" =~ parser|parsing|parse ]]; then
             echo "Branch name matches parser-related keywords"
             echo "should-run=true" >> $GITHUB_OUTPUT
@@ -51,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -80,7 +75,7 @@ jobs:
         run: |
           if [ "${{ needs.check-branch.outputs.should-run }}" != "true" ]; then
             echo "⏭️ Parser tests were skipped (branch name doesn't match)"
-            echo "ℹ️ Tests only run for branches containing: parser, parsing, or parse" 
+            echo "ℹ️ Tests only run for branches containing: parser, parsing, or parse"
           elif [ "${{ needs.test-parser.result }}" == "success" ]; then
             echo "✅ All parser tests passed!"
           else

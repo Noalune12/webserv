@@ -53,12 +53,10 @@ void	ServerManager::setupListenSockets(void) {
 		_socketToEndpoint[sockFd] = i;
 		oneSuccess = true;
 
-
 		for (size_t j = 0; j < ep.servers.size(); ++j) {
 			ep.servers[j]->isRunning = true;
 		}
 
-		
 		std::ostringstream oss;
 		oss << "listening on " << ep.addr << ":" << ep.port;
 		Logger::notice(oss.str());
@@ -69,7 +67,7 @@ void	ServerManager::setupListenSockets(void) {
 		return ;
 	}
 	// debug
-	// printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later 
+	printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
@@ -100,12 +98,11 @@ int	ServerManager::createListenSocket(const std::string& address, int port) {
 		return (-1);
 	}
 
-	// need to change 512 for something else
-	// found this value in cat /proc/sys/net/ipv4/tcp_max_syn_backlog (value's the same in nginx docker container)
+	// found 512 in /proc/sys/net/ipv4/tcp_max_syn_backlog
 	if (listen(socketFd, 512) == -1) {
 		std::cerr << "listen() failed: " << strerror(errno) << std::endl;
 		close(socketFd);
-		return -1;
+		return (-1);
 	}
 
 	return (socketFd);
@@ -128,7 +125,7 @@ void	ServerManager::groupServersByEndPoint(void) {
 
 			const listenDirective& lis = srv.lis[j];
 
-			// Formatting ip:port into key (string) -> 0.0.0.0:8080 for exemple
+			// Formatting ip:port into key (string) -> 0.0.0.0:8080 for example
 			std::ostringstream keyStream;
 			keyStream << lis.ip << ":" << lis.port;
 			std::string key = keyStream.str();
@@ -161,13 +158,6 @@ bool	ServerManager::configureSocket(int socketFd) {
 		return (false);
 	}
 
-	// flag retrieval
-	// int flags = fcntl(socketFd, F_GETFL, 0);
-	// if (flags < 0) {
-	// 	std::cerr << "fcntl(F_GETFL) failed: " << strerror(errno) << std::endl;
-	// 	return (false);
-	// }
-
 	// adding O_NONBLOCK to list of existing flags
 	if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0) {
 		std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed: " << strerror(errno) << std::endl;
@@ -194,7 +184,7 @@ void	ServerManager::printEndpoints(void) {
 			for (size_t k = 0; k < ep.servers[j]->serverName.size(); ++k) {
 				std::cout << "\"" BLUE << ep.servers[j]->serverName[k] << RESET "\" ";
 			}
-			std::cout << std::endl;
+			std::cout << "| isRunning: " << (ep.servers[j]->isRunning ? GREEN "true" : RED "false") << RESET << std::endl;
 		}
 		std::cout << RESET << std::endl;
 	}
@@ -236,10 +226,9 @@ std::vector<int>	ServerManager::getListenSocketFds(void) {
 }
 
 std::vector<server>	ServerManager::getServers(void) {
-	return _servers;
+	return (_servers);
 }
 
 globalDir ServerManager::getGlobalDir(void) {
-	return _globalDir;
+	return (_globalDir);
 }
-
