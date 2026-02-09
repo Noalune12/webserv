@@ -55,23 +55,53 @@
 		<a href="/" class="button">← Return to homepage</a>
 	</div>
 
-<h2>Upload de fichier</h2>
+<h2>Upload de fichiers</h2>
 
-<form id="uploadForm">
-    <input type="file" id="fileInput" required>
-    <br><br>
-    <button type="submit">Envoyer</button>
-</form>
+<div id="fileInputsContainer">
+    <div class="file-row">
+        <input type="file" class="fileInput" required>
+        <button type="button" class="removeBtn">❌</button>
+    </div>
+</div>
+
+<button type="button" id="addFileBtn">Ajouter un fichier</button>
+<br><br>
+<button id="submitAllBtn">Envoyer tous les fichiers</button>
 
 <p id="result"></p>
 
-<script>
-document.getElementById("uploadForm").addEventListener("submit", function(e) {
-    e.preventDefault(); // ⛔ empêche la redirection
 
-    const file = document.getElementById("fileInput").files[0];
+<script>
+const container = document.getElementById("fileInputsContainer");
+
+// Ajouter un nouveau fichier
+document.getElementById("addFileBtn").addEventListener("click", () => {
+    const div = document.createElement("div");
+    div.className = "file-row";
+    div.innerHTML = `
+        <input type="file" class="fileInput" required>
+        <button type="button" class="removeBtn">❌</button>
+    `;
+    container.appendChild(div);
+});
+
+// Retirer un fichier
+container.addEventListener("click", (e) => {
+    if (e.target.classList.contains("removeBtn")) {
+        e.target.parentElement.remove();
+    }
+});
+
+// Envoyer tous les fichiers
+document.getElementById("submitAllBtn").addEventListener("click", () => {
     const formData = new FormData();
-    formData.append("file", file);
+    const fileInputs = document.querySelectorAll(".fileInput");
+
+    fileInputs.forEach((input, index) => {
+        if (input.files.length > 0) {
+            formData.append("file", input.files[0]);
+        }
+    });
 
     fetch("http://localhost:8080/api/", {
         method: "POST",
@@ -86,6 +116,7 @@ document.getElementById("uploadForm").addEventListener("submit", function(e) {
             "Erreur réseau";
     });
 });
+
 </script>
 </body>
 </html>
