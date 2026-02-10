@@ -159,6 +159,9 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 		case READING_BODY:
 			handleReadingBody(client, clientFd, ev);
 			break ;
+		case CGI_WRITING_BODY:
+			handleCGIRunning(client, clientFd, ev);
+			break ;
 		case CGI_RUNNING:
 			handleCGIRunning(client, clientFd, ev);
 			break ;
@@ -187,7 +190,11 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 	}
 
 	Connection& client = clientIt->second;
-	_cgiExecutor.handlePipeEvent(client, clientFd, pipeFd, ev, *this);
+	if (client.getState() == CGI_WRITING_BODY) {
+		_cgiExecutor.handleCGIWriteEvent(client, clientFd, pipeFd, ev, *this);
+	} else {
+		_cgiExecutor.handlePipeEvent(client, clientFd, pipeFd, ev, *this);
+	}
 }
 
 void	EventLoop::handleIdle(Connection& client, int clientFd, uint32_t ev) {
@@ -340,10 +347,14 @@ void	EventLoop::transitionToReadingBody(Connection& client, int clientFd) {
 
 void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
 	if (_cgiExecutor.start(client, clientFd, *this)) {
-		client.setState(CGI_RUNNING);
-		client.startTimer(3, CGI_TIMEOUT);
-		// modifyEpoll(clientFd, EPOLLOUT) -> need to check if this is still needed, for now it should not
-		Logger::debug("-> CGI_RUNNING");
+		if (client._cgi.pipeIn[1] != -1) {
+			client.setState(CGI_WRITING_BODY);
+			client.startTimer(3, CGI_TIMEOUT);
+		} else {
+			client.setState(CGI_RUNNING);
+			client.startTimer(3, CGI_TIMEOUT);
+			Logger::debug("-> CGI_RUNNING");
+		}
 	} else {
 		client._request.err = true;
 		client._request.status = 500;
