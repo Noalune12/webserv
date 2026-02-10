@@ -37,8 +37,8 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 			setBodyFromError(resp, req.status, req);
 		}
 	}
-	else if (!req.htmlPage.empty()) {
-		setStatus(resp, 200);
+	else if (!req.htmlPage.empty() || (req.htmlPage.empty() && !req.err)) {
+		setStatus(resp, req.status);
 		setBodyFromFile(resp, req);
 	}
 	else { // No content - return error
