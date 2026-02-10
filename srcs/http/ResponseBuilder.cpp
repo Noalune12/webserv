@@ -29,6 +29,13 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 		setAllow(resp, req);
 	}
 
+	if (req.status == 201) {
+		setLocation(resp, req);
+		setStatus(resp, req.status);
+		setBodyFromBody(resp, req);
+		return (resp);
+	}
+
 	if (req.err) {
 		setStatus(resp, req.status);
 		if (!req.htmlPage.empty()) {
@@ -85,6 +92,11 @@ void	ResponseBuilder::initializeResponse(Response& resp, const Request& req) {
 	resp._bytesSent = 0;
 
 	setCommonHeaders(resp, req._keepAlive);
+}
+
+void	ResponseBuilder::setBodyFromBody(Response& resp, const Request& req) {
+	resp._body.assign(req._body.begin(), req._body.end());
+	setContentType(resp, req._trailing);
 }
 
 void	ResponseBuilder::setBodyFromFile(Response& resp, const Request& req) {
@@ -217,6 +229,12 @@ void	ResponseBuilder::setContentTypeFromCGI(Response& resp) {
 void	ResponseBuilder::setStatus(Response& resp, int code) {
 	resp._statusCode = code;
 	resp._statusText = StatusCodes::getReasonPhrase(code);
+}
+
+void	ResponseBuilder::setLocation(Response& resp, const Request& req) {
+
+	std::cerr << req._reqLocation->path + req._uplaodFiles[0].filename << std::endl;
+	resp._headers["Location"] = req._uplaodFiles[0].location + req._uplaodFiles[0].filename;
 }
 
 void	ResponseBuilder::setAllow(Response& resp, const Request& req) {
