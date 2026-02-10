@@ -220,7 +220,18 @@ bool Request::parseMultipart() {
                                 std::cout << "error with multipart  Content Type extension not same as filename" << std::endl;
                                 return false;
                             }
-                        }
+                        } 
+                    } else if (it == _multiTemp.headers.end() && _multiTemp.filename.empty()) { // no content type and no filename --> 400
+                            findErrorPage(400, "/", _globalDir.errPage); // host identified
+                            std::cout << "error with multipart  no content type and no filename" << std::endl;
+                            return false;
+                    } else if (it == _multiTemp.headers.end() && !_multiTemp.filename.empty()) { // no content type and  filename --> check type of extansion
+                            std::string type = MimeTypes::getType(_multiTemp.filename);
+                            if (type.empty()) {
+                                findErrorPage(400, "/", _globalDir.errPage); // host identified
+                                std::cout << "error with multipart  no content type and  filename has wring extension" << std::endl;
+                                return false;
+                            }
                     }
 
                 }

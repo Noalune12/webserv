@@ -53,6 +53,9 @@ void Request::clearPreviousRequest() {
     chunkRemaining = false;
     status = 200;
     _isChunked = false;
+    _uplaodFiles.clear();
+    _failedUpload = 0;
+    _totalUpload = 0;
 }
 
 bool Request::hasWS(const std::string& line) const {

@@ -33,6 +33,10 @@ struct Multipart {
     std::string                         name;
 };
 
+struct FilesPost {
+    std::string filename;
+    std::string location;
+};
 
 class Request {
     private:
@@ -52,6 +56,8 @@ class Request {
         std::string _serverIp;
 
         Multipart _multiTemp;
+        double _failedUpload;
+        double _totalUpload;
 
     public:
         Request();
@@ -72,7 +78,7 @@ class Request {
         std::string _trailing;
         bool _keepAlive;
         server *_reqServer;
-	location *_reqLocation;
+	    location *_reqLocation;
         std::string _version;
         bool _cgi;
         bool _return;
@@ -89,6 +95,7 @@ class Request {
         std::vector<Multipart> _multipartContent;
         std::string _fullBody;
         bool _multipartRemaining;
+        std::vector<FilesPost> _uplaodFiles;
 
         // PARSING
         void checkRequestSem(std::string request);
@@ -125,6 +132,10 @@ class Request {
         bool handleAutoindex(std::string dirPath);
         std::string getDirectory();
         bool deleteFolder(std::string path);
+        bool findUploadDir();
+        bool checkFilename(std::string &filename);
+        void createFileName(std::string &filename);
+        void printFilename() const;
 
         // UTILS
         std::string trimOws(const std::string& s);

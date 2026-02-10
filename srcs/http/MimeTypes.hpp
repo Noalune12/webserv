@@ -22,6 +22,7 @@ class MimeTypes {
 
 		static std::string	getType(const std::string& extensionOrFilename);
 		static std::string	getExtension(const std::string& filename);
+		static std::string  getExtensionFromType(const std::string& contentType);
 
 		static bool			isTextType(const std::string& mimeType);
 		static bool			isSupportedType(const std::string& contentType);

@@ -179,3 +179,21 @@ bool	MimeTypes::isSupportedType(const std::string& contentType) {
 	std::cout << std::endl;
 	return false;
 }
+
+std::string  MimeTypes::getExtensionFromType(const std::string& contentType) {
+	if (!_initialized) {
+		if (!load("srcs/http/mime.types")) {
+			return "";
+		}
+	}
+	std::cout << contentType <<std::endl;;
+
+	// std::cout << "\nIS SUPPORTED TYPE" << std::endl;
+	std::map<std::string, std::string>::iterator it = _types.begin();
+	for (; it != _types.end(); it++) {
+		// std::cout << it->second << " ---- ";
+		if (contentType == it->second)
+			return it->first;
+	}
+	return "";
+}
