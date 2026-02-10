@@ -216,7 +216,7 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 	client.parseRequest();
 
 	// check if need to read body (chunked request)
-	if (client._request.chunkRemaining || client._request._multipartRemaining) {
+	if (client._request.chunkRemaining || client._request._multipartRemaining || client._request._remainingBody) {
 		transitionToReadingBody(client, clientFd);
 		return ;
 	}
@@ -253,9 +253,11 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 		client._request.parseChunk();
 	else if (client._request._isMultipart)
 		client._request.parseMultipart();
+	else if (client._request._remainingBody)
+		client._request.parseBody();
 
 	if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return \
-		&& !client._request._multipartRemaining) {
+		&& !client._request._multipartRemaining && !client._request._remainingBody) {
 		client._request.methodHandler();
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
@@ -263,7 +265,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	} else if (client._request._cgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 	}
-	else if ((!client._request.chunkRemaining && !client._request._multipartRemaining) || client._request.err) {
+	else if ((!client._request.chunkRemaining && !client._request._multipartRemaining && !client._request._remainingBody) || client._request.err) {
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
 		// std::cout << "FULL BODY = " << client._request._fullBody << std::endl;

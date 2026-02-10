@@ -309,12 +309,28 @@ bool Request::bodyChecker() {
             std::cout << "error no content length but existing body" << std::endl;
             return false;
         } else if (it != _headers.end()) {
+
             std::cout << "CONTENT LENGTH = " << it->second << std::endl;
-            std::stringstream ss;
-            ss << _body.size();
-            std::string bodySize = ss.str();
-            std::cout << "BODY SIZE = " << bodySize << std::endl;
-            if (it->second != bodySize) {
+
+            std::stringstream ss(it->second);
+            double contentLength = 0;
+            ss >> contentLength;
+
+            if (ss.fail()) {
+                if (!_reqLocation->root.empty()) { 
+                    findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                } else {
+                    findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                }
+                std::cout << "error  while converting content len" << std::endl;
+                return false;
+            }
+
+            double bodySize = static_cast<double>(_body.size());
+            if (bodySize < contentLength) {
+                _remainingBody = true;
+                _fullBody = _body;
+            } else if (bodySize > contentLength) {
                 if (!_reqLocation->root.empty()) {
                     findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
                 } else {
@@ -323,8 +339,65 @@ bool Request::bodyChecker() {
                 std::cout << "error  content length is not equal to existing body size" << std::endl;
                 return false;
             }
+
         }
     }
     return true;
+}
+
+void Request::parseBody() {
+    std::cout << "FULL BODY = " << _fullBody << std::endl;
+    if (_reqLocation->bodySize < _fullBody.size()) {
+        if (!_reqLocation->root.empty())
+            findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
+        else
+            findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
+        std::cout << "error body is higher that client max body size" << std::endl;
+        return ;
+    }
+
+    std::map<std::string, std::string>::iterator it = _headers.find("content-length");
+    if (it == _headers.end()) {
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        } else {
+            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+        }
+        std::cout << "error no content length but existing body" << std::endl;
+        return ;
+    } else if (it != _headers.end()) {
+
+        std::cout << "CONTENT LENGTH = " << it->second << std::endl;
+
+        std::stringstream ss(it->second);
+        double contentLength = 0;
+        ss >> contentLength;
+
+        if (ss.fail()) {
+            if (!_reqLocation->root.empty()) { 
+                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            }
+            std::cout << "error  while converting content len" << std::endl;
+            return ;
+        }
+
+        double bodySize = static_cast<double>(_fullBody.size());
+        std::cout << "COMPARING body size = " << bodySize << " and content length = " << contentLength << std::endl;
+        if (bodySize == contentLength) {
+            _remainingBody = false;
+            return ;
+        } else if (bodySize > contentLength) {
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            }
+            std::cout << "error  content length is not equal to existing body size" << std::endl;
+            return ;
+        }
+
+    }
 }
 

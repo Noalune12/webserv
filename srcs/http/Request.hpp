@@ -96,6 +96,7 @@ class Request {
         std::string _fullBody;
         bool _multipartRemaining;
         std::vector<FilesPost> _uplaodFiles;
+        bool _remainingBody;
 
         // PARSING
         void checkRequestSem(std::string request);
@@ -111,6 +112,7 @@ class Request {
         void findServer();
         void findLocation();
         bool bodyChecker();
+        void parseBody();
 
         // MULTIPART
         void checkMultipart(std::string content);
