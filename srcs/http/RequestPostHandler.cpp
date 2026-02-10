@@ -89,7 +89,7 @@ void Request::methodPostHandler() {
 
             }
         }
-        if (_failedUpload == _totalUpload) {
+        if (_totalUpload != 0 && _failedUpload == _totalUpload) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
@@ -98,9 +98,12 @@ void Request::methodPostHandler() {
             std::cout << "error nothing uploaded for multipart" << std::endl;
             return ;
 
-        } else if (_failedUpload == 0) {
+        } else if (_failedUpload == 0 && _totalUpload != 0) {
             err = false;
             status = 201;
+        } else if (_failedUpload == 0 && _totalUpload == 0) {
+            err = false;
+            status = 200;
         } else {
             err = false;
             status = 206;
@@ -269,7 +272,7 @@ void Request::createFileName(std::string &filename) {
             if (index == std::string::npos || index != 0)
                 continue;
 
-            std::string temp = n.substr(7);
+            std::string temp = n.substr(filename.size());
             
             index = temp.find(".");
             if (index != std::string::npos) {
