@@ -338,6 +338,8 @@ bool Request::bodyChecker() {
                 }
                 std::cout << "error  content length is not equal to existing body size" << std::endl;
                 return false;
+            } else if (bodySize == contentLength) {
+                _fullBody = _body;
             }
 
         }
