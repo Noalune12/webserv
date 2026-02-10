@@ -248,13 +248,14 @@ bool Request::bodyChecker() {
             parseChunk();
         // }
 
-    } else if (it == _headers.end()) {
+    }
+    // elseif (it == _headers.end()) {
 
         // check if multipart
         it = _headers.find("content-type");
         if (it != _headers.end()) {
             checkMultipart(it->second);
-            if (_isMultipart) {
+            if (_isMultipart && !chunkRemaining) {
                 std::cout << "\nMULTIPART PARSING" << std::endl;
                 _multipartState = GETTING_FIRST_BOUNDARY;
                 // _fullBody = _body;
@@ -267,7 +268,11 @@ bool Request::bodyChecker() {
             } else {
                 std::transform(it->second.begin(), it->second.end(), it->second.begin(), ::tolower);
             }
-        }
+
+        // }
+
+        if (_isChunked)
+            return true;
 
 
         if (_reqLocation->bodySize < _body.size()) {

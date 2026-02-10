@@ -91,6 +91,12 @@ void Request::parseChunk() {
                 if (_chunkSize == 0 && _chunk == "\r\n") {
                     _chunkState = IS_END;
                     chunkRemaining = false;
+                    if (_isMultipart) {
+                        _multipartState = GETTING_FIRST_BOUNDARY;
+                        _fullBody = _body;
+                        _chunk = _body;
+                        parseMultipart();
+                    }
                     return ;
                 } else if (_chunkSize == 0) {
                     if (!_reqLocation->root.empty())
