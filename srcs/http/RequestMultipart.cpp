@@ -132,6 +132,19 @@ bool Request::parseMultipart() {
 
     
     while (_multipartState != IS_MULTI_END) {
+
+        if (_reqLocation->bodySize < _fullBody.size()) {
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
+            }
+            std::cout << "error body is higher that client max body size for multipart" << std::endl;
+            return false ;   
+        }
+
+
+
         if (_multipartState == IS_HEADERS) {
             // case sensitive, only Content-Disposition and Content-Type -> 400 invalid multipart header or ignore
             size_t index = _chunk.find("\r\n");
@@ -331,6 +344,37 @@ bool Request::parseMultipart() {
                 _multipartState = IS_MULTI_END;
                 _multipartRemaining = false;
                 _multipartContent.push_back(_multiTemp);
+
+                if (!_isChunked) {
+
+                    std::map<std::string, std::string>::iterator it = _headers.find("content-length");
+                    if (it == _headers.end()) {
+                        if (!_reqLocation->root.empty()) {
+                            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                        } else {
+                            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                        }
+                        std::cout << "error no content length but existing body for multipart" << std::endl;
+                        return false;
+                    } else {
+                        std::cout << "CONTENT LENGTH = " << it->second << "vs full body size = " << _fullBody.size() << std::endl;
+                        std::stringstream ss;
+                        ss << _fullBody.size();
+                        std::string bodySize = ss.str();
+                        std::cout << "BODY SIZE = " << bodySize << std::endl;
+                        if (it->second != bodySize) {
+                            if (!_reqLocation->root.empty()) {
+                                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                            } else {
+                                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                            }
+                            std::cout << "error  content length is not equal to existing body size for multipart" << std::endl;
+                            return false;
+                        }
+                    }
+                }
+
+
                 continue ;
             }
             std::cout << "waiting for final or intermediate boundary" << std::endl;

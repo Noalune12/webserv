@@ -257,6 +257,19 @@ bool Request::bodyChecker() {
             checkMultipart(it->second);
             if (_isMultipart && !chunkRemaining) {
                 std::cout << "\nMULTIPART PARSING" << std::endl;
+
+                // check content len
+                it = _headers.find("content-length");
+                if (it == _headers.end()) {
+                    if (!_reqLocation->root.empty()) {
+                        findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    } else {
+                        findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                    }
+                    std::cout << "error no content length but existing body for multipart" << std::endl;
+                    return false;
+                }
+
                 _multipartState = GETTING_FIRST_BOUNDARY;
                 // _fullBody = _body;
                 _chunk = _body;

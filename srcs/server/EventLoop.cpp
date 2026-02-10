@@ -245,6 +245,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 			return ;
 		}
 		client._request._chunk += client.getChunkBuffer();
+		client._request._fullBody += client.getChunkBuffer();
 		client.clearChunkBuffer();
 		client.startTimer(2, CLIENT_TIMEOUT - 2);
 	}
