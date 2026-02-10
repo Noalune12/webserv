@@ -131,14 +131,14 @@ void Request::methodPostHandler() {
                 return ;
             }
 
-            size_t		lastSlash = it->second.find_last_of('/');
-            _postExt = ".";
-            if (lastSlash != std::string::npos) {
-                _postExt += it->second.substr(lastSlash + 1);
-            } else {
-                _postExt = ".txt";
+            // size_t		lastSlash = it->second.find_last_of('/');
+            _postExt = MimeTypes::getExtensionFromType(it->second);
+            // if (lastSlash != std::string::npos) {
+            //     _postExt += it->second.substr(lastSlash + 1);
+            // } else {
+            //     _postExt = ".txt";
                 
-            }
+            // }
             
         }
         std::cout << "EXTENSION = " << _postExt << std::endl;
@@ -157,7 +157,7 @@ void Request::methodPostHandler() {
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
 
-        outfile << _body;
+        outfile << _fullBody;
 
         outfile.close();
         
