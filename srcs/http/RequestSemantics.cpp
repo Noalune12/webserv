@@ -49,7 +49,7 @@ bool Request::extractRequestInfo() {
 
     index = _req.find("\r\n\r\n");
     if (index == std::string::npos || index == 0) {
-        findErrorPage(400, "/", _globalDir.errPage);
+        findErrorPage(414, "/", _globalDir.errPage); // double check on that
         std::cout << "error no header or final WS" << std::endl;
         return false;
     }
