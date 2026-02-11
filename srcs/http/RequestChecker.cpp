@@ -321,7 +321,7 @@ std::cout << "\nChecking multipart" << std::endl;
             ss >> contentLength;
 
             if (ss.fail()) {
-                if (!_reqLocation->root.empty()) { 
+                if (!_reqLocation->root.empty()) {
                     findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
                 } else {
                     findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
@@ -347,12 +347,12 @@ std::cout << "\nChecking multipart" << std::endl;
             }
 
         }
-    
+
     return true;
 }
 
 void Request::parseBody() {
-    std::cout << "FULL BODY = " << _fullBody << std::endl;
+    // std::cout << "FULL BODY = " << _fullBody << std::endl;
     if (_reqLocation->bodySize < _fullBody.size()) {
         if (!_reqLocation->root.empty())
             findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
@@ -380,7 +380,7 @@ void Request::parseBody() {
         ss >> contentLength;
 
         if (ss.fail()) {
-            if (!_reqLocation->root.empty()) { 
+            if (!_reqLocation->root.empty()) {
                 findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
             } else {
                 findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
@@ -406,4 +406,3 @@ void Request::parseBody() {
 
     }
 }
-

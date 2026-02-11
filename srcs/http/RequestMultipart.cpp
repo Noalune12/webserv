@@ -6,27 +6,27 @@
 #include "colors.hpp"
 
 void Request::checkMultipart(std::string content) {
-    std::cout << "\nCHECK MULTIPART : " << content << std::endl;
+    // std::cout << "\nCHECK MULTIPART : " << content << std::endl;
     size_t index = content.find(";");
     std::string type, boundary;
     if (index == std::string::npos)
         return ;
-    else { 
+    else {
         type = content.substr(0, index);
         boundary = content.substr(index + 1);
         boundary = trimOws(boundary);
-        std::cout << type << " with boundary \'" << boundary << "\'" << std::endl;
+        // std::cout << type << " with boundary \'" << boundary << "\'" << std::endl;
         index = boundary.find("=");
         if (index == 8) {
             std::string b = boundary.substr(0, 9);
             std::transform(b.begin(), b.end(), b.begin(), ::tolower);
-            std::cout << "B = " << b << std::endl;
+            // std::cout << "B = " << b << std::endl;
             if (b != "boundary=") {
                 // eroor ?
                 return;
             }
             boundary = boundary.substr(9);
-            std::cout << "BOUNDARY IS = " << boundary << std::endl;
+            // std::cout << "BOUNDARY IS = " << boundary << std::endl;
             if (boundary.empty() || boundary.size() > 70) {
                 // error ?
                 return;
@@ -87,7 +87,7 @@ bool Request::parseMultipart() {
 
     // _fullBody += _chunk;
     std::cout << RED "\nENTERING MULTIPART\n\n" RESET;
-    
+
     // std::cout << "CHUNK = " << _chunk << std::endl << std::endl;
     // std::string finalBoundary = "\r\n--" + _multipartBoundary + "--";
     // size_t endIndex = _chunk.find(finalBoundary);
@@ -96,8 +96,8 @@ bool Request::parseMultipart() {
     //     _chunk = _chunk.substr(endIndex + finalBoundary.size());
     //     // printRNPositions(_chunk);
     //     _chunk = trimFirstCRLF(_chunk);
-    //     std::cout << "B IS \'" << b << "\'" << std::endl; 
-    //     std::cout << "REMAINING BODY IS \'" << _chunk << "\'" << std::endl; 
+    //     std::cout << "B IS \'" << b << "\'" << std::endl;
+    //     std::cout << "REMAINING BODY IS \'" << _chunk << "\'" << std::endl;
     //     if (!_chunk.empty()) {
     //         findErrorPage(400, "/", _globalDir.errPage);
     //         std::cout << "error remaining body after end boundary" << std::endl;
@@ -130,7 +130,7 @@ bool Request::parseMultipart() {
         }
     }
 
-    
+
     while (_multipartState != IS_MULTI_END) {
 
         if (_reqLocation->bodySize < _fullBody.size()) {
@@ -140,7 +140,7 @@ bool Request::parseMultipart() {
                 findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error body is higher that client max body size for multipart" << std::endl;
-            return false ;   
+            return false ;
         }
 
 
@@ -233,7 +233,7 @@ bool Request::parseMultipart() {
                                 std::cout << "error with multipart  Content Type extension not same as filename" << std::endl;
                                 return false;
                             }
-                        } 
+                        }
                     } else if (it == _multiTemp.headers.end() && _multiTemp.filename.empty()) { // no content type and no filename --> 400
                             findErrorPage(400, "/", _globalDir.errPage); // host identified
                             std::cout << "error with multipart  no content type and no filename" << std::endl;
@@ -280,9 +280,9 @@ bool Request::parseMultipart() {
                     std::cout << "error with multiparts headers invalid" << std::endl;
                     return false;
                 }
-                
+
                 std::string content = header.substr(index + 1);
-                
+
                 if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
                     std::cout << "CONTENT = \'" << content << "\'" << std::endl;
                     findErrorPage(400, "/", _globalDir.errPage);
@@ -291,11 +291,11 @@ bool Request::parseMultipart() {
                 }
                 content = trimOws(content);
                 std::cout << "HEADER CONTENT " << content << std::endl;
-                if ((name == "Content-Disposition" && _multiTemp.headers.find("Content-Disposition") != _multiTemp.headers.end()) 
+                if ((name == "Content-Disposition" && _multiTemp.headers.find("Content-Disposition") != _multiTemp.headers.end())
                         || (name == "Content-Type" && _multiTemp.headers.find("Content-Type") != _multiTemp.headers.end())) {
                     findErrorPage(400, "/", _globalDir.errPage); // host identified
                     std::cout << "error with duplicate multipart headers : " << name << std::endl;
-                    return false;  
+                    return false;
                 }
                 if (((name == "Content-Disposition") && content.empty())
                         || ((name == "Content-Type") && content.empty())) {
@@ -309,12 +309,12 @@ bool Request::parseMultipart() {
             }
         }
         if (_multipartState == IS_BODY) {
-            std::cout  << "IS BODY = " << _chunk << std::endl;
+            // std::cout  << "IS BODY = " << _chunk << std::endl;
             std::string interBoundary = "\r\n--" + _multipartBoundary + "\r\n";
             size_t index = _chunk.find(interBoundary);
             if (index != std::string::npos) {
                 std::string b = _chunk.substr(0, index);
-                std::cout << "BODY B IS = " << b << std::endl;
+                // std::cout << "BODY B IS = " << b << std::endl;
                 _chunk = _chunk.substr(index + interBoundary.size());
                 _multiTemp.body = b;
                 _multipartState = IS_HEADERS;
@@ -332,8 +332,8 @@ bool Request::parseMultipart() {
                 _chunk = _chunk.substr(endIndex + finalBoundary.size());
                 // printRNPositions(_chunk);
                 _chunk = trimFirstCRLF(_chunk);
-                std::cout << "B IS \'" << b << "\'" << std::endl; 
-                std::cout << "REMAINING BODY IS \'" << _chunk << "\'" << std::endl; 
+                // std::cout << "B IS \'" << b << "\'" << std::endl;
+                // std::cout << "REMAINING BODY IS \'" << _chunk << "\'" << std::endl;
                 if (!_chunk.empty()) {
                     findErrorPage(400, "/", _globalDir.errPage);
                     std::cout << "error remaining body after end boundary" << std::endl;
@@ -357,11 +357,11 @@ bool Request::parseMultipart() {
                         std::cout << "error no content length but existing body for multipart" << std::endl;
                         return false;
                     } else {
-                        std::cout << "CONTENT LENGTH = " << it->second << "vs full body size = " << _fullBody.size() << std::endl;
+                        // std::cout << "CONTENT LENGTH = " << it->second << "vs full body size = " << _fullBody.size() << std::endl;
                         std::stringstream ss;
                         ss << _fullBody.size();
                         std::string bodySize = ss.str();
-                        std::cout << "BODY SIZE = " << bodySize << std::endl;
+                        // std::cout << "BODY SIZE = " << bodySize << std::endl;
                         if (it->second != bodySize) {
                             if (!_reqLocation->root.empty()) {
                                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
