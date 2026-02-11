@@ -77,12 +77,11 @@ class Connection {
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
 		bool				_keepAlive;
 		std::string			_chunkBuffer;
-		// bool				_chunked;
 
 		std::vector<server>	_servers;
 
-		std::string _serverIP;
-		int			_serverPort;
+		std::string 		_serverIP;
+		int					_serverPort;
 
 	public:
 		Connection(); // cannot compile without it
@@ -108,11 +107,9 @@ class Connection {
 		void				clearChunkBuffer();
 		void				clearBuffer();
 
-		void parseRequest();
-		// bool				err;
-		// int					status;
+		void 				parseRequest();
+
 		Request				_request;
-		// std::string			htmlPage;
 		CGIContext			_cgi;
 };
 
