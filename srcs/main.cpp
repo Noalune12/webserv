@@ -36,6 +36,11 @@ int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
 
+	if (ac > 2) {
+		std::cerr << "error message for too many arguments, cerr or logging it like nginx ?" << std::endl;
+		return (EXIT_FAILURE);
+	}
+
 	try
 	{
 		Logger::notice("loading configuration file from " + configFile);
