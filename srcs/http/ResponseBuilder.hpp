@@ -25,7 +25,6 @@ class ResponseBuilder {
 
 		void	initializeResponse(Response& resp, const Request& req);
 
-		void	setBodyFromBody(Response& resp, const Request& req);
 		void	setBodyFromFile(Response& resp, const Request& req);
 		void	setBodyFromError(Response& resp, int statusCode, const Request& req);
 
