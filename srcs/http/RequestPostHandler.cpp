@@ -239,6 +239,7 @@ bool Request::checkFilename(std::string &filename) {
             continue;
         if (n == filename) {
             std::cout << "has same filename" << std::endl;
+            closedir(dir);
             return false;
         }
     }

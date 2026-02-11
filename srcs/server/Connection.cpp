@@ -134,12 +134,5 @@ void Connection::parseRequest() {
 		return ;
 	_request.checkRequestContent();
 
-	std::cout << _request.err << " &&&&& " << _request.status << std::endl;
 	_buffer.clear();
-	if (_request._keepAlive == true)
-        std::cout << "keep alive is true" << std::endl;
-    else
-        std::cout << "no keep alive" << std::endl;
-
-
 }

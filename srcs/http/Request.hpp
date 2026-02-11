@@ -88,6 +88,11 @@ class Request {
         void checkMultipart(std::string content);
         bool isMultipartCarac(std::string &boundary);
         bool getChunkSize();
+        bool handleMultipartHeader();
+        bool checkMultipartHeader();
+        bool checkContentDisposition(const std::string& content);
+        bool checkContentType(const std::string& content);
+        bool checkLastBoundary(int endIndex, const std::string &finalBoundary);
 
         // HANDLER
         void methodGetHandler();

@@ -374,7 +374,7 @@ void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 
 size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
-	char	buffer[20];
+	char	buffer[4096];
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {
@@ -383,7 +383,6 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
 	if (bytesRead > 0) {
 		if (client.getState() == READING_BODY) {
-			// buffer[bytesRead] = '\0';
 			std::string chunk(buffer, bytesRead);
 			std::cout << "CHUNK BUFFER WHEN READING BODY = " << buffer << std::endl;
 			client.setChunkBuffer(chunk);
