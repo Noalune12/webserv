@@ -29,10 +29,9 @@ Response	ResponseBuilder::buildFromRequest(const Request& req) {
 		setAllow(resp, req);
 	}
 
-	if (req.status == 201) {
+	if (req.status == 201 || (req._method == "POST" && req.status == 200)) {
 		setLocation(resp, req);
 		setStatus(resp, req.status);
-		setBodyFromBody(resp, req);
 		return (resp);
 	}
 
@@ -92,11 +91,6 @@ void	ResponseBuilder::initializeResponse(Response& resp, const Request& req) {
 	resp._bytesSent = 0;
 
 	setCommonHeaders(resp, req._keepAlive);
-}
-
-void	ResponseBuilder::setBodyFromBody(Response& resp, const Request& req) {
-	resp._body.assign(req._body.begin(), req._body.end());
-	setContentType(resp, req._trailing);
 }
 
 void	ResponseBuilder::setBodyFromFile(Response& resp, const Request& req) {
