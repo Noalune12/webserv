@@ -320,7 +320,6 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		closeConnection(clientFd);
 		return ;
 	}
-
 	Logger::accessLog(client.getIP(), client._request._method, client._request._uri, "HTTP/1.1", response._statusCode, response._body.size());
 
 	if (!client._request._keepAlive) {
@@ -329,7 +328,8 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		transitionToIDLE(client, clientFd);
 		// client.clearBuffer();
 	}
-	
+	std::cerr << "\n\n\nHERRRRE\n\n\n" << std::endl;
+	std::cerr << response._bytesSent << std::endl;
 }
 
 void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
