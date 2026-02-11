@@ -11,14 +11,14 @@
 
 
 void Request::methodPostHandler() {
-    std::cout << "\nENTERING POST HANDLER" << std::endl; 
+    std::cout << "\nENTERING POST HANDLER" << std::endl;
     if (_body.empty() && _isMultipart == false) {
         if (!_reqLocation->root.empty())
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         std::cout << "error with POST, no body" << std::endl;
-        return ;   
+        return ;
     }
     if (!_trailing.empty()) {
         if (!_reqLocation->root.empty())
@@ -26,7 +26,7 @@ void Request::methodPostHandler() {
         else
             findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
         std::cout << "error with POST, trailing after location not handled --> NOT SURE" << std::endl;
-        return ;   
+        return ;
     }
 
     //if multipart --> loop on vector
@@ -93,7 +93,7 @@ void Request::methodPostHandler() {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);                
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error nothing uploaded for multipart" << std::endl;
             return ;
@@ -103,7 +103,7 @@ void Request::methodPostHandler() {
             status = 201;
         } else {
             err = false;
-            status = 206;
+            status = 200;
         }
     } else {
 
@@ -113,7 +113,7 @@ void Request::methodPostHandler() {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);                
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error content type required for POST" << std::endl;
             return ;
@@ -125,7 +125,7 @@ void Request::methodPostHandler() {
                 if (!_reqLocation->root.empty()) {
                     findErrorPage(415, _reqLocation->root, _reqLocation->errPage);
                 } else {
-                    findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);                
+                    findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
                 }
                 std::cout << "error type is not supported" << std::endl;
                 return ;
@@ -137,9 +137,9 @@ void Request::methodPostHandler() {
             //     _postExt += it->second.substr(lastSlash + 1);
             // } else {
             //     _postExt = ".txt";
-                
+
             // }
-            
+
         }
         std::cout << "EXTENSION = " << _postExt << std::endl;
 
@@ -152,7 +152,7 @@ void Request::methodPostHandler() {
 
 
         std::cout << "FILENAME = " << _postFilename << "  in directory = " << _postUploadDir << std::endl;
-        
+
         // put body into file
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
@@ -160,7 +160,7 @@ void Request::methodPostHandler() {
         outfile << _fullBody;
 
         outfile.close();
-        
+
         err = false;
         status = 201;
         FilesPost temp;
@@ -176,7 +176,7 @@ void Request::methodPostHandler() {
 
 bool Request::findUploadDir() {
     // find location
-    
+
     if (_reqLocation->uploadTo.empty()) {
         if (!_reqLocation->root.empty())
             _postUploadDir = _reqLocation->root + _uri; // check /////
@@ -185,7 +185,7 @@ bool Request::findUploadDir() {
     } else {
         _postUploadDir = _reqLocation->uploadTo;
     }
-    if (_postUploadDir[0] == '/') 
+    if (_postUploadDir[0] == '/')
         _postUploadDir = _postUploadDir.substr(1, _postUploadDir.size());
     std::cout << "UPLOAD TO " << _postUploadDir << std::endl;
     // check rights
@@ -196,7 +196,7 @@ bool Request::findUploadDir() {
             findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
         }
         else {
-            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
         }
         std::cout << "error with POST folder does not exist" << std::endl;
         return false;
@@ -207,7 +207,7 @@ bool Request::findUploadDir() {
         else
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         std::cout << "error with POST, upload to is not a folder" << std::endl;
-        return false;  
+        return false;
     }
     if (access(_postUploadDir.c_str(), W_OK | X_OK) != 0) {
         if (!_reqLocation->root.empty())
@@ -215,7 +215,7 @@ bool Request::findUploadDir() {
         else
             findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
         std::cout << "error with POST, no right on folder" << std::endl;
-        return false;  
+        return false;
     }
 
     if (_postUploadDir[_postUploadDir.size() - 1] != '/') {
@@ -270,7 +270,7 @@ void Request::createFileName(std::string &filename) {
                 continue;
 
             std::string temp = n.substr(7);
-            
+
             index = temp.find(".");
             if (index != std::string::npos) {
                 temp = temp.substr(0, index);
