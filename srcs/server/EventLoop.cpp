@@ -319,7 +319,9 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		closeConnection(clientFd);
 	} else {
 		transitionToIDLE(client, clientFd);
+		// client.clearBuffer();
 	}
+	
 }
 
 void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {

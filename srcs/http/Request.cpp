@@ -57,6 +57,10 @@ void Request::clearPreviousRequest() {
     _failedUpload = 0;
     _totalUpload = 0;
     _remainingBody = false;
+    _multiTemp.headers.clear();
+    _multiTemp.body.clear();
+    _multiTemp.filename.clear();
+    _multiTemp.name.clear();
 }
 
 bool Request::hasWS(const std::string& line) const {

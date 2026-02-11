@@ -103,6 +103,7 @@ class Connection {
 		void				setChunkBuffer(std::string request);
 		
 		void				clearChunkBuffer();
+		void				clearBuffer();
 
 		void parseRequest();
 		// bool				err;

@@ -121,6 +121,11 @@ void	Connection::clearChunkBuffer() {
 	_chunkBuffer.clear();
 }
 
+void Connection::clearBuffer() {
+	_buffer.clear();
+}
+
+
 void Connection::parseRequest() {
 	_request.clearPreviousRequest();
 	_request.setServerInfo(_serverPort, _serverIP);
