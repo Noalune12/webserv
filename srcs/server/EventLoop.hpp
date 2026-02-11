@@ -6,7 +6,6 @@
 # include "CGIExecutor.hpp"
 # include "Connection.hpp"
 # include "ResponseBuilder.hpp"
-# include "ResponseSender.hpp"
 # include "ServerManager.hpp"
 
 # define PROXY_AUTH_REQ 407
@@ -26,7 +25,6 @@ class EventLoop {
 
 		CGIExecutor     _cgiExecutor;
 		ResponseBuilder _responseBuilder;
-		ResponseSender  _responseSender;
 
 	public:
 		EventLoop(ServerManager& serverManager);

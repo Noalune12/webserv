@@ -16,7 +16,7 @@ class Response {
 		void	prepare(const Request& req);
 		void	prepareCGI(const std::string& cgiOutput, const Request& req);
 
-		std::vector<char>	buildRaw(void);
+		std::vector<char>	prepareRawData(void);
 
 		// data public for now
 		int									_statusCode;

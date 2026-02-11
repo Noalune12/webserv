@@ -134,30 +134,27 @@ void	Response::prepareCGI(const std::string& cgiOutput, const Request& req) {
 	}
 }
 
-std::vector<char>	Response::buildRaw(void) {
+std::vector<char>	Response::prepareRawData(void) {
 
 	std::ostringstream	oss;
 	oss << "HTTP/1.1 " << _statusCode << " " << _statusText << "\r\n";
 
-	std::ostringstream lenOss;
+	std::ostringstream	lenOss;
 	lenOss << _body.size();
 	_headers["Content-Length"] = lenOss.str();
 
-	std::map<std::string, std::string>::const_iterator it;
+	std::map<std::string, std::string>::const_iterator	it;
 	for (it = _headers.begin(); it != _headers.end(); ++it) {
 		oss << it->first << ": " << it->second << "\r\n";
 	}
-	oss << "\r\n"; // last CRLF (double \r\n)
+	oss << "\r\n";
 
-	std::string	headerStr = oss.str();
-	std::vector<char>	result;
+	std::string			headerStr = oss.str();
+	std::vector<char>	res;
 
-	result.reserve(headerStr.size() + _body.size());
+	res.reserve(headerStr.size() + _body.size());
+	res.insert(res.end(), headerStr.begin(), headerStr.end());
+	res.insert(res.end(), _body.begin(), _body.end());
 
-	// headers
-	result.insert(result.end(), headerStr.begin(), headerStr.end());
-	// body
-	result.insert(result.end(), _body.begin(), _body.end());
-
-	return (result);
+	return (res);
 }

@@ -60,7 +60,6 @@ override HTTPSRC	:= \
 	RequestSemantics \
 	Response \
 	ResponseBuilder \
-	ResponseSender \
 	StatusCodes \
 	RequestGetHandler \
 	RequestDeleteHandler \

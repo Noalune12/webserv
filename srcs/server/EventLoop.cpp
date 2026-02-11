@@ -15,7 +15,7 @@
 #include "EventLoop.hpp"
 #include "Logger.hpp"
 
-EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor(), _responseBuilder(), _responseSender() {}
+EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor(), _responseBuilder() {}
 
 EventLoop::~EventLoop() {
 
@@ -314,7 +314,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 			response = _responseBuilder.buildFromRequest(client._request);
 		}
 
-		client._sendBuffer = _responseSender.prepareRawData(response);
+		client._sendBuffer = response.prepareRawData();
 		client._sendOffset = 0;
 
 		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response._statusCode, response._body.size());
