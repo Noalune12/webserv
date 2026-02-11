@@ -33,8 +33,12 @@ std::string	getReasonPhrase(int code) {
 			return "Method Not Allowed";
 		case 408:
 			return "Request Timeout";
+		case 411:
+			return "Length Required";
 		case 413:
 			return "Content Too Large";
+		case 415:
+			return "Unsupported Media Type";
 
 		case 500:
 			return "Internal Server Error";

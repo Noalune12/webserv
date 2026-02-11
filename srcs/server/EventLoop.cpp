@@ -271,14 +271,12 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 		client._request.methodHandler();
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
-		// std::cout << "FULL BODY = " << client._request._fullBody << std::endl;
 	} else if (client._request._cgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 	}
 	else if ((!client._request.chunkRemaining && !client._request._multipartRemaining && !client._request._remainingBody) || client._request.err) {
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
-		// std::cout << "FULL BODY = " << client._request._fullBody << std::endl;
 	}
 }
 
