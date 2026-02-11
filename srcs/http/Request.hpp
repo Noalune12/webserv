@@ -84,6 +84,7 @@ class Request {
         
         // BODY PARSING
         bool bodyChecker();
+        bool checkChunked();
         void checkMultipart(std::string content);
         bool isMultipartCarac(std::string &boundary);
         bool getChunkSize();
@@ -152,7 +153,9 @@ class Request {
         bool isCRLF(std::string request);
         void checkRequestSem(std::string request);
         void checkRequestContent();
-        void parseBody();
+        // void parseBody();
+        bool checkBodySize(const std::string &body);
+
 
         // MULTIPART
         bool parseMultipart();

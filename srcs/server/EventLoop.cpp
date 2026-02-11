@@ -264,7 +264,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	else if (client._request._isMultipart)
 		client._request.parseMultipart();
 	else if (client._request._remainingBody)
-		client._request.parseBody();
+		client._request.checkBodySize(client._request._fullBody);
 
 	if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return \
 		&& !client._request._multipartRemaining && !client._request._remainingBody) {
@@ -374,7 +374,7 @@ void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 
 size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
-	char	buffer[4096];
+	char	buffer[20];
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {

@@ -38,8 +38,6 @@ void Tokenizer::tokenize(const std::string& fileContent) {
 
         if (index != std::string::npos) {
             _context.push_back(Utils::handleContext(f, content));
-            // std::cout << "CONTENT AFTER END CONTEXT : " << content << std::endl;
-            // content.clear();
         }
     }
     if (!content.empty()) {
