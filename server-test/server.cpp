@@ -1,10 +1,10 @@
 #include "TcpServer.hpp"
 #include <iostream>
-#include "colors.h"
+#include "colors.hpp"
 
 int main() {
     try {
-        TcpServer server("127.0.0.1", 8080);
+        TcpServer server("127.0.0.1", 7000);
         std::cout << GREEN "\nWelcome to my server" RESET << std::endl;
         std::cout << "Listening on port: " << RED << server.getPort() << RESET << std::endl;
         server.acceptClient();

@@ -1,0 +1,75 @@
+name: Automated API tests using Postman CLI (Standalone)
+
+on:
+  pull_request:
+    branches:
+      - '*'
+  workflow_dispatch:
+
+jobs:
+  automated-api-tests:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Build webserv
+        run: make
+
+      - name: Make executable
+        run: chmod +x ./webserv
+
+      - name: Install Postman CLI
+        run: |
+          curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Login Postman
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Start webserv
+        run: |
+          ./webserv config-files/valid/postman-test.conf &
+          echo $! > server.pid
+
+      - name: Wait for server to be ready
+        run: |
+          echo "Waiting for server to start..."
+          sleep 3
+
+      - name: Run Postman tests
+        id: tests
+        continue-on-error: true
+        run: |
+          postman collection run "52021088-71de474d-a92c-437b-99d7-5cc6eee513a8" \
+            -e "52021088-580ece52-37d3-4dd2-9ca1-a242d70d68b0" \
+            -r cli,json --reporter-json-export report.json
+
+      - name: Show detailed results
+        if: always()
+        run: |
+          echo "=== Test Summary ==="
+          jq '.run.stats' report.json
+          echo ""
+          echo "=== Failed Tests ==="
+          jq '.run.executions[] | select(.assertions[]?.error) | {name: .item.name, errors: [.assertions[] | select(.error) | .error.message]}' report.json
+
+      - name: Log summary
+        if: always()
+        run: |
+          if [ -f report.json ]; then
+            echo "Passed: $(jq '.run.stats.assertions.passed' report.json)/$(jq '.run.stats.assertions.total' report.json)"
+          else
+            echo "No report generated"
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || true
+          fi

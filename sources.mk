@@ -5,8 +5,9 @@ override SUBD_TESTDIR	:= subdirectory_test/
 
 
 override CGIDIR			:= cgi/
-override HTTPDIR		:= http/
 override CONFIGDIR		:= config/
+override HTTPDIR		:= http/
+override LOGGERDIR		:= logger/
 override INHERITORDIR	:= $(CONFIGDIR)inheritor/
 override LEXERDIR		:= $(CONFIGDIR)lexer/
 override READERDIR		:= $(CONFIGDIR)reader/
@@ -16,21 +17,20 @@ override SERVERDIR		:= server/
 
 override SUBDIRS := \
 	$(CGIDIR) \
-	$(HTTPDIR) \
 	$(CONFIGDIR) \
+	$(HTTPDIR) \
 	$(INHERITORDIR) \
 	$(LEXERDIR) \
+	$(LOGGERDIR) \
 	$(READERDIR) \
-	$(VALIDATORDIR) \
-	$(SERVERDIR)
+	$(SERVERDIR) \
+	$(VALIDATORDIR)
 
 
 SRC	+= $(addsuffix .cpp, $(MAIN))
 
 override MAIN			:= \
 	main
-
-
 
 
 SRC += $(addprefix $(SUBD_TESTDIR), $(addsuffix .cpp, $(SUBD_TESTSRC)))
@@ -43,7 +43,29 @@ override SUBD_TESTSRC			:= \
 SRC += $(addprefix $(SERVERDIR), $(addsuffix .cpp, $(SERVERSRC)))
 
 override SERVERSRC	:= \
-	Server
+	Connection \
+	EpollUtils \
+	EventLoop \
+	EventLoopTimeout \
+	EventLoopUtils \
+	ServerManager
+
+SRC += $(addprefix $(HTTPDIR), $(addsuffix .cpp, $(HTTPSRC)))
+
+override HTTPSRC	:= \
+	MimeTypes \
+	Request \
+	RequestChecker \
+	RequestChunkHandler \
+	RequestSemantics \
+	Response \
+	ResponseBuilder \
+	ResponseSender \
+	StatusCodes \
+	RequestGetHandler \
+	RequestDeleteHandler \
+	RequestPostHandler \
+	RequestMultipart
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
@@ -51,6 +73,10 @@ override CONFIGSRC	:= \
 	Config \
 	Utils
 
+SRC += $(addprefix $(LOGGERDIR), $(addsuffix .cpp, $(LOGGERSRC)))
+
+override LOGGERSRC	:= \
+	Logger
 
 SRC += $(addprefix $(READERDIR), $(addsuffix .cpp, $(READERSRC)))
 
@@ -72,3 +98,11 @@ SRC += $(addprefix $(INHERITORDIR), $(addsuffix .cpp, $(INHERITORSRC)))
 
 override INHERITORSRC	:= \
 	ConfigInheritor
+
+SRC += $(addprefix $(CGIDIR), $(addsuffix .cpp, $(CGISRC)))
+
+override CGISRC	:= \
+	CGIEnvironment \
+	CGIExecutor \
+	CGIUtils \
+	CGIVerification

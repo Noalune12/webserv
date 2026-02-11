@@ -43,5 +43,17 @@
 .build/
 .obj/
 webserv
+servertest
 .vscode
 *.log
+
+out
+usr/*
+*.html
+
+.gitignore
+
+config-files
+*.conf
+default.conf
+upload*

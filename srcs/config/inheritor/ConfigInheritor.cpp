@@ -1,19 +1,19 @@
 #include "ConfigInheritor.hpp"
 #include "rules.h"
-#include <colors.h>
 
 #include <algorithm>
+#include "colors.hpp"
 #include <iostream>
 #include <sstream>
 
-ConfigInheritor::ConfigInheritor() {};
+ConfigInheritor::ConfigInheritor() {}
 
-ConfigInheritor::~ConfigInheritor() {};
+ConfigInheritor::~ConfigInheritor() {}
 
 void ConfigInheritor::inherit(Tokenizer& tokens) {
     getGlobalDir(tokens.getGlobalDirective());
     getServer(tokens.getVectorContext());
-    printContent();
+    // printContent();
 }
 
 
@@ -108,7 +108,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(RETURN));
         if (it == directives.end()) {
-            temp.ret[0] = "";
+            // temp.ret[0] = "";
         } else {
             setReturn(it, temp);
         }
@@ -122,7 +122,7 @@ void ConfigInheritor::getServer(std::vector<Context> context) {
 
         it = std::find_if(directives.begin(), directives.end(), MatchFirst(LISTEN));
         if (it == directives.end()) {
-            listen lisTemp;
+            listenDirective lisTemp;
             lisTemp.ip = "0.0.0.0";
             lisTemp.port = 8080;
             temp.lis.push_back(lisTemp);
@@ -227,7 +227,7 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
             getReturnFromServer(server, temp);
         } else {
             setReturn(it, temp);
-            getReturnFromServer(server, temp);
+            // getReturnFromServer(server, temp);
         }
 
         server.loc.push_back(temp);
@@ -255,13 +255,15 @@ void ConfigInheritor::getErrPageFromServer(server& server, location& location) {
 }
 
 void ConfigInheritor::getReturnFromServer(server& server, location& location) {
-    std::map<int, std::string>::iterator it = server.ret.begin();
+    // std::map<int, std::string>::iterator it = server.ret.begin();
 
-    for (; it != server.ret.end(); it++) {
-        if (location.ret.find(it->first) ==  location.ret.end()) {
-            location.ret[it->first] = it->second;
-        }
-    }
+    // for (; it != server.ret.end(); it++) {
+    //     if (location.ret.find(it->first) ==  location.ret.end()) {
+    //         location.ret[it->first] = it->second;
+    //     }
+    // }
+    location.returnPath = server.returnPath;
+    location.returnStatus = server.returnStatus;
 }
 
 void ConfigInheritor::setMethods(PairVector::iterator& it, allowMeth& methods) {
@@ -316,8 +318,9 @@ void ConfigInheritor::setBodySize(PairVector::iterator& it, T& t) {
         iss >> t.bodySize;
         char suffix = arg[arg.size() - 2];
         switch (std::toupper(suffix)) { // overflow ?
-            case 'M': t.bodySize *= 1000; break;
-            case 'G': t.bodySize *= 1000000; break;
+            case 'K': t.bodySize *= 1000; break;
+            case 'M': t.bodySize *= 1000000; break;
+            case 'G': t.bodySize *= 1000000000; break;
         }
 }
 
@@ -341,7 +344,10 @@ void ConfigInheritor::setReturn(PairVector::iterator& it, T& t) {
         if (*itArg == " ")
             continue;
         if (itArg->find(';') != std::string::npos) {
-            t.ret[value] = (*itArg).substr(0, (*itArg).size() - 1);
+            // t.ret[value] = (*itArg).substr(0, (*itArg).size() - 1);
+            t.returnStatus = value;
+            t.returnPath = (*itArg).substr(0, (*itArg).size() - 1);
+            break ;
         } else {
             std::istringstream iss(*itArg);
             iss >> value;
@@ -370,7 +376,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
         else {
             size_t sepIndex;
             if ((sepIndex = (*itArg).find(":")) != std::string::npos) {
-                listen lisTemp;
+                listenDirective lisTemp;
 
                 lisTemp.ip = (*itArg).substr(0, sepIndex);
                 if (lisTemp.ip == "localhost")
@@ -385,7 +391,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
 
             } else {
                 if ((*itArg).find(".") != std::string::npos ||  (*itArg) == "localhost;" || (*itArg) == "*;") {
-                    listen lisTemp;
+                    listenDirective lisTemp;
                     lisTemp.ip = (*itArg).substr(0, (*itArg).size() - 1);
                     if (lisTemp.ip == "localhost")
                         lisTemp.ip = "127.0.0.1";
@@ -394,7 +400,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
                     lisTemp.port = 8080;
                     s.lis.push_back(lisTemp);
                 } else {
-                    listen lisTemp;
+                    listenDirective lisTemp;
                     std::istringstream iss(*itArg);
                     iss >> lisTemp.port;
                     lisTemp.ip = "0.0.0.0";
@@ -445,17 +451,17 @@ void ConfigInheritor::printContent() const {
         std::cout << std::endl;
         std::cout << "auto index : ";
         if (itt->autoIndex == true) {std::cout << "on" << std::endl;} else if (itt->autoIndex == false) {std::cout << "off" << std::endl;}
-        std::cout << "return : ";
-        it = itt->ret.begin();
-        for (; it != itt->ret.end(); it++) {
-            std::cout << it->first << " " << it->second << " -- ";
-        }
+        if (!itt->returnPath.empty()) {std::cout << "return : " << itt->returnStatus << ", " << itt->returnPath << std::endl;}
+        // it = itt->ret.begin();
+        // for (; it != itt->ret.end(); it++) {
+        //     std::cout << it->first << " " << it->second << " -- ";
+        // }
         std::cout << "\nserver name: ";
         vecstring_it = itt->serverName.begin();
         for (; vecstring_it != itt->serverName.end(); vecstring_it++)
             std::cout << *vecstring_it << ", ";
         std::cout << std::endl;
-        std::vector<listen>::const_iterator lisit = itt->lis.begin();
+        std::vector<listenDirective>::const_iterator lisit = itt->lis.begin();
         std::cout << "listen : ";
         for (; lisit != itt->lis.end(); lisit++) {
             std::cout << "[" << lisit->port << "] - " << lisit->ip << " , ";
@@ -491,11 +497,11 @@ void ConfigInheritor::printContent() const {
             std::cout << std::endl;
             std::cout << "auto index : ";
             if (itl->autoIndex == true) {std::cout << "on" << std::endl;} else if (itl->autoIndex == false) {std::cout << "off" << std::endl;}
-            std::cout << "return : ";
-            it = itl->ret.begin();
-            for (; it != itl->ret.end(); it++) {
-                std::cout << it->first << " " << it->second << " -- ";
-            }
+            if (!itl->returnPath.empty()) {std::cout << "return : " << itl->returnStatus << ", " << itl->returnPath << std::endl;}
+            // it = itl->ret.begin();
+            // for (; it != itl->ret.end(); it++) {
+            //     std::cout << it->first << " " << it->second << " -- ";
+            // }
             std::cout << std::endl;
             std::cout << "CGI : " << itl->cgiPath << " with extension " << itl->cgiExt << std::endl;
             j++;
@@ -503,3 +509,7 @@ void ConfigInheritor::printContent() const {
         i++;
     }
 }
+
+std::vector<server>&    ConfigInheritor::getServers(void) { return (_server); }
+globalDir&              ConfigInheritor::getGlobalDir(void) { return (_globalDir); }
+

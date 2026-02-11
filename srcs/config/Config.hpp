@@ -42,6 +42,8 @@ class Config {
 		Tokenizer&	getTokenizer(void);
 		const std::string&	getFilePath(void) const;
 		const std::string&	getFileContent(void) const;
+		std::vector<server>&	getServers(void);
+		globalDir& getGlobalDir(void);
 };
 
 #endif
