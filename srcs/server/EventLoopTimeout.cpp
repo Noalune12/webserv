@@ -50,7 +50,7 @@ void	EventLoop::checkTimeouts(void) {
 			continue ;
 		}
 
-		if (client.getState() == CGI_RUNNING) {
+		if (client.getState() == CGI_WRITING_BODY || client.getState() == CGI_RUNNING) {
 			Logger::warn("CGI timeout, killing process");
 			if (client._cgi.pid > 0) {
 				kill(client._cgi.pid, SIGKILL);
@@ -75,6 +75,8 @@ int	EventLoop::getActiveTimer(ConnectionState s) {
 			return (1);
 		case READING_BODY:
 			return (2);
+		case CGI_WRITING_BODY:
+			return (3);
 		case CGI_RUNNING:
 			return (3);
 		case SENDING_RESPONSE:
