@@ -184,5 +184,21 @@ Refuses:
 
 
 TODO:
-- Implement check of missing directives 
+- Implement check of missing directives
 - Check every comments in Validator and fix issues if there are some
+
+
+
+
+
+
+
+
+PR:
+
+Manque:
+
+- check en cas de fails des fonctions de la libc
+- checks des droits/access au cgi binary + scripts to execute
+- finaliser environnement (fonctionnel actuellement)
+- handler pour POST speficique ?

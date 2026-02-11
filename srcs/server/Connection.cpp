@@ -1,6 +1,9 @@
 #include "Connection.hpp"
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sstream>
 
-Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true) {
+Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _serverIP(), _serverPort(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -9,6 +12,21 @@ Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffe
 Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers, globalDir) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
+	}
+	// Get the local address (server's IP:port that received this connection)
+	struct sockaddr_storage local_addr;
+	socklen_t addr_len = sizeof(local_addr);
+	getsockname(clientFd, (struct sockaddr*)&local_addr, &addr_len);
+
+	// Extract IP and Port
+	if (local_addr.ss_family == AF_INET) {
+		struct sockaddr_in* addr = (struct sockaddr_in*)&local_addr;
+
+		unsigned char* bytes = (unsigned char*)&addr->sin_addr;
+		std::stringstream ss;
+		ss << (int)bytes[0] << "." << (int)bytes[1] << "." << (int)bytes[2] << "." << (int)bytes[3];
+		_serverIP = ss.str();
+		_serverPort = ntohs(addr->sin_port);
 	}
 }
 
@@ -45,8 +63,7 @@ void	Connection::startTimer(int index, time_t duration) {
 long	Connection::secondsToClosestTimeout() const {
 
 	time_t	curr = time(NULL);
-	long	min_rem = 5;
-	int		active_idx;
+	int		active_idx = -1;
 
 	switch (_state) {
 		case IDLE:
@@ -58,6 +75,9 @@ long	Connection::secondsToClosestTimeout() const {
 		case READING_BODY:
 			active_idx = 2;
 			break ;
+		case CGI_WRITING_BODY:
+			active_idx = 3;
+			break ;
 		case CGI_RUNNING:
 			active_idx = 3;
 			break ;
@@ -68,33 +88,58 @@ long	Connection::secondsToClosestTimeout() const {
 			return 5;
 	}
 
-	long	rem = _timers[active_idx] - curr;
+	if (active_idx < 0)
+		return (5);
 
-	if (rem > 0 && rem < min_rem)
-		return (rem);
+	long	rem = static_cast<long>(_timers[active_idx] - curr);
 
-	return(min_rem);
+	if (rem <= 0)
+		return (1);
+
+	return(rem);
 }
 
 void Connection::setBuffer(std::string request) {
 	_buffer = request;
 }
 
+void Connection::setChunkBuffer(std::string request) {
+	_chunkBuffer = request;
+}
+
 std::string Connection::getBuffer(void) const {
 	return _buffer;
 }
 
+std::string Connection::getChunkBuffer(void) const {
+	return _chunkBuffer;
+}
+
+
+
+void	Connection::clearChunkBuffer() {
+	_chunkBuffer.clear();
+}
+
+void Connection::clearBuffer() {
+	_buffer.clear();
+}
+
+
 void Connection::parseRequest() {
 	_request.clearPreviousRequest();
+	_request.setServerInfo(_serverPort, _serverIP);
 	_request.checkRequestSem(_buffer);
 	if (_request.err == true)
 		return ;
 	_request.checkRequestContent();
-	// err = _request.err;
-	// status = _request.status;
 
 	std::cout << _request.err << " &&&&& " << _request.status << std::endl;
 	_buffer.clear();
+	if (_request._keepAlive == true)
+        std::cout << "keep alive is true" << std::endl;
+    else
+        std::cout << "no keep alive" << std::endl;
 
 
 }
