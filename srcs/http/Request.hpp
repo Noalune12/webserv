@@ -99,6 +99,7 @@ class Request {
         bool _remainingBody;
 
         // PARSING
+        bool isCRLF(std::string request);
         void checkRequestSem(std::string request);
 
         bool extractRequestInfo();

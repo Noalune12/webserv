@@ -213,6 +213,9 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 		return ;
 	}
 
+	if (!client._request.isCRLF(client.getBuffer()))
+		return;
+
 	client.parseRequest();
 
 	// check if need to read body (chunked request)

@@ -156,3 +156,11 @@ void Request::setServerInfo(const int& port, const std::string& ip) {
     _serverIp = ip;
     _serverPort = port;
 }
+
+
+bool Request::isCRLF(std::string request) {
+    std::cout << "IS CRLF BUFFER = " << request << std::endl;
+    if (request.find("\r\n\r\n") != std::string::npos)
+        return true;
+    return false;
+}
