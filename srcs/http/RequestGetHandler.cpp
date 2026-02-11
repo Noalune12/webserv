@@ -223,7 +223,7 @@ bool Request::readFile(std::string path, struct stat buf) {
         std::ifstream file(path.c_str());
         std::cout << "File found" << std::endl;
         std::stringstream buffer;
-        buffer << file.rdbuf();
+        buffer << file.rdbuf(); // protect ?
         htmlPage = buffer.str();
         err = false;
         status = 200;

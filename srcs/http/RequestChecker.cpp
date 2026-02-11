@@ -11,13 +11,10 @@ void Request::findServer() {
     std::vector<size_t> possibleServerIndices;
 	for (; itServer != _servers.end(); itServer++) {
 		std::vector<listenDirective>::iterator itListen = itServer->lis.begin();
-        // std::cout << "Is server running ? " << itServer->isRunning << std::endl;
         if (itServer->isRunning == false)
             continue ;
 		for (; itListen != itServer->lis.end(); itListen++) {
-            // std::cout << "POST it = " << itListen->port << "ServerPort = "<< _serverPort << "IP it = "<< itListen->ip << "ServerName = "<< _serverName << std::endl;
 			if (itListen->port == _serverPort && (itListen->ip == _serverName || itListen->ip == "0.0.0.0" || itListen->ip == _serverIp)) {
-				std::cout << "possible server found with " << itListen->port << ", " << itListen->ip << std::endl;
                 possibleServerIndices.push_back(std::distance(_servers.begin(), itServer));
                 break ;
 			}
@@ -30,7 +27,6 @@ void Request::findServer() {
         std::vector<std::string>::iterator itServerName = candidateServer.serverName.begin();
         for (; itServerName != candidateServer.serverName.end(); itServerName++) {
             if (*itServerName == _serverName) {
-                std::cout << "server found with " << _serverName << std::endl;
                 _reqServer = &_servers[serverIndex];
                 break;
             }
@@ -38,38 +34,26 @@ void Request::findServer() {
         if (_reqServer != NULL)
             break;
     }
-    // _reqServer = &(*itServer);
-    // std::cout << "SERVER FOUND = " << serverFound << std::endl;
-    if (_reqServer == NULL && possibleServerIndices.size() > 0) { // how to decide which server to chose, by default I set the 1st one
+
+    if (_reqServer == NULL && possibleServerIndices.size() > 0) { 
         size_t serverIndex = possibleServerIndices[0];
         _reqServer = &_servers[serverIndex];
         std::cout << "default server is set" << std::endl;
     }
-    // _reqServer = NULL;
 }
 
 
 void Request::findLocation() {
-	// uri check
-    // /!\ check only 1st /.../
-    // size_t index = _uri.rfind('/');
-    // if (index != _uri.size() - 1) {
-    //     _trailing = _uri.substr(index + 1, _uri.size());
-    //     _uri = _uri.substr(0, index + 1);
-    // }
     size_t  query_pos = _uri.find('?');
     if (query_pos != std::string::npos) {
         _queryString = _uri.substr(query_pos + 1);
         _uri = _uri.substr(0, query_pos);
-        std::cout << "EXTRACTED QUERY: '" << _queryString << "' CLEAN URI: '" << _uri << "'" << std::endl;
     }
 
-    std::cout << "before loop URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
     while (!_uri.empty()) {
         std::vector<location>::iterator itLocation = _reqServer->loc.begin();
         for (; itLocation != _reqServer->loc.end(); itLocation++) {
             if (_uri == itLocation->path || _uri + "/" == itLocation->path || _uri == itLocation->path + "/") {
-                std::cout << "location found at " << itLocation->path << std::endl;
                 _reqLocation = &(*itLocation);
                 return ;
             }
@@ -84,9 +68,10 @@ void Request::findLocation() {
         }
         _trailing = _uri.substr(index + 1, _uri.size()) + _trailing;
         _uri = _uri.substr(0, index + 1);
-        std::cout << "in loop URI = \'" << _uri << "\'" << " -------- TRAILING = \'" << _trailing << "\'" << std::endl;
     }
 }
+
+#include <limits.h>
 
 bool Request::hostChecker() {
     // Host check
@@ -103,9 +88,9 @@ bool Request::hostChecker() {
 		return false;
 	}
 	if (sep == std::string::npos) {
-		_serverName = it->second; // can be server name or ip
+		_serverName = it->second;
 	} else {
-        int port;
+        double port;
         _serverName = it->second.substr(0, sep);
 		std::string temp = it->second.substr(sep + 1, it->second.size());
         if (!isOnlyDigits(temp)) {
@@ -114,7 +99,13 @@ bool Request::hostChecker() {
             return false;
         }
 		std::stringstream ss(temp);
-		ss >> port; // what if overflow
+		ss >> port;
+        if (ss.fail() || !ss.eof()) {
+            findErrorPage(400, "/", _globalDir.errPage);
+            std::cout << "error while converting port" << std::endl;
+            return false;
+        }
+
         if (port != _serverPort) {
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error host port is not the same as server" << std::endl;
@@ -144,7 +135,6 @@ bool Request::hostChecker() {
 
 void Request::checkRequestContent() {
 
-    std::cout << "\nCHECK REQUEST CONTENT\n" << std::endl;
     std::map<std::string, std::string>::iterator it = _headers.find("connection");
     if (it == _headers.end() || it->second == "close")
         _keepAlive = false;
@@ -322,9 +312,9 @@ std::cout << "\nChecking multipart" << std::endl;
 
             if (ss.fail()) {
                 if (!_reqLocation->root.empty()) { 
-                    findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
                 } else {
-                    findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
                 std::cout << "error  while converting content len" << std::endl;
                 return false;
@@ -381,9 +371,9 @@ void Request::parseBody() {
 
         if (ss.fail()) {
             if (!_reqLocation->root.empty()) { 
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error  while converting content len" << std::endl;
             return ;

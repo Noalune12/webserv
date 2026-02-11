@@ -285,19 +285,43 @@ void Request::createFileName(std::string &filename) {
         std::vector<std::string>::iterator index;
         std::stringstream ss;
         ss << add;
+        if (ss.fail()) {
+            if (!_reqLocation->root.empty()) { 
+                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            }
+            std::cout << "error  while converting extension for POST" << std::endl;
+            return ;
+        }
         std::string addStr = ss.str();
         // std::cout << "Comparing temp and addStr : " << addStr << std::endl;
         while ((index = std::find(filesExt.begin(), filesExt.end(), addStr)) != filesExt.end()) {
             std::stringstream sss;
             add++;
-            // if (add too big)
+            if (add > __DBL_MAX__) {
+                if (!_reqLocation->root.empty()) { 
+                    findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                } else {
+                    findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                }
+                std::cout << "Cannot upload more files" << std::endl;
+                return ;
+            }
             sss << add;
+            if (sss.fail()) {
+                if (!_reqLocation->root.empty()) { 
+                    findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                } else {
+                    findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                }
+                std::cout << "error  while converting extension for POST" << std::endl;
+                return ;
+            }
             addStr = sss.str();
-            // std::cout << "Comparing temp and addStr : " << addStr << std::endl;
         }
 
-        // ss << add;
-        // std::string addStr = ss.str();
+
 
         _postFilename = filename + addStr + _postExt;
 }

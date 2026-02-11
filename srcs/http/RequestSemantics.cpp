@@ -15,18 +15,11 @@ void Request::checkRequestSem(std::string request) {
         return ;
     }
 
-    std::cout << "REQUEST = " << request << std::endl;
-
     std::string method, uri, http;
 
     if (!extractRequestInfo() || !extractRequestLineInfo(method, uri, http)
             || !checkRequestLine(method, uri, http) || !checkHeaders())
         return ;
-
-
-    printWithoutR("METHOD", _method);
-    printWithoutR("URI", _uri);
-    // printWithoutR("BODY", _body);
 
     status = 200;
 }
@@ -49,7 +42,7 @@ bool Request::extractRequestInfo() {
 
     index = _req.find("\r\n\r\n");
     if (index == std::string::npos || index == 0) {
-        findErrorPage(414, "/", _globalDir.errPage); // double check on that
+        findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error no header or final WS" << std::endl;
         return false;
     }
@@ -132,7 +125,6 @@ bool Request::checkHeaders() {
         std::string content = line.substr(index + 1);
 
         if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
-            std::cout << "CONTENT = \'" << content << "\'" << std::endl;
             findErrorPage(400, "/", _globalDir.errPage);
             std::cout << "error with headers : is not followed by space" << std::endl;
             return false;
@@ -143,7 +135,6 @@ bool Request::checkHeaders() {
         if (name != "user-agent" && name != "content-type")
             std::transform(content.begin(), content.end(), content.begin(), ::tolower);
 
-        std::cout << "NAME, CONTENT FOR HEADER = " << name << ", " << content << std::endl;
         if ((name == "host" && _headers.find("host") != _headers.end())
                 || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
                 || (name == "content-length" && _headers.find("content-length") != _headers.end())
@@ -213,21 +204,8 @@ bool Request::checkRequestLine(std::string& method, std::string& uri, std::strin
         std::cout << "error with http index is not 0" << std::endl;
         return false;
     }
-    // std::string version = http.substr(index + 5, http.length());
-    // std::cout << "VERSION = " << version << std::endl;
-    // if (version == "2" || version == "3") {
-    //     findErrorPage(505, "/", _globalDir.errPage);
-    //     std::cout << "error with http not the real version" << std::endl;
-    //     return false;
-    // }
-    // if (version != "1.1" && version != "1.0") {
-    //     findErrorPage(400, "/", _globalDir.errPage); // doubt here, why is it a 400
-    //     std::cout << "error with http" << std::endl;
-    //     return false;
-    // }
 
     std::string version = http.substr(5);
-    std::cout << "VERSION = " << version << std::endl;
     if (!isValidHTTPVersion(version)) {
         findErrorPage(400, "/", _globalDir.errPage);
         std::cout << "error with http syntax" << std::endl;

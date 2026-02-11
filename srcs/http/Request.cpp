@@ -5,9 +5,16 @@
 #include <fstream>
 #include "colors.hpp"
 
-Request::Request(): err(false), status(0), chunkRemaining(false), _keepAlive(false) {}
+Request::Request(): _chunkSize(-1), _chunkState(GETTING_FIRST_SIZE), _multipartState(GETTING_FIRST_BOUNDARY), \
+    _failedUpload(0), _totalUpload(0), _indexFound(false), err(false), status(0), _keepAlive(false), \
+    _reqServer(NULL), _reqLocation(NULL), _cgi(false), _return(false), chunkRemaining(false), _isChunked(false), \
+    _isMultipart(false), _multipartRemaining(false), _remainingBody(false) {}
 
-Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), err(false), status(0), chunkRemaining(false), _isChunked(false), _keepAlive(false), _cgi(false), _return(false), _indexFound(false), _isMultipart(false), _multipartRemaining(false), _remainingBody(false) {}
+Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), \
+    _chunkSize(-1), _chunkState(GETTING_FIRST_SIZE), _multipartState(GETTING_FIRST_BOUNDARY), \
+    _failedUpload(0), _totalUpload(0), _indexFound(false), err(false), status(0), _keepAlive(false), \
+    _reqServer(NULL), _reqLocation(NULL), _cgi(false), _return(false), chunkRemaining(false), _isChunked(false), \
+    _isMultipart(false), _multipartRemaining(false), _remainingBody(false) {}
 
 
 Request::~Request() {}
@@ -24,35 +31,17 @@ void Request::printWithoutR(std::string what, std::string line) const {
 void Request::clearPreviousRequest() {
     _reqServer = NULL, _reqLocation = NULL;
 
-    _cgi = false, _return = false, _indexFound = false, _isMultipart = false; 
-    _multipartRemaining = false, err = false, _isChunked = false, _remainingBody = false;
-     _keepAlive = false, chunkRemaining = false;
+    _cgi = false, _return = false, _indexFound = false, _isMultipart = false, \
+    _multipartRemaining = false, _isChunked = false, _remainingBody = false, \
+    _keepAlive = false, chunkRemaining = false;
 
-    status = 200, _failedUpload = 0, _totalUpload = 0;
+    _failedUpload = 0, _totalUpload = 0;
 
-    htmlPage.clear();
-    _headersStr.clear();
-    _requestLine.clear();
-    _body.clear();
-    _headers.clear();
-    _chunk.clear();
-    _trailing.clear();
-   _scriptPath.clear();
-   _queryString.clear();
-   _postExt.clear();
-   _postFilename.clear();
-   _getPath.clear();
-   _multipartBoundary.clear();
-   _multipartContent.clear();
-   _fullBody.clear();
-    _method.clear();
-    _uri.clear();
-    _version.clear();
-    _uplaodFiles.clear();
-    _multiTemp.headers.clear();
-    _multiTemp.body.clear();
-    _multiTemp.filename.clear();
-    _multiTemp.name.clear();
+    htmlPage.clear(), _headersStr.clear(), _requestLine.clear(), _body.clear(), _headers.clear(), \
+    _chunk.clear(), _trailing.clear(), _scriptPath.clear(), _queryString.clear(), _postExt.clear(), \
+    _postFilename.clear(), _getPath.clear(), _multipartBoundary.clear(), _multipartContent.clear(), \
+    _fullBody.clear(), _method.clear(), _uri.clear(), _version.clear(), _uplaodFiles.clear(), \
+    _multiTemp.headers.clear(), _multiTemp.body.clear(), _multiTemp.filename.clear(), _multiTemp.name.clear();
 }
 
 bool Request::hasWS(const std::string& line) const {
@@ -80,11 +69,9 @@ std::string Request::trimOws(const std::string& s)
     std::string::size_type start = 0;
     std::string::size_type end = s.size();
 
-    // trim leading spaces/tabs, what about other whitespaces
     while (start < end && (s[start] == ' ' || s[start] == '\t'))
         ++start;
 
-    // trim trailing spaces/tabs, what about other whitespaces
     while (end > start && (s[end - 1] == ' ' || s[end - 1] == '\t'))
         --end;
 
@@ -104,11 +91,14 @@ std::string Request::trimFirstCRLF(const std::string& s)
 
 
 void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
+
     err = true;
     status = code;
+
     std::map<int, std::string>::iterator itErr = errPage.find(code);
     if (itErr == errPage.end())
         return;
+
     std::string path;
     if (root[root.size() - 1] == '/' && itErr->second[0] == '/')
         path = root.substr(0, root.size() - 1) + itErr->second;
@@ -117,22 +107,20 @@ void Request::findErrorPage(int code, std::string root, std::map<int, std::strin
     else
         path = root + itErr->second;
 
-    if (path[0] == '/') // what if many /
+    if (path[0] == '/')
         path = path.substr(1, path.size());
-    std::cout << "PATH = " << path << std::endl;
-			std::ifstream file(path.c_str());
-			if (!file) {
-				return;
-			} else {
-				std::cout << "File found" << std::endl;
-				std::stringstream buffer;
-				buffer << file.rdbuf();
-				htmlPage = buffer.str();
-			}
+
+    std::ifstream file(path.c_str());
+    if (!file) {
+        return;
+    } else {
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        htmlPage = buffer.str();
+    }
 }
 
 void Request::methodHandler() {
-	// get info
 	if (_method == "GET") {
         methodGetHandler();
 	} else if (_method == "DELETE") {
@@ -151,7 +139,6 @@ void Request::setServerInfo(const int& port, const std::string& ip) {
 
 
 bool Request::isCRLF(std::string request) {
-    std::cout << "IS CRLF BUFFER = " << request << std::endl;
     if (request.find("\r\n\r\n") != std::string::npos)
         return true;
     return false;

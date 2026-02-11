@@ -359,7 +359,7 @@ bool Request::parseMultipart() {
                     } else {
                         std::cout << "CONTENT LENGTH = " << it->second << "vs full body size = " << _fullBody.size() << std::endl;
                         std::stringstream ss;
-                        ss << _fullBody.size();
+                        ss << _fullBody.size(); // protect ?
                         std::string bodySize = ss.str();
                         std::cout << "BODY SIZE = " << bodySize << std::endl;
                         if (it->second != bodySize) {
