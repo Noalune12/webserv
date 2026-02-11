@@ -97,16 +97,12 @@ void Request::methodPostHandler() {
             }
             std::cout << "error nothing uploaded for multipart" << std::endl;
             return ;
-
-        } else if (_failedUpload == 0 && _totalUpload != 0) {
-            err = false;
-            status = 201;
         } else if (_failedUpload == 0 && _totalUpload == 0) {
             err = false;
             status = 200;
         } else {
             err = false;
-            status = 206;
+            status = 201;
         }
     } else {
 
