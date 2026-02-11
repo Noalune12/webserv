@@ -3,13 +3,13 @@
 #include <arpa/inet.h>
 #include <sstream>
 
-Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _serverIP(), _serverPort(0) {
+Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _serverIP(), _serverPort(0), _request(), _cgi(), _sendBuffer(), _sendOffset(0)  {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers, globalDir) {
+Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -121,8 +121,13 @@ void	Connection::clearChunkBuffer() {
 	_chunkBuffer.clear();
 }
 
-void Connection::clearBuffer() {
+void	Connection::clearBuffer() {
 	_buffer.clear();
+}
+
+void	Connection::clearSendBuffer() {
+    _sendBuffer.clear();
+    _sendOffset = 0;
 }
 
 

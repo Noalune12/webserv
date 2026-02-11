@@ -8,11 +8,12 @@
 class ResponseSender {
 
 	private:
-		std::vector<char>	prepareRawData(Response& resp);
 
 	public:
 		ResponseSender();
 		~ResponseSender();
+
+		std::vector<char>	prepareRawData(Response& resp);
 
 		ssize_t send(int clientFd, Response& resp);
 };

@@ -23,9 +23,9 @@ EventLoop::~EventLoop() {
 	std::map<int, Connection>::iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
 		Connection& client = it->second;
-        if (client._cgi.isActive()) {
-            _cgiExecutor.cleanup(client._cgi, *this);
-        }
+		if (client._cgi.isActive()) {
+			_cgiExecutor.cleanup(client._cgi, *this);
+		}
 		close(it->first);
 	}
 	_connections.clear();
@@ -303,33 +303,45 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	Response response;
 
-	response.debugPrintRequestData(client._request);
+	if (client._sendBuffer.empty()) {
+		response.debugPrintRequestData(client._request);
 
-	if (!client._cgi.outputBuff.empty()) {
-		Logger::debug("Building CGI response");
-		response = _responseBuilder.buildFromCGI(client._cgi.outputBuff, client._request);
-		client._cgi.outputBuff.clear();
-	} else {
-		response = _responseBuilder.buildFromRequest(client._request);
+		if (!client._cgi.outputBuff.empty()) {
+			Logger::debug("Building CGI response");
+			response = _responseBuilder.buildFromCGI(client._cgi.outputBuff, client._request);
+			client._cgi.outputBuff.clear();
+		} else {
+			response = _responseBuilder.buildFromRequest(client._request);
+		}
+
+		client._sendBuffer = _responseSender.prepareRawData(response);
+		client._sendOffset = 0;
+
+		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response._statusCode, response._body.size());
 	}
 
-	ssize_t bytesSent = _responseSender.send(clientFd, response);
+	size_t	remaining = client._sendBuffer.size() - client._sendOffset;
+	ssize_t	bytesSent = ::send(clientFd, &client._sendBuffer[client._sendOffset], remaining, MSG_NOSIGNAL);
 
 	if (bytesSent < 0) {
 		Logger::error("Failed to send response");
+		client.clearSendBuffer();
 		closeConnection(clientFd);
 		return ;
 	}
-	Logger::accessLog(client.getIP(), client._request._method, client._request._uri, "HTTP/1.1", response._statusCode, response._body.size());
+
+	client._sendOffset += bytesSent;
+
+	if (client._sendOffset < client._sendBuffer.size())
+		return ;
+
+	client.clearSendBuffer();
 
 	if (!client._request._keepAlive) {
 		closeConnection(clientFd);
 	} else {
 		transitionToIDLE(client, clientFd);
-		// client.clearBuffer();
 	}
-	std::cerr << "\n\n\nHERRRRE\n\n\n" << std::endl;
-	std::cerr << response._bytesSent << std::endl;
 }
 
 void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
@@ -385,7 +397,7 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 		if (client.getState() == READING_BODY) {
 			// buffer[bytesRead] = '\0';
 			std::string chunk(buffer, bytesRead);
-			std::cout << "CHUNK BUFFER WHEN READING BODY = " << buffer << std::endl;
+			// std::cout << "CHUNK BUFFER WHEN READING BODY = " << buffer << std::endl;
 			client.setChunkBuffer(chunk);
 		}
 		std::string	currentBuffer = client.getBuffer();

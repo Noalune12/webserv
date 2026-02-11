@@ -106,11 +106,13 @@ class Connection {
 
 		void				clearChunkBuffer();
 		void				clearBuffer();
-
+		void				clearSendBuffer();
 		void 				parseRequest();
 
 		Request				_request;
 		CGIContext			_cgi;
+		std::vector<char>   _sendBuffer;
+		size_t              _sendOffset;
 };
 
 #endif
