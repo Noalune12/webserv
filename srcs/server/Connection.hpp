@@ -12,11 +12,12 @@
 # include "Response.hpp"
 
 enum ConnectionState {
-	IDLE,				// 0. starting state
-	READING_HEADERS,	// 1. keeping this state until chunked requests are completely read
-	READING_BODY,		// 2. nd state
-	CGI_RUNNING,		// 3. only if CGI
-	SENDING_RESPONSE,	// 4.
+	IDLE,
+	READING_HEADERS,
+	READING_BODY,
+	CGI_WRITING_BODY,
+	CGI_RUNNING,
+	SENDING_RESPONSE,
 };
 
 struct CGIContext {
@@ -26,6 +27,8 @@ struct CGIContext {
 	std::string	outputBuff;
 	bool		headerParsed;
 	size_t		bodyStart;
+	std::string	inputBody;
+	size_t		inputOffset;
 
 	CGIContext() : pid(-1), headerParsed(false), bodyStart(0) {
 		pipeIn[0] = -1;
@@ -74,12 +77,11 @@ class Connection {
 		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
 		bool				_keepAlive;
 		std::string			_chunkBuffer;
-		// bool				_chunked;
 
 		std::vector<server>	_servers;
 
-		std::string _serverIP;
-		int			_serverPort;
+		std::string 		_serverIP;
+		int					_serverPort;
 
 	public:
 		Connection(); // cannot compile without it
@@ -96,19 +98,18 @@ class Connection {
 		ConnectionState		getState(void) const;
 		std::string			getBuffer(void) const;
 		std::string 		getChunkBuffer(void) const;
-		
+
 		/* setters */
 		void				setState(ConnectionState s);
 		void				setBuffer(std::string request);
 		void				setChunkBuffer(std::string request);
-		
-		void				clearChunkBuffer();
 
-		void parseRequest();
-		// bool				err;
-		// int					status;
+		void				clearChunkBuffer();
+		void				clearBuffer();
+
+		void 				parseRequest();
+
 		Request				_request;
-		// std::string			htmlPage;
 		CGIContext			_cgi;
 };
 

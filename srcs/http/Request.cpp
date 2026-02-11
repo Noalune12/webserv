@@ -22,41 +22,37 @@ void Request::printWithoutR(std::string what, std::string line) const {
 }
 
 void Request::clearPreviousRequest() {
+    _reqServer = NULL, _reqLocation = NULL;
+
+    _cgi = false, _return = false, _indexFound = false, _isMultipart = false; 
+    _multipartRemaining = false, err = false, _isChunked = false, _remainingBody = false;
+     _keepAlive = false, chunkRemaining = false;
+
+    status = 200, _failedUpload = 0, _totalUpload = 0;
+
     htmlPage.clear();
     _headersStr.clear();
     _requestLine.clear();
     _body.clear();
     _headers.clear();
     _chunk.clear();
-    _reqServer = NULL;
-    _reqLocation = NULL;
     _trailing.clear();
-    _cgi = false;
-    _return = false;
    _scriptPath.clear();
    _queryString.clear();
    _postExt.clear();
    _postFilename.clear();
-   _indexFound = false;
    _getPath.clear();
-   _isMultipart = false;
    _multipartBoundary.clear();
    _multipartContent.clear();
    _fullBody.clear();
-   _multipartRemaining = false;
-    // what about err and keep alive
     _method.clear();
     _uri.clear();
     _version.clear();
-    err = false;
-    _keepAlive = false;
-    chunkRemaining = false;
-    status = 200;
-    _isChunked = false;
     _uplaodFiles.clear();
-    _failedUpload = 0;
-    _totalUpload = 0;
-    _remainingBody = false;
+    _multiTemp.headers.clear();
+    _multiTemp.body.clear();
+    _multiTemp.filename.clear();
+    _multiTemp.name.clear();
 }
 
 bool Request::hasWS(const std::string& line) const {
@@ -151,4 +147,12 @@ void Request::methodHandler() {
 void Request::setServerInfo(const int& port, const std::string& ip) {
     _serverIp = ip;
     _serverPort = port;
+}
+
+
+bool Request::isCRLF(std::string request) {
+    std::cout << "IS CRLF BUFFER = " << request << std::endl;
+    if (request.find("\r\n\r\n") != std::string::npos)
+        return true;
+    return false;
 }

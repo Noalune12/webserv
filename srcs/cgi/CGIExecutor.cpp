@@ -1,15 +1,16 @@
-#include <cstring>
 #include "errno.h"
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
 #include <signal.h>
 #include <sstream>
-#include <cstdlib>
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "CGIExecutor.hpp"
 #include "colors.hpp"
 #include "EventLoop.hpp"
-#include "CGIExecutor.hpp"
 #include "Logger.hpp"
 
 CGIExecutor::CGIExecutor() {}
@@ -53,21 +54,76 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	close(cgi.pipeOut[1]);	// Close write end of stdout
 	cgi.pipeOut[1] = -1;
 
-	if (!writeBodyToCGI(cgi, client._request._body)) {
-		cleanup(cgi, loop);
-		return (false);
+	if (cgi.pipeIn[1] != -1) {
+		fcntl(cgi.pipeIn[1], F_SETFL, O_NONBLOCK); // protect
 	}
+	fcntl(cgi.pipeOut[0], F_SETFL, O_NONBLOCK); // protect
 
-	if (!loop.addToEpoll(cgi.pipeOut[0], EPOLLIN)) {
-		cleanup(cgi, loop);
-		return (false);
+	if (!client._request._body.empty()) {
+		cgi.inputBody = client._request._body;
+		cgi.inputOffset = 0;
+
+		if (!loop.addToEpoll(cgi.pipeIn[1], EPOLLOUT)) {
+			cleanup(cgi, loop);
+			return (false);
+		}
+
+		loop.registerPipe(cgi.pipeIn[1], clientFd);
+		Logger::debug("CGI body to write, registered pipeIn for EPOLLOUT");
+	} else {
+		close(cgi.pipeIn[1]);
+		cgi.pipeIn[1] = -1;
+
+		if (!loop.addToEpoll(cgi.pipeOut[0], EPOLLIN)) {
+			cleanup(cgi, loop);
+			return (false);
+		}
+		loop.registerPipe(cgi.pipeOut[0], clientFd);
+		Logger::debug("No CGI body, registering pipeOut for EPOLLIN");
 	}
-
-	loop.registerPipe(cgi.pipeOut[0], clientFd);
 
 	return (true);
 }
 
+void	CGIExecutor::handleCGIWriteEvent(Connection& client, int clientFd, int pipeFd, uint32_t events, EventLoop& loop) {
+
+	CGIContext&	cgi = client._cgi;
+
+	if (events & (EPOLLERR | EPOLLHUP)) {
+		Logger::error("CGI stdin pipe error/hangup during body write");
+		cleanup(cgi, loop);
+		client._request.err = true;
+		client._request.status = 502;
+		client.setState(SENDING_RESPONSE);
+		client.startTimer(4, 5);
+		loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
+		return ;
+	}
+
+	if (events & EPOLLOUT) {
+		const char*	data = cgi.inputBody.c_str() + cgi.inputOffset;
+		size_t		remaining = cgi.inputBody.size() - cgi.inputOffset;
+
+		ssize_t	written = write(pipeFd, data, remaining);
+
+		if (written > 0) {
+			cgi.inputOffset += static_cast<size_t>(written);
+			client.startTimer(3, 5); // reset CGI timeout
+
+			if (cgi.inputOffset >= cgi.inputBody.size()) {
+				transitionToReadingCGI(cgi, client, clientFd, loop);
+			}
+		} else if (written == -1) {
+			Logger::error("CGI stdin write error:" + std::string(strerror(errno)));
+			cleanup(cgi, loop);
+			client._request.err = true;
+			client._request.status = 502;
+			client.setState(SENDING_RESPONSE);
+			client.startTimer(4, 5);
+			loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
+		}
+	}
+}
 
 void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, uint32_t events, EventLoop& loop) {
 
@@ -81,7 +137,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		client._request.status = 502;
 		client.setState(SENDING_RESPONSE);
 		client.startTimer(4, 5);
-		loop.modifyEpoll(clientFd, EPOLLOUT);
+		loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
 		return ;
 	}
 
@@ -102,17 +158,17 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 			cleanup(cgi, loop);
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, 5); // CLIENT_TIMEOUT
-			loop.modifyEpoll(clientFd, EPOLLOUT);
+			loop.modifyEpoll(clientFd,  EPOLLIN | EPOLLOUT);
 			return ;
 		}
-		else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+		else if (bytesRead == -1) {
 			Logger::error("CGI read error: " + std::string(strerror(errno)));
 			cleanup(cgi, loop);
 			client._request.err = true;
 			client._request.status = 502;
 			client.setState(SENDING_RESPONSE);
 			client.startTimer(4, 5); // CLIENT_TIMEOUT
-			loop.modifyEpoll(clientFd, EPOLLOUT);
+			loop.modifyEpoll(clientFd,  EPOLLIN | EPOLLOUT);
 			return ;
 		}
 	}
@@ -130,7 +186,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		cleanup(cgi, loop);
 		client.setState(SENDING_RESPONSE);
 		client.startTimer(4, 5);
-		loop.modifyEpoll(clientFd, EPOLLOUT);
+		loop.modifyEpoll(clientFd,  EPOLLIN | EPOLLOUT);
 		return;
 	}
 }
@@ -185,27 +241,37 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 	exit(EXIT_FAILURE);
 }
 
-bool CGIExecutor::writeBodyToCGI(CGIContext& cgi, const std::string& body) {
+void	CGIExecutor::transitionToReadingCGI(CGIContext& cgi, Connection& client, int clientFd, EventLoop& loop) {
 
-	if (!body.empty()) {
-		ssize_t written = write(cgi.pipeIn[1], body.c_str(), body.size()); // still not sure I'm allowed to write without going back to epoll
-		if (written != static_cast<ssize_t>(body.size())) {
-			Logger::error("Failed to write full body to CGI");
-			return (false);
-		}
-	}
-
-	close(cgi.pipeIn[1]); // sending EOF to the pipe by closing it -> sends a signal that the request body is complete
+	loop.removeFromEpoll(cgi.pipeIn[1]);
+	loop.unregisterPipe(cgi.pipeIn[1]);
+	close(cgi.pipeIn[1]);
 	cgi.pipeIn[1] = -1;
 
-	Logger::debug("Sent body to CGI and closed stdin");
-	return (true);
+	cgi.inputBody.clear();
+	cgi.inputOffset = 0;
+
+	if (!loop.addToEpoll(cgi.pipeOut[0], EPOLLIN)) {
+		cleanup(cgi, loop);
+		client._request.err = true;
+		client._request.status = 500;
+		client.setState(SENDING_RESPONSE);
+		client.startTimer(4, 5);
+		loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
+		return ;
+	}
+
+	loop.registerPipe(cgi.pipeOut[0], clientFd);
+
+	client.setState(CGI_RUNNING);
+	client.startTimer(3, 5); // CGI_TIMEOUT
+	Logger::debug("CGI body fully written -> CGI_RUNNING");
 }
 
 ssize_t	CGIExecutor::readFromPipe(int pipeFd, std::string& buffer) {
 
 	char tempBuffer[8192];
-	ssize_t bytesRead = read(pipeFd, tempBuffer, sizeof(tempBuffer)); // same same
+	ssize_t bytesRead = read(pipeFd, tempBuffer, sizeof(tempBuffer));
 
 	if (bytesRead > 0) {
 		buffer.append(tempBuffer, bytesRead);

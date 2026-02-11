@@ -20,6 +20,7 @@ class CGIExecutor {
 		bool	start(Connection& client, int clientFd, EventLoop& loop);
 		void	cleanup(CGIContext& cgi, EventLoop& loop);
 		void	handlePipeEvent(Connection& client, int clientFd, int pipeFd, uint32_t events, EventLoop& loop);
+		void	handleCGIWriteEvent(Connection& client, int clientFd, int pipeFd, uint32_t events, EventLoop& loop);
 
 	private:
 		bool	createPipes(CGIContext& cgi);
@@ -28,7 +29,7 @@ class CGIExecutor {
 		std::vector<std::string>	buildEnvironmentStrings(const Connection& conn);
 		std::string					buildEnvVar(const std::string& name, const std::string& value);
 
-		bool	writeBodyToCGI(CGIContext& cgi, const std::string& body);
+		void	transitionToReadingCGI(CGIContext& cgi, Connection& client, int clientFd, EventLoop& loop);
 
 		ssize_t	readFromPipe(int pipeFd, std::string& buffer);
 

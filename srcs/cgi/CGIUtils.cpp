@@ -7,12 +7,20 @@
 
 void	CGIExecutor::cleanup(CGIContext& cgi, EventLoop& loop) {
 
+	if (cgi.pipeIn[1] != -1) {
+		loop.removeFromEpoll(cgi.pipeIn[1]);
+		loop.unregisterPipe(cgi.pipeIn[1]);
+	}
+
 	if (cgi.pipeOut[0] != -1) {
 		loop.removeFromEpoll(cgi.pipeOut[0]);
 		loop.unregisterPipe(cgi.pipeOut[0]);
 	}
 
 	cgi.closePipes();
+
+	cgi.inputBody.clear();
+	cgi.inputOffset = 0;
 
 	if (cgi.pid > 0) {
 		int	status;

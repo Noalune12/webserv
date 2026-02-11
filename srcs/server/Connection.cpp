@@ -3,7 +3,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 
-Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true) {
+Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _serverIP(), _serverPort(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -19,18 +19,15 @@ Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<se
 	getsockname(clientFd, (struct sockaddr*)&local_addr, &addr_len);
 
 	// Extract IP and Port
-
 	if (local_addr.ss_family == AF_INET) {
 		struct sockaddr_in* addr = (struct sockaddr_in*)&local_addr;
 
-		unsigned char* bytes = (unsigned char*)&addr->sin_addr; // protect ???
+		unsigned char* bytes = (unsigned char*)&addr->sin_addr;
 		std::stringstream ss;
 		ss << (int)bytes[0] << "." << (int)bytes[1] << "." << (int)bytes[2] << "." << (int)bytes[3];
 		_serverIP = ss.str();
-
 		_serverPort = ntohs(addr->sin_port);
 	}
-	std::cout << "CLIENT CONNECTED TO SERVER PORT = " << _serverPort << "WITH IP = " << _serverIP << std::endl;
 }
 
 Connection::~Connection() {
@@ -78,6 +75,8 @@ long	Connection::secondsToClosestTimeout() const {
 		case READING_BODY:
 			active_idx = 2;
 			break ;
+		case CGI_WRITING_BODY:
+			active_idx = 3;
 		case CGI_RUNNING:
 			active_idx = 3;
 			break ;
@@ -121,6 +120,11 @@ void	Connection::clearChunkBuffer() {
 	_chunkBuffer.clear();
 }
 
+void Connection::clearBuffer() {
+	_buffer.clear();
+}
+
+
 void Connection::parseRequest() {
 	_request.clearPreviousRequest();
 	_request.setServerInfo(_serverPort, _serverIP);
@@ -128,8 +132,6 @@ void Connection::parseRequest() {
 	if (_request.err == true)
 		return ;
 	_request.checkRequestContent();
-	// err = _request.err;
-	// status = _request.status;
 
 	std::cout << _request.err << " &&&&& " << _request.status << std::endl;
 	_buffer.clear();
