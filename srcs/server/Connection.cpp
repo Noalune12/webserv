@@ -77,6 +77,7 @@ long	Connection::secondsToClosestTimeout() const {
 			break ;
 		case CGI_WRITING_BODY:
 			active_idx = 3;
+			break ;
 		case CGI_RUNNING:
 			active_idx = 3;
 			break ;
