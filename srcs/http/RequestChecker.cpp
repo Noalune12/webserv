@@ -263,9 +263,9 @@ std::cout << "\nChecking multipart" << std::endl;
             it = _headers.find("content-length");
             if (it == _headers.end()) {
                 if (!_reqLocation->root.empty()) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    findErrorPage(411, _reqLocation->root, _reqLocation->errPage);
                 } else {
-                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
                 }
                 std::cout << "error no content length but existing body for multipart" << std::endl;
                 return false;
@@ -306,9 +306,9 @@ std::cout << "\nChecking multipart" << std::endl;
         it = _headers.find("content-length");
         if (it == _headers.end() && !_body.empty()) {
             if (!_reqLocation->root.empty()) {
-                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                findErrorPage(411, _reqLocation->root, _reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
             }
             std::cout << "error no content length but existing body" << std::endl;
             return false;
@@ -365,9 +365,9 @@ void Request::parseBody() {
     std::map<std::string, std::string>::iterator it = _headers.find("content-length");
     if (it == _headers.end()) {
         if (!_reqLocation->root.empty()) {
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            findErrorPage(411, _reqLocation->root, _reqLocation->errPage);
         } else {
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
         }
         std::cout << "error no content length but existing body" << std::endl;
         return ;
