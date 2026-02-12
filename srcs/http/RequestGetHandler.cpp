@@ -249,7 +249,11 @@ bool Request::handleAutoindex(std::string dirPath) {
         return false;
     }
 
-    htmlPage = "<!DOCTYPE html>\n<html>\n<head>\n <meta charset=\"UTF-8\">\n<title>Index</title>\n</head><h1>Index of " + dirPath + "\n\n</h1>";
+
+    std::string path = _reqLocation->path + _trailing;
+    if (path[path.size() - 1] == '/')
+        path = path.substr(0, path.size() - 1);
+    htmlPage = "<!DOCTYPE html>\n<html>\n<head>\n <meta charset=\"UTF-8\">\n<title>Index</title>\n</head><h1>Index of " + path + "\n\n</h1>";
 
 
     DIR* dir = opendir(dirPath.c_str());
