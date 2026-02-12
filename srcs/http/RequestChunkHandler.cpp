@@ -21,8 +21,6 @@ bool Request::getChunkSize() {
     _chunk = _chunk.substr(index + 2, _chunk.size());
     _chunkSize = strtol(hex.c_str(), &end, 16);
 
-    std::cout << "CHUNK SIZE = " << _chunkSize << std::endl;
-
     if (end == hex.c_str()
             || *end != '\0'
             || _chunkSize < 0) {
@@ -54,7 +52,6 @@ void Request::parseChunk() {
 
 
     while (_chunkState != IS_END) {
-        std::cout << "IN CHUNK LOOP" << std::endl;
         if (_reqLocation->bodySize < _body.size()) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
@@ -66,7 +63,6 @@ void Request::parseChunk() {
         }
         if (_chunkState == READING_BYTES) {
 
-            std::cout << "READING BYTES\n" << std::endl;
 
             // get size bytes
             if ((_chunk.size() >= _chunkSize + 2)) {
@@ -111,7 +107,6 @@ void Request::parseChunk() {
                 return ;
             }
         } else if (_chunkState == GETTING_SIZE) {
-            std::cout << "GETTING SIZE\n" << std::endl;
 
             if (_chunk.size() >= 2 &&
                     _chunk.compare(_chunk.size() - 2, 2, "\r\n") == 0) {

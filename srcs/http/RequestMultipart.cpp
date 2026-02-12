@@ -178,7 +178,6 @@ bool Request::handleMultipartHeader() {
     } else {
         std::string header = _chunk.substr(0, index);
         _chunk = _chunk.substr(index + 2);
-        std::cout << "Getting header = " << header << "and remaining body is " << _chunk <<std::endl;
 
         size_t index = header.find(":");
         if (index == 0 || index == std::string::npos) {
@@ -191,7 +190,7 @@ bool Request::handleMultipartHeader() {
             return false;
         }
         std::string name = header.substr(0, index);
-        std::cout << "HEADER NAME " << name << std::endl;
+
         if (hasWS(name)) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -214,13 +213,17 @@ bool Request::handleMultipartHeader() {
         std::string content = header.substr(index + 1);
         
         if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
-            std::cout << "CONTENT = \'" << content << "\'" << std::endl;
-            findErrorPage(400, "/", _globalDir.errPage);
+
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            }
             std::cout << "error with headers : is not followed by space" << std::endl;
             return false;
         }
         content = trimOws(content);
-        std::cout << "HEADER CONTENT " << content << std::endl;
+
         if ((name == "Content-Disposition" && _multiTemp.headers.find("Content-Disposition") != _multiTemp.headers.end()) 
                 || (name == "Content-Type" && _multiTemp.headers.find("Content-Type") != _multiTemp.headers.end())) {
             if (!_reqLocation->root.empty()) {
@@ -233,7 +236,11 @@ bool Request::handleMultipartHeader() {
         }
         if (((name == "Content-Disposition") && content.empty())
                 || ((name == "Content-Type") && content.empty())) {
-            findErrorPage(400, "/", _globalDir.errPage);
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            }
             std::cout << "error multipart header : " << name << " cannot have an empty content" << std::endl;
             return false;
         }
@@ -422,7 +429,11 @@ bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) 
     _chunk = trimFirstCRLF(_chunk);
 
     if (!_chunk.empty()) {
-        findErrorPage(400, "/", _globalDir.errPage);
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        } else {
+            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+        }
         std::cout << "error remaining body after end boundary" << std::endl;
         return false;
     }

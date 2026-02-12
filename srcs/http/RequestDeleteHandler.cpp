@@ -28,7 +28,7 @@ void Request::methodDeleteHandler() {
             path = path.substr(1, path.size());
         if (rootDir[0] == '/')
             rootDir = rootDir.substr(1, rootDir.size());
-        std::cout << "PATH = " << path << " DIR = " << rootDir << std::endl;
+
         struct stat buf;
         if (stat(rootDir.c_str(), &buf) != 0) {
             if (!_reqLocation->root.empty()) {
@@ -41,7 +41,6 @@ void Request::methodDeleteHandler() {
             return ;
         }
 
-        // CHECK IF rootDir is a folder ?
 
         // delete permission based on directory not file
         if (access(rootDir.c_str(), W_OK | X_OK) != 0) {
@@ -54,21 +53,28 @@ void Request::methodDeleteHandler() {
             std::cout << "error with DELETE no rights on root directoru" << std::endl;
             return ;
         }
-        // check permission of last folder (can be in trailing)
-        
 
         if (stat(path.c_str(), &buf) == 0) {
+
             if (S_ISREG(buf.st_mode)) {
-                // regular file
-                htmlPage = "File found for delete";
                 std::remove(path.c_str());
                 err = false;
                 status = 204;
             }
+
             else if (S_ISDIR(buf.st_mode)) {
-                // directory
-                // opendir, readdir and closedir
-                DIR* dir = opendir(path.c_str()); // protect
+
+                DIR* dir = opendir(path.c_str());
+                if (dir == NULL) {
+                    if (!_reqLocation->root.empty()) {
+                        findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                    }
+                    else {
+                        findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                    }
+                    std::cout << "error with DELETE opendir failed" << std::endl;
+                    return ;
+                }
                 struct dirent* entry;
                 while ((entry = readdir(dir)) != NULL) {
                     std::string name = entry->d_name;
@@ -81,39 +87,46 @@ void Request::methodDeleteHandler() {
                         fullPath = path + name;
 
                     struct stat st;
-                    stat(fullPath.c_str(), &st); // protection ??
-                    if (S_ISDIR(st.st_mode)) {
-                            if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
-                                if (!_reqLocation->root.empty()) {
-                                    findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                    if (stat(fullPath.c_str(), &st) == 0) {
+
+                        if (S_ISDIR(st.st_mode)) {
+                                if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
+                                    if (!_reqLocation->root.empty()) {
+                                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                                    }
+                                    else {
+                                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                                    }
+                                    closedir(dir);
+                                    std::cout << "error with DELETE no rights on a directory inside what is to be deleted" << std::endl;
+                                    return ;
                                 }
-                                else {
-                                    findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                                if (!deleteFolder(fullPath)) {
+                                    closedir(dir);
+                                    return ;
                                 }
-                                closedir(dir);
-                                std::cout << "error with DELETE no rights on a directory inside what is to be deleted" << std::endl;
-                                return ;
-                            }
-                            std::cout << YELLOW "folder : " << fullPath << RESET << std::endl;
-                            // get in folder
-                            if (!deleteFolder(fullPath)) {
-                            closedir(dir);
-                                return ;
-                            }
+                                std::remove(fullPath.c_str());
+                        } else if (S_ISREG(st.st_mode)) {
                             std::remove(fullPath.c_str());
-                    } else if (S_ISREG(st.st_mode)) {
-                        std::remove(fullPath.c_str());
-                        std::cout << BLUE "regular file :" << fullPath << RESET << std::endl;
+                        } else {
+                            std::remove(fullPath.c_str());
+                        }
 
                     } else {
-                        // what do I do ?
-                        std::cout << GREEN "not regular file " << fullPath << RESET << std::endl;
+                        closedir(dir);
+                        if (!_reqLocation->root.empty()) {
+                            findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                        }
+                        else {
+                            findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                        }
+                        std::cout << "error with DELETE stats failed" << std::endl;
+                        return ;
                     }
 
                 }
                 closedir(dir);
-                 std::remove(path.c_str());
-                htmlPage = "I have to delete a directory";
+                std::remove(path.c_str());
                 err = false;
                 status = 204;
             }
@@ -133,20 +146,36 @@ void Request::methodDeleteHandler() {
 }
 
 bool Request::deleteFolder(std::string path) {
-        DIR* dir = opendir(path.c_str()); // protect
-        struct dirent* entry;
-        while ((entry = readdir(dir)) != NULL) {
-            std::string name = entry->d_name;
-            if (name == "." || name == "..")
-                continue;
-            std::string fullPath;
-            if (path[path.size() - 1] != '/')
-                fullPath = path + "/" + name;
-            else
-                fullPath = path + name;
 
-            struct stat st;
-            stat(fullPath.c_str(), &st); // protection ??
+    DIR* dir = opendir(path.c_str());
+    if (dir == NULL) {
+        if (!_reqLocation->root.empty()) {
+            findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+        }
+        else {
+            findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+        }
+        std::cout << "error with DELETE opendir failed" << std::endl;
+        return false;
+    }
+
+    struct dirent* entry;
+
+    while ((entry = readdir(dir)) != NULL) {
+
+        std::string name = entry->d_name;
+        if (name == "." || name == "..")
+            continue;
+
+        std::string fullPath;
+        if (path[path.size() - 1] != '/')
+            fullPath = path + "/" + name;
+        else
+            fullPath = path + name;
+
+        struct stat st;
+
+        if (stat(fullPath.c_str(), &st) == 0) {
             if (S_ISDIR(st.st_mode)) {
                 if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
                     if (!_reqLocation->root.empty()) {
@@ -159,46 +188,57 @@ bool Request::deleteFolder(std::string path) {
                     closedir(dir);
                     return false;
                 }
-                std::cout << YELLOW "folder : " << fullPath << RESET << std::endl;
-                // get in folder
                 if (!deleteFolder(fullPath)) {
                     closedir(dir);
                     return false;
                 }
                 std::remove(fullPath.c_str());
             } else if (S_ISREG(st.st_mode)) {
-                std::cout << BLUE "regular file :" << fullPath << RESET << std::endl;
                 std::remove(fullPath.c_str());
-
+    
             } else {
-                // what do I do ?
-                std::cout << GREEN "not regular file " << fullPath << RESET << std::endl;
+                std::remove(fullPath.c_str());
             }
-
+        } else {
+            closedir(dir);
+            if (!_reqLocation->root.empty()) {
+                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            }
+            else {
+                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            }
+            std::cout << "error with DELETE stats failed" << std::endl;
+            return false;
         }
-        closedir(dir);
-        err = false;
-        status = 204;
-        return true;
+
+    }
+    closedir(dir);
+    err = false;
+    status = 204;
+    return true;
 }
 
 
 std::string Request::getDirectory() {
+
     std::string ret;
+
     if (!_reqLocation->root.empty()) 
         ret = _reqLocation->root + _uri;
     else
         ret = _reqLocation->alias;
+
     std::string trail = _trailing;
     size_t index = trail.find('/');
+
     while (index != std::string::npos) {
-        std::cout << "INDEX = " << index << std::endl;
+
         if (ret[ret.size() - 1] != '/')
             ret = ret + "/" + trail.substr(0, index + 1);
         else
             ret += trail.substr(0, index + 1);
+
         trail = trail.substr(index + 1);
-        std::cout << RED "NEW DIR = " << ret << " and TRAIL = " << trail << RESET << std::endl;
         index = trail.find('/');
     }
     return ret;

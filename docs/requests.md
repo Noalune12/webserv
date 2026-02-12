@@ -456,14 +456,5 @@ Trailing slashes are preserved and affect directory handling.
 
 ---
 
-## Implementation Checklist
 
-- [ ] DELETE: verify root directory is a folder
-- [ ] DELETE: handle non-regular files (symlink, socket, etc.)
-- [ ] `stat()` protection
-- [ ] Overflow protection
-- [ ] If `Content-Length` or `Transfer-Encoding` exists but no body: `0` → OK // `>0` → 400 Bad Request
-- [ ] If body exists, require `Content-Type`
-- [ ] Support reading body in multiple reads
-- [ ] Multipart header case-sensitivity rules
-- [ ] Multipart: ensure `filename` is present when required
+

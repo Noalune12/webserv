@@ -38,7 +38,6 @@ void Request::findServer() {
     if (_reqServer == NULL && possibleServerIndices.size() > 0) { 
         size_t serverIndex = possibleServerIndices[0];
         _reqServer = &_servers[serverIndex];
-        std::cout << "default server is set" << std::endl;
     }
 }
 
