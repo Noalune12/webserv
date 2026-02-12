@@ -1039,9 +1039,7 @@ void	Validator::validateCGIPath(const std::vector<std::string>& values) const {
 		}
 	}
 
-	/* not sure we can limit to only one type of script, leaving it like that right now */
 	Utils::duplicateDirective(groups, CGI_PATH, _config.getFilePath());
-
 	semicolonCheck(values, CGI_PATH);
 }
 
@@ -1082,9 +1080,7 @@ void	Validator::validateCGIExt(const std::vector<std::string>& values) const {
 		}
 	}
 
-	/* same as validateCGIPath here */
 	Utils::duplicateDirective(groups, CGI_EXT, _config.getFilePath());
-
 	semicolonCheck(values, CGI_EXT);
 }
 

@@ -2,11 +2,8 @@
 # define CGIEXECUTOR_HPP
 
 # include <stdint.h>
-# include <string>
-# include <vector>
 
 # include "Connection.hpp"
-# include "Request.hpp"
 
 class EventLoop;
 class Connection;
