@@ -69,7 +69,6 @@ void	EventLoop::run(void) {
 	while (_running) {
 		int timeout = calculateEpollTimeout() * 1000;
 		int nfds = epoll_wait(_epollFd, events, MAX_EVENTS, timeout);
-
 		if (nfds == -1) {
 			if (errno == EINTR) // errno code for signal interruption
 				continue ;
@@ -123,7 +122,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
 
-	if (!addToEpoll(clientFd, EPOLLIN)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
+	if (!addToEpoll(clientFd, EPOLLIN)) { // no EPOLLOUT here to avoid triggering epoll_wait once for each socket after creation
 		close(clientFd);
 		return ;
 	}

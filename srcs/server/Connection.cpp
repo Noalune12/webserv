@@ -3,13 +3,13 @@
 #include <arpa/inet.h>
 #include <sstream>
 
-Connection::Connection() : _clientFd(-1), _ip(), _port(-1), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _serverIP(), _serverPort(0), _request(), _cgi(), _sendBuffer(), _sendOffset(0)  {
+Connection::Connection() : _ip(), _port(-1), _state(IDLE), _buffer(), _serverIP(), _serverPort(0), _request(), _cgi(), _sendBuffer(), _sendOffset(0)  {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _clientFd(clientFd), _ip(ip), _port(port), _state(IDLE), _buffer(), _bufferLenght(-1), _keepAlive(true), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
+Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _port(port), _state(IDLE), _buffer(), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -31,13 +31,7 @@ Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<se
 }
 
 Connection::~Connection() {
-	(void) _clientFd;
-	(void) _ip;
 	(void) _port;
-	(void) _buffer;
-	(void) _bufferLenght;
-	(void) _keepAlive;
-	// /!\ do not close _clientFd, it should be managed by EventLopp
 }
 
 const std::string&	Connection::getIP(void) const {
