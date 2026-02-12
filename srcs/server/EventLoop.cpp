@@ -117,7 +117,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	std::string	ip;
 	int			port;
 	getClientInfo(clientAddr, ip, port);
-	Connection newClient(clientFd, ip, port, _serverManager.getServers(), _serverManager.getGlobalDir());
+	Connection newClient(clientFd, ip, _serverManager.getServers(), _serverManager.getGlobalDir());
 
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);

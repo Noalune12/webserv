@@ -63,7 +63,6 @@ class Connection {
 
 	private:
 		std::string			_ip;
-		int					_port;
 		ConnectionState		_state;
 		time_t				_timers[5];
 		std::string			_buffer;
@@ -74,7 +73,7 @@ class Connection {
 
 	public:
 		Connection(); // cannot compile without it
-		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir);
+		Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir);
 		~Connection();
 
 		/* timeout related functions */

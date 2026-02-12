@@ -3,13 +3,13 @@
 #include <arpa/inet.h>
 #include <sstream>
 
-Connection::Connection() : _ip(), _port(-1), _state(IDLE), _buffer(), _serverIP(), _serverPort(0), _request(), _cgi(), _sendBuffer(), _sendOffset(0)  {
+Connection::Connection() : _ip(), _state(IDLE), _buffer(), _serverIP(), _serverPort(0), _request(), _cgi(), _sendBuffer(), _sendOffset(0)  {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _port(port), _state(IDLE), _buffer(), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
+Connection::Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _state(IDLE), _buffer(), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
@@ -31,7 +31,6 @@ Connection::Connection(int& clientFd, std::string& ip, int& port, std::vector<se
 }
 
 Connection::~Connection() {
-	(void) _port;
 }
 
 const std::string&	Connection::getIP(void) const {
