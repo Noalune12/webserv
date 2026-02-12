@@ -5,7 +5,7 @@
 #include "MimeTypes.hpp"
 #include "colors.hpp"
 
-void Request::checkMultipart(std::string content) {
+void Request::checkMultipart(const std::string& content) {
 
     size_t index = content.find(";");
     std::string type, boundary;
@@ -48,7 +48,7 @@ void Request::checkMultipart(std::string content) {
     }
 }
 
-bool Request::isMultipartCarac(std::string &boundary) {
+bool Request::isMultipartCarac(const std::string &boundary) {
     if (boundary.empty()) {
         return false;
     }

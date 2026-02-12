@@ -35,77 +35,8 @@ void Request::methodPostHandler() {
         if (!findUploadDir())
             return ;
 
-        std::vector<Multipart>::iterator it = _multipartContent.begin();
+        handleMultipart();
 
-        for (; it != _multipartContent.end(); it++) {
-
-            if (it->name == "file") {
-
-                if (!it->filename.empty() && checkFilename(it->filename)) {
-                    std::ofstream outfile ((_postUploadDir + it->filename).c_str());
-                    if (!outfile) {
-                        _failedUpload++, _totalUpload++;
-                        continue;
-                    }
-
-                    outfile << it->body;
-
-                    outfile.close();
-
-                    FilesPost temp;
-                    temp.filename = it->filename;
-                    temp.location = _postUploadDir;
-                    _uplaodFiles.push_back(temp);
-                    _totalUpload++;
-
-                } else {
-                    if (!it->filename.empty()) {
-                        size_t index = it->filename.find(".");
-                        std::string filename = it->filename;
-                        if (index != std::string::npos) {
-                            filename = filename.substr(0, index);
-                            _postExt = it->filename.substr(index);
-                        }
-                        if (!createFileName(filename)) {
-                            _failedUpload++, _totalUpload++;
-                            continue;
-                        }
-                    } else {
-                        std::map<std::string, std::string>::iterator itType = it->headers.find("Content-Type");
-                        if (itType != it->headers.end()) {
-                            _postExt = MimeTypes::getExtensionFromType(itType->second);
-                        if(_postExt.empty()) {
-                            _failedUpload++, _totalUpload++;
-                            continue;
-                        }
-                            std::string filename = "upload_";
-                        if (!createFileName(filename)) {
-                            _failedUpload++, _totalUpload++;
-                            continue;
-                        }
-                        } else {
-                            _failedUpload++, _totalUpload++;
-                            continue;
-                        }
-                    }
-
-                    std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
-                    if (!outfile) {
-                        _failedUpload++, _totalUpload++;
-                        continue;
-                    }
-                    outfile << it->body;
-
-                    outfile.close();
-                    FilesPost temp;
-                    temp.filename = _postFilename;
-                    temp.location = _postUploadDir;
-                    _uplaodFiles.push_back(temp);
-                    _totalUpload++;
-                }
-
-            }
-        }
         if (_totalUpload != 0 && _failedUpload == _totalUpload) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -121,6 +52,7 @@ void Request::methodPostHandler() {
             err = false;
             status = 201;
         }
+
     } else {
 
         std::map<std::string, std::string>::iterator it = _headers.find("content-type");
@@ -170,9 +102,7 @@ void Request::methodPostHandler() {
             return;
         }
 
-
         // std::cout << "FILENAME = " << _postFilename << "  in directory = " << _postUploadDir << std::endl;
-
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
         if(!outfile) {
@@ -248,7 +178,7 @@ bool Request::findUploadDir() {
     return true;
 }
 
-bool Request::checkFilename(std::string &filename) {
+bool Request::checkFilename(const std::string &filename) {
     DIR* dir = opendir(_postUploadDir.c_str());
     if (dir == NULL) {
         std::cout << "DELETE open dir fail" << std::endl;
@@ -285,7 +215,7 @@ bool Request::checkFilename(std::string &filename) {
 }
 
 
-bool Request::createFileName(std::string &filename) {
+bool Request::createFileName(const std::string &filename) {
     double add = 1;
 
     DIR* dir = opendir(_postUploadDir.c_str()); 
@@ -366,5 +296,86 @@ void Request::printFilename() const {
     std::vector<FilesPost>::const_iterator it = _uplaodFiles.begin();
     for (; it != _uplaodFiles.end(); it++) {
         std::cout << "File was created with name : " << it->filename << " at location : " << it->location << std::endl;
+    }
+}
+
+void Request::handleMultipart() {
+
+    std::vector<Multipart>::iterator it = _multipartContent.begin();
+
+    for (; it != _multipartContent.end(); it++) {
+
+        if (it->name == "file") {
+
+            if (!it->filename.empty() && checkFilename(it->filename)) {
+                std::ofstream outfile ((_postUploadDir + it->filename).c_str());
+                if (!outfile) {
+                    _failedUpload++, _totalUpload++;
+                    continue;
+                }
+
+                outfile << it->body;
+
+                outfile.close();
+
+                FilesPost temp;
+                temp.filename = it->filename;
+                temp.location = _postUploadDir;
+                _uplaodFiles.push_back(temp);
+                _totalUpload++;
+
+            } else {
+
+                if (!it->filename.empty()) {
+                    size_t index = it->filename.find(".");
+                    std::string filename = it->filename;
+                    if (index != std::string::npos) {
+                        filename = filename.substr(0, index);
+                        _postExt = it->filename.substr(index);
+                    }
+                    if (!createFileName(filename)) {
+                        _failedUpload++, _totalUpload++;
+                        continue;
+                    }
+
+                } else {
+
+                    std::map<std::string, std::string>::iterator itType = it->headers.find("Content-Type");
+                    if (itType != it->headers.end()) {
+                        _postExt = MimeTypes::getExtensionFromType(itType->second);
+
+                    if (_postExt.empty()) {
+                        _failedUpload++, _totalUpload++;
+                        continue;
+                    }
+
+                    std::string filename = "upload_";
+                    if (!createFileName(filename)) {
+                        _failedUpload++, _totalUpload++;
+                        continue;
+                    }
+
+                    } else {
+                        _failedUpload++, _totalUpload++;
+                        continue;
+                    }
+                }
+
+                std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
+                if (!outfile) {
+                    _failedUpload++, _totalUpload++;
+                    continue;
+                }
+                outfile << it->body;
+
+                outfile.close();
+                FilesPost temp;
+                temp.filename = _postFilename;
+                temp.location = _postUploadDir;
+                _uplaodFiles.push_back(temp);
+                _totalUpload++;
+            }
+
+        }
     }
 }

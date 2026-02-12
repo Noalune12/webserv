@@ -170,10 +170,8 @@ void Request::checkRequestContent() {
     if (!_reqLocation->returnPath.empty()) {
         if (!_trailing.empty())
             return;
-        htmlPage = "this will be a return";
         status = _reqLocation->returnStatus;
         _returnPath = _reqLocation->returnPath;
-        std::cout << "RETURN STATUS " << status << "with path " << _returnPath << std::endl;
         _return = true;
     }
 

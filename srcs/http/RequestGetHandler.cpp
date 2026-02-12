@@ -157,7 +157,7 @@ void Request::methodGetHandler() {
 
 }
 
-std::string Request::getPath(std::string folder) {
+std::string Request::getPath(const std::string& folder) {
 
     std::string path;
 
@@ -172,7 +172,7 @@ std::string Request::getPath(std::string folder) {
     return path;
 }
 
-std::string Request::getPath(std::string folder, std::string file) {
+std::string Request::getPath(const std::string& folder, std::string& file) {
 
     std::string path;
 
@@ -189,7 +189,7 @@ std::string Request::getPath(std::string folder, std::string file) {
     return path;
 }
 
-bool Request::readFile(std::string path, struct stat buf) {
+bool Request::readFile(const std::string& path, struct stat buf) {
 
 
     if (!S_ISREG(buf.st_mode)) {
@@ -236,7 +236,7 @@ bool Request::readFile(std::string path, struct stat buf) {
     }
 }
 
-bool Request::handleAutoindex(std::string dirPath) {
+bool Request::handleAutoindex(const std::string& dirPath) {
 
     if (access(dirPath.c_str(), R_OK | X_OK) != 0) {
         if (!_reqLocation->root.empty()) {

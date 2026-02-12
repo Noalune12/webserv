@@ -76,7 +76,7 @@ class Request {
         // PARSING
         bool extractRequestInfo();
         bool extractRequestLineInfo(std::string& method, std::string& uri, std::string& http);
-        bool checkRequestLine(std::string& method, std::string& uri, std::string& http);
+        bool checkRequestLine(const std::string& method, const std::string& uri, const std::string& http);
         bool checkHeaders();
         bool hostChecker();
         void findServer();
@@ -85,8 +85,8 @@ class Request {
         // BODY PARSING
         bool bodyChecker();
         bool checkChunked();
-        void checkMultipart(std::string content);
-        bool isMultipartCarac(std::string &boundary);
+        void checkMultipart(const std::string& content);
+        bool isMultipartCarac(const std::string &boundary);
         bool getChunkSize();
         bool handleMultipartHeader();
         bool checkMultipartHeader();
@@ -98,23 +98,24 @@ class Request {
         void methodGetHandler();
         void methodDeleteHandler();
         void methodPostHandler();
-        std::string getPath(std::string folder);
-        std::string getPath(std::string folder, std::string file);
-        bool readFile(std::string path, struct stat buf);
-        bool handleAutoindex(std::string dirPath);
+        std::string getPath(const std::string& folder);
+        std::string getPath(const std::string& folder, std::string& file);
+        bool readFile(const std::string& path, struct stat buf);
+        bool handleAutoindex(const std::string& dirPath);
         std::string getDirectory();
-        bool deleteFolder(std::string path);
+        bool deleteFolder(const std::string& path);
         bool findUploadDir();
-        bool checkFilename(std::string &filename);
-        bool createFileName(std::string &filename);
+        bool checkFilename(const std::string &filename);
+        bool createFileName(const std::string &filename);
         void printFilename() const;
+        void handleMultipart();
 
         // UTILS
         std::string trimOws(const std::string& s);
         std::string trimFirstCRLF(const std::string& s);
         bool hasWS(const std::string& line) const;
         bool isOnlyDigits(const std::string& line) const;
-        void printWithoutR(std::string what, std::string line) const;
+        void printWithoutR(const std::string& what, const std::string& line) const;
 
     public:
         Request();
@@ -155,10 +156,9 @@ class Request {
         std::vector<FilesPost> _uplaodFiles;
 
         // PARSING
-        bool isCRLF(std::string request);
+        bool isCRLF(const std::string& request);
         void checkRequestSem(std::string request);
         void checkRequestContent();
-        // void parseBody();
         bool checkBodySize(const std::string &body);
 
 
@@ -174,7 +174,7 @@ class Request {
         // UTILS
         void clearPreviousRequest();
         void setServerInfo(const int& port, const std::string& ip);
-        void findErrorPage(int code, std::string path, std::map<int, std::string> errPage);
+        void findErrorPage(int code, const std::string& root, const std::map<int, std::string>& errPage);
 };
 
 

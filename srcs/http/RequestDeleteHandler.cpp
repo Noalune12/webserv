@@ -145,7 +145,7 @@ void Request::methodDeleteHandler() {
     status = 200;
 }
 
-bool Request::deleteFolder(std::string path) {
+bool Request::deleteFolder(const std::string& path) {
 
     DIR* dir = opendir(path.c_str());
     if (dir == NULL) {

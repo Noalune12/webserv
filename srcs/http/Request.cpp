@@ -19,7 +19,7 @@ Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(se
 
 Request::~Request() {}
 
-void Request::printWithoutR(std::string what, std::string line) const {
+void Request::printWithoutR(const std::string& what, const std::string& line) const {
     std::string l;
     for (size_t i = 0; i < line.size(); i++) {
         if (line[i] != '\r')
@@ -90,12 +90,12 @@ std::string Request::trimFirstCRLF(const std::string& s)
 }
 
 
-void Request::findErrorPage(int code, std::string root, std::map<int, std::string> errPage) {
+void Request::findErrorPage(int code, const std::string& root, const std::map<int, std::string>& errPage) {
 
     err = true;
     status = code;
 
-    std::map<int, std::string>::iterator itErr = errPage.find(code);
+    std::map<int, std::string>::const_iterator itErr = errPage.find(code);
     if (itErr == errPage.end())
         return;
 
@@ -138,7 +138,7 @@ void Request::setServerInfo(const int& port, const std::string& ip) {
 }
 
 
-bool Request::isCRLF(std::string request) {
+bool Request::isCRLF(const std::string& request) {
     if (request.find("\r\n\r\n") != std::string::npos)
         return true;
     return false;

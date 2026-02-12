@@ -184,7 +184,7 @@ static bool isValidHTTPVersion(const std::string& version) {
     return (std::isdigit(version[0]) && version[1] == '.' && std::isdigit(version[2]));
 }
 
-bool Request::checkRequestLine(std::string& method, std::string& uri, std::string& http) {
+bool Request::checkRequestLine(const std::string& method, const std::string& uri, const std::string& http) {
     if (method != "GET" && method != "POST" && method != "DELETE"
             && method != "HEAD" && method != "OPTIONS"
             && method != "TRACE" && method != "PUT"
