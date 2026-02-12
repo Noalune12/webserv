@@ -52,7 +52,9 @@ int	main(int ac, char **av) {
 		serverManager.setupListenSockets();
 
 		EventLoop	eventLoop(serverManager);
-		eventLoop.init(); // not checking the return value yet
+		if (!eventLoop.init()) {
+			return (EXIT_FAILURE);
+		}
 
 		// ctrl+c only for now
 		g_eventLoop = &eventLoop;
