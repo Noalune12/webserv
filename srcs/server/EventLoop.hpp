@@ -1,8 +1,6 @@
 #ifndef EVENTLOOP_HPP
 # define EVENTLOOP_HPP
 
-# include <stdint.h>
-
 # include "CGIExecutor.hpp"
 # include "Connection.hpp"
 # include "ResponseBuilder.hpp"
