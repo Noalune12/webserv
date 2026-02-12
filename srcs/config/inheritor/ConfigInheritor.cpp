@@ -404,7 +404,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
 
 
 void ConfigInheritor::printContent() const {
-    std::cout << RED << "\nINHERITOR FINAL\n" << RESET << std::endl;
+
     std::cout << BLUE << "GLOBAL DIRECTIVES" << RESET << std::endl;
 
     std::cout << "error page : ";
@@ -412,14 +412,18 @@ void ConfigInheritor::printContent() const {
     for (; it != _globalDir.errPage.end(); it++) {
         std::cout << it->first << " " << it->second << " -- ";
     }
+
     std::cout << "\nclient max body size : ";
     std::cout << std::fixed <<_globalDir.bodySize << " k" << std::endl;
 
-    std::cout << GREEN << "\nSERVER" << RESET << std::endl;
+
     std::vector<server>::const_iterator itt = _server.begin();
+
     int i = 1;
+
     for (; itt != _server.end(); itt++) {
-        std::cout << YELLOW << "\nsevrer n*" << i << RESET << std::endl;
+
+        std::cout << GREEN << "\nSERVER n*" << i << RESET << std::endl;
         std::cout << "error page : ";
         std::map<int, std::string>::const_iterator it = itt->errPage.begin();
         for (; it != itt->errPage.end(); it++) {
@@ -427,7 +431,7 @@ void ConfigInheritor::printContent() const {
         }
         std::cout << "\nclient max body size : ";
         std::cout << std::fixed << itt->bodySize << " k" << std::endl;
-        std::cout << "\nroot : ";
+        std::cout << "root : ";
         std::cout << std::fixed << itt->root << std::endl;
         std::cout << "index : ";
         std::vector<std::string>::const_iterator vecstring_it = itt->index.begin();
@@ -443,7 +447,7 @@ void ConfigInheritor::printContent() const {
         std::cout << "auto index : ";
         if (itt->autoIndex == true) {std::cout << "on" << std::endl;} else if (itt->autoIndex == false) {std::cout << "off" << std::endl;}
         if (!itt->returnPath.empty()) {std::cout << "return : " << itt->returnStatus << ", " << itt->returnPath << std::endl;}
-        std::cout << "\nserver name: ";
+        std::cout << "server name: ";
         vecstring_it = itt->serverName.begin();
         for (; vecstring_it != itt->serverName.end(); vecstring_it++)
             std::cout << *vecstring_it << ", ";
@@ -454,7 +458,6 @@ void ConfigInheritor::printContent() const {
             std::cout << "[" << lisit->port << "] - " << lisit->ip << " , ";
         }
 
-        std::cout << GREEN << "\nLOCATION" << RESET << std::endl;
         std::vector<location>::const_iterator itl = itt->loc.begin();
         int j = 1;
         for (; itl != itt->loc.end(); itl++) {
@@ -485,7 +488,6 @@ void ConfigInheritor::printContent() const {
             std::cout << "auto index : ";
             if (itl->autoIndex == true) {std::cout << "on" << std::endl;} else if (itl->autoIndex == false) {std::cout << "off" << std::endl;}
             if (!itl->returnPath.empty()) {std::cout << "return : " << itl->returnStatus << ", " << itl->returnPath << std::endl;}
-            std::cout << std::endl;
             std::cout << "CGI : " << itl->cgiPath << " with extension " << itl->cgiExt << std::endl;
             j++;
         }
