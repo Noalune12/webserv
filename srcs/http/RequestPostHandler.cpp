@@ -11,7 +11,7 @@
 
 
 void Request::methodPostHandler() {
-    std::cout << "\nENTERING POST HANDLER" << std::endl;
+
     if (_body.empty() && _isMultipart == false) {
         if (!_reqLocation->root.empty())
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -20,6 +20,7 @@ void Request::methodPostHandler() {
         std::cout << "error with POST, no body" << std::endl;
         return ;
     }
+
     if (!_trailing.empty()) {
         if (!_reqLocation->root.empty())
             findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
@@ -29,20 +30,23 @@ void Request::methodPostHandler() {
         return ;
     }
 
-    //if multipart --> loop on vector
     if (_isMultipart == true) {
+
         if (!findUploadDir())
             return ;
+
         std::vector<Multipart>::iterator it = _multipartContent.begin();
+
         for (; it != _multipartContent.end(); it++) {
+
             if (it->name == "file") {
 
-                // need to find location etc
-                std::cout << "UPLOAD DIR = " << _postUploadDir << std::endl;
                 if (!it->filename.empty() && checkFilename(it->filename)) {
-                    // need to check if filename exist ?
-                    std::cout << "creating " << it->filename << std::endl;
                     std::ofstream outfile ((_postUploadDir + it->filename).c_str());
+                    if (!outfile) {
+                        _failedUpload++, _totalUpload++;
+                        continue;
+                    }
 
                     outfile << it->body;
 
@@ -53,6 +57,7 @@ void Request::methodPostHandler() {
                     temp.location = _postUploadDir;
                     _uplaodFiles.push_back(temp);
                     _totalUpload++;
+
                 } else {
                     if (!it->filename.empty()) {
                         size_t index = it->filename.find(".");
@@ -61,22 +66,34 @@ void Request::methodPostHandler() {
                             filename = filename.substr(0, index);
                             _postExt = it->filename.substr(index);
                         }
-                        createFileName(filename);
+                        if (!createFileName(filename)) {
+                            _failedUpload++, _totalUpload++;
+                            continue;
+                        }
                     } else {
                         std::map<std::string, std::string>::iterator itType = it->headers.find("Content-Type");
                         if (itType != it->headers.end()) {
                             _postExt = MimeTypes::getExtensionFromType(itType->second);
+                        if(_postExt.empty()) {
+                            _failedUpload++, _totalUpload++;
+                            continue;
+                        }
                             std::string filename = "upload_";
-                            createFileName(filename);
+                        if (!createFileName(filename)) {
+                            _failedUpload++, _totalUpload++;
+                            continue;
+                        }
                         } else {
-                            _failedUpload++;
-                            _totalUpload++;
+                            _failedUpload++, _totalUpload++;
                             continue;
                         }
                     }
-                    std::cout << "creating " << _postFilename << std::endl;
-                    std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
 
+                    std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
+                    if (!outfile) {
+                        _failedUpload++, _totalUpload++;
+                        continue;
+                    }
                     outfile << it->body;
 
                     outfile.close();
@@ -108,7 +125,6 @@ void Request::methodPostHandler() {
 
         std::map<std::string, std::string>::iterator it = _headers.find("content-type");
         if (it == _headers.end()) {
-            // _postExt = ".txt"; // not sure
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
@@ -117,9 +133,7 @@ void Request::methodPostHandler() {
             std::cout << "error content type required for POST" << std::endl;
             return ;
         } else {
-            // set extenstion
 
-            // check is valid extension in mime types ?
             if (_isMultipart == false &&  !MimeTypes::isSupportedType(it->second)) {
                 if (!_reqLocation->root.empty()) {
                     findErrorPage(415, _reqLocation->root, _reqLocation->errPage);
@@ -130,31 +144,45 @@ void Request::methodPostHandler() {
                 return ;
             }
 
-            // size_t		lastSlash = it->second.find_last_of('/');
             _postExt = MimeTypes::getExtensionFromType(it->second);
-            // if (lastSlash != std::string::npos) {
-            //     _postExt += it->second.substr(lastSlash + 1);
-            // } else {
-            //     _postExt = ".txt";
-
-            // }
+            if (_postExt.empty()) {
+                if (!_reqLocation->root.empty()) {
+                    findErrorPage(415, _reqLocation->root, _reqLocation->errPage);
+                } else {
+                    findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
+                }
+                std::cout << "error type is not supported" << std::endl;
+                return ;
+            }
 
         }
-        std::cout << "EXTENSION = " << _postExt << std::endl;
 
         if (!findUploadDir())
             return ;
 
-        // create file
         std::string filename = "upload_";
-        createFileName(filename);
+        if (!createFileName(filename)) {
+            if (!_reqLocation->root.empty()) { 
+                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            }
+            return;
+        }
 
 
-        std::cout << "FILENAME = " << _postFilename << "  in directory = " << _postUploadDir << std::endl;
+        // std::cout << "FILENAME = " << _postFilename << "  in directory = " << _postUploadDir << std::endl;
 
-        // put body into file
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
+        if(!outfile) {
+            if (!_reqLocation->root.empty()) { 
+                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            } else {
+                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            }
+            return;
+        }
 
         outfile << _fullBody;
 
@@ -168,17 +196,13 @@ void Request::methodPostHandler() {
         _uplaodFiles.push_back(temp);
 
     }
-    printFilename();
-
-    std::cout << std::endl;
 }
 
 bool Request::findUploadDir() {
-    // find location
 
     if (_reqLocation->uploadTo.empty()) {
         if (!_reqLocation->root.empty())
-            _postUploadDir = _reqLocation->root + _uri; // check /////
+            _postUploadDir = _reqLocation->root + _uri;
         else
             _postUploadDir = _reqLocation->alias;
     } else {
@@ -186,8 +210,6 @@ bool Request::findUploadDir() {
     }
     if (_postUploadDir[0] == '/')
         _postUploadDir = _postUploadDir.substr(1, _postUploadDir.size());
-    std::cout << "UPLOAD TO " << _postUploadDir << std::endl;
-    // check rights
 
     struct stat buf;
     if (stat(_postUploadDir.c_str(), &buf) != 0) {
@@ -200,6 +222,7 @@ bool Request::findUploadDir() {
         std::cout << "error with POST folder does not exist" << std::endl;
         return false;
     }
+
     if (!S_ISDIR(buf.st_mode)) {
         if (!_reqLocation->root.empty())
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -208,6 +231,7 @@ bool Request::findUploadDir() {
         std::cout << "error with POST, upload to is not a folder" << std::endl;
         return false;
     }
+
     if (access(_postUploadDir.c_str(), W_OK | X_OK) != 0) {
         if (!_reqLocation->root.empty())
             findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
@@ -225,106 +249,116 @@ bool Request::findUploadDir() {
 }
 
 bool Request::checkFilename(std::string &filename) {
-    DIR* dir = opendir(_postUploadDir.c_str()); // protect
+    DIR* dir = opendir(_postUploadDir.c_str());
+    if (dir == NULL) {
+        std::cout << "DELETE open dir fail" << std::endl;
+        return false;
+    }
+
     struct dirent* entry;
+
     while ((entry = readdir(dir)) != NULL) {
         std::string n = entry->d_name;
         if (n == "." || n == "..")
             continue;
 
         struct stat st;
-        std::cout << "checking for mulitpart filename: " << _postUploadDir + n << std::endl;
-        stat((_postUploadDir + n).c_str(), &st); //protection
-        if (!S_ISREG(st.st_mode))
-            continue;
-        if (n == filename) {
-            std::cout << "has same filename" << std::endl;
+
+        if (stat((_postUploadDir + n).c_str(), &st) == 0) {
+
+            if (!S_ISREG(st.st_mode))
+                continue;
+            if (n == filename) {
+                closedir(dir);
+                return false;
+            }
+
+        } else {
             closedir(dir);
             return false;
         }
+
     }
+
     closedir(dir);
     return true;
 }
 
 
-void Request::createFileName(std::string &filename) {
-        double add = 1;
-        DIR* dir = opendir(_postUploadDir.c_str()); // protect
-        struct dirent* entry;
-        std::vector<std::string> filesExt;
-        while ((entry = readdir(dir)) != NULL) {
-            std::string n = entry->d_name;
-            if (n == "." || n == "..")
-                continue;
+bool Request::createFileName(std::string &filename) {
+    double add = 1;
 
-            struct stat st;
-            // std::cout << "checking : " << _postUploadDir + n << std::endl;
-            stat((_postUploadDir + n).c_str(), &st); //protection
+    DIR* dir = opendir(_postUploadDir.c_str()); 
+    if (dir == NULL) {
+        std::cout << "DELETE open dir fail" << std::endl;
+        return false;
+    }
+
+    struct dirent* entry;
+
+    std::vector<std::string> filesExt;
+
+    while ((entry = readdir(dir)) != NULL) {
+        std::string n = entry->d_name;
+        if (n == "." || n == "..")
+            continue;
+
+        struct stat st;
+
+        if (stat((_postUploadDir + n).c_str(), &st) == 0) {
+
             if (!S_ISREG(st.st_mode))
                 continue;
-            // std::cout << "file name in upload dir = " << n << std::endl;
+
             size_t index = n.find(filename);
-            // std::cout << "upload_ index = " << index << std::endl;
             if (index == std::string::npos || index != 0)
                 continue;
-
+    
             std::string temp = n.substr(filename.size());
             
             index = temp.find(".");
             if (index != std::string::npos) {
                 temp = temp.substr(0, index);
             }
-            // std::cout << "after upload_ = " << temp << std::endl;
+
             filesExt.push_back(temp);
 
+        } else {
+            closedir(dir);
+            return false;
         }
-        closedir(dir);
 
-        std::sort(filesExt.begin(), filesExt.end());
+    }
+    closedir(dir);
 
-        std::vector<std::string>::iterator index;
-        std::stringstream ss;
-        ss << add;
-        if (ss.fail()) {
-            if (!_reqLocation->root.empty()) { 
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
-            } else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
-            }
+    std::sort(filesExt.begin(), filesExt.end());
+
+    std::vector<std::string>::iterator index;
+    std::stringstream ss;
+    ss << add;
+    if (ss.fail()) {
+        std::cout << "error  while converting extension for POST" << std::endl;
+        return false;
+    }
+    std::string addStr = ss.str();
+
+    while ((index = std::find(filesExt.begin(), filesExt.end(), addStr)) != filesExt.end()) {
+        std::stringstream sss;
+        add++;
+        if (add > __DBL_MAX__) {
+            std::cout << "Cannot upload more files" << std::endl;
+            return false;
+        }
+        sss << add;
+        if (sss.fail()) {
             std::cout << "error  while converting extension for POST" << std::endl;
-            return ;
+            return false;
         }
-        std::string addStr = ss.str();
-        // std::cout << "Comparing temp and addStr : " << addStr << std::endl;
-        while ((index = std::find(filesExt.begin(), filesExt.end(), addStr)) != filesExt.end()) {
-            std::stringstream sss;
-            add++;
-            if (add > __DBL_MAX__) {
-                if (!_reqLocation->root.empty()) { 
-                    findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
-                } else {
-                    findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
-                }
-                std::cout << "Cannot upload more files" << std::endl;
-                return ;
-            }
-            sss << add;
-            if (sss.fail()) {
-                if (!_reqLocation->root.empty()) { 
-                    findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
-                } else {
-                    findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
-                }
-                std::cout << "error  while converting extension for POST" << std::endl;
-                return ;
-            }
-            addStr = sss.str();
-        }
+        addStr = sss.str();
+    }
 
-
-
-        _postFilename = filename + addStr + _postExt;
+    _postFilename = filename + addStr + _postExt;
+    return true;
 }
 
 

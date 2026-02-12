@@ -167,14 +167,11 @@ bool	MimeTypes::isSupportedType(const std::string& contentType) {
 			return false;
 		}
 	}
-	std::cout << contentType <<std::endl;;
-
 	std::map<std::string, std::string>::iterator it = _types.begin();
 	for (; it != _types.end(); it++) {
 		if (contentType == it->second || isTextType(contentType))
 			return true;
 	}
-	std::cout << std::endl;
 	return false;
 }
 

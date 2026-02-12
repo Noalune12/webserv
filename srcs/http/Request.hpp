@@ -106,7 +106,7 @@ class Request {
         bool deleteFolder(std::string path);
         bool findUploadDir();
         bool checkFilename(std::string &filename);
-        void createFileName(std::string &filename);
+        bool createFileName(std::string &filename);
         void printFilename() const;
 
         // UTILS

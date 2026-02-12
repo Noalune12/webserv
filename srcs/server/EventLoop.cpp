@@ -384,7 +384,6 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 	if (bytesRead > 0) {
 		if (client.getState() == READING_BODY) {
 			std::string chunk(buffer, bytesRead);
-			std::cout << "CHUNK BUFFER WHEN READING BODY = " << buffer << std::endl;
 			client.setChunkBuffer(chunk);
 		}
 		std::string	currentBuffer = client.getBuffer();
