@@ -1,15 +1,10 @@
-#include <arpa/inet.h>
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
-#include <iostream>
 #include <netinet/in.h>
 #include <sstream>
 #include <sys/epoll.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
@@ -18,7 +13,6 @@
 EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor(), _responseBuilder() {}
 
 EventLoop::~EventLoop() {
-
 
 	std::map<int, Connection>::iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
