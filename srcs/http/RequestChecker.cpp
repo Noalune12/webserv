@@ -2,9 +2,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <fstream>
 #include <sys/stat.h>
-#include <algorithm>
 
 void Request::findServer() {
 	std::vector<server>::iterator itServer = _servers.begin();

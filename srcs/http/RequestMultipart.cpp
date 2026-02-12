@@ -1,9 +1,9 @@
 #include "Request.hpp"
+#include "MimeTypes.hpp"
+
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-#include "MimeTypes.hpp"
-#include "colors.hpp"
 
 void Request::checkMultipart(const std::string& content) {
 

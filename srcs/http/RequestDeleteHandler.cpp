@@ -1,11 +1,9 @@
 #include "Request.hpp"
 #include <iostream>
-#include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdio>
-#include "colors.hpp"
 
 void Request::methodDeleteHandler() {
     if (_trailing.empty()) {

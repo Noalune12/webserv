@@ -3,7 +3,6 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include "colors.hpp"
 
 Request::Request(): _chunkSize(-1), _chunkState(GETTING_FIRST_SIZE), _multipartState(GETTING_FIRST_BOUNDARY), \
     _failedUpload(0), _totalUpload(0), _indexFound(false), err(false), status(0), _keepAlive(false), \

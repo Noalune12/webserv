@@ -1,11 +1,11 @@
 #include "Request.hpp"
-#include "iostream"
+#include <iostream>
 #include <sys/stat.h>
 #include <sstream>
 #include <fstream>
 #include <dirent.h>
-#include "colors.hpp"
-#include "unistd.h"
+#include <unistd.h>
+
 void Request::methodGetHandler() {
 
     if (!_reqLocation->root.empty() && !_trailing.empty()) {

@@ -1,11 +1,11 @@
 #include "Request.hpp"
-#include <iostream>
 #include "MimeTypes.hpp"
+
+#include <iostream>
 #include <fstream>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
-#include <cstdlib>
 #include <sstream>
 #include <algorithm>
 

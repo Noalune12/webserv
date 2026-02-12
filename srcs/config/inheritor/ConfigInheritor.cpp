@@ -1,8 +1,8 @@
 #include "ConfigInheritor.hpp"
 #include "rules.h"
+#include "colors.hpp"
 
 #include <algorithm>
-#include "colors.hpp"
 #include <iostream>
 #include <sstream>
 
