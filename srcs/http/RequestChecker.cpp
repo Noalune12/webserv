@@ -1,10 +1,12 @@
 #include "Request.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
 
 void Request::findServer() {
+
 	std::vector<server>::iterator itServer = _servers.begin();
     std::vector<size_t> possibleServerIndices;
 	for (; itServer != _servers.end(); itServer++) {
@@ -75,13 +77,13 @@ bool Request::hostChecker() {
 	std::map<std::string, std::string>::iterator it = _headers.find("host");
 	if (it == _headers.end()) {
 		findErrorPage(400, "/", _globalDir.errPage);
-	    std::cout << "error no host in headers " << std::endl;
+	    Logger::warn("Headers: missing Host");
 		return false;
 	}
 	size_t sep = it->second.find(":");
 	if (sep == 0 || sep == it->second.size() - 1) {
 		findErrorPage(400, "/", _globalDir.errPage);
-	    std::cout << "error host has : at the start or the end" << std::endl;
+        Logger::warn("Headers: Host not well defined");
 		return false;
 	}
 	if (sep == std::string::npos) {
@@ -92,20 +94,20 @@ bool Request::hostChecker() {
 		std::string temp = it->second.substr(sep + 1, it->second.size());
         if (!isOnlyDigits(temp)) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error host port has not only digits" << std::endl;
+            Logger::warn("Headers: Host Port not well defined");
             return false;
         }
 		std::stringstream ss(temp);
 		ss >> port;
         if (ss.fail() || !ss.eof()) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error while converting port" << std::endl;
+            Logger::warn("Headers: Host Port not well defined");
             return false;
         }
 
         if (port != _serverPort) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error host port is not the same as server" << std::endl;
+            Logger::warn("Headers: Host Port not well defined");
             return false;
         }
 	}
@@ -116,14 +118,14 @@ bool Request::hostChecker() {
     findServer();
 	if (_reqServer == NULL) {
 		findErrorPage(400, "/", _globalDir.errPage);
-	    std::cout << "error no compatible server found" << std::endl;
+        Logger::warn("Headers: no compatible server found");
 		return false;
 	}
 
     findLocation();
 	if (_reqLocation == NULL) {
         findErrorPage(404, _reqServer->root, _reqServer->errPage);
-	    std::cout << "error no location found" << std::endl;
+	    Logger::warn("Headers: no location found");
 		return false;
 	}
 
@@ -139,7 +141,7 @@ void Request::checkRequestContent() {
         _keepAlive = true;
     else {
         findErrorPage(400, "/", _globalDir.errPage);
-	    std::cout << "error in headers: connection not well formated " << std::endl;
+        Logger::warn("Headers: Connection not well defined");
 		return ;
     }
 
@@ -159,7 +161,7 @@ void Request::checkRequestContent() {
         } else {
             findErrorPage(405, _reqLocation->alias, _reqLocation->errPage);
         }
-	    std::cout << "error not allowed method" << std::endl;
+        Logger::warn("Headers: Method is not supported");
 		return ;
 	}
 
@@ -188,7 +190,7 @@ void Request::checkRequestContent() {
         struct stat buf;
 
         if (stat(_scriptPath.c_str(), &buf) == 0) {
-            std::cout << "FILE FOUND FOR CGI" << std::endl;
+            Logger::debug("CGI: File Found");
             _cgi = true;
         }
         else {
@@ -198,7 +200,7 @@ void Request::checkRequestContent() {
             else {
                 findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with CGI file or folder note found" << std::endl;
+            Logger::warn("CGI: path not found");
         }
     }
 

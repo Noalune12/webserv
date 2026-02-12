@@ -1,10 +1,11 @@
 #include "Request.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 #include <cstdlib>
 
 bool Request::getChunkSize() {
-    // convert hexa to int
+    Logger::debug("Chunked Body: Getting Size");
     char* end = NULL;
     std::string hex;
     size_t index = _chunk.find("\r\n");
@@ -14,7 +15,7 @@ bool Request::getChunkSize() {
         } else {
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with chunked body = \\r\\n at index 0" << std::endl;
+        Logger::warn("Chunked Body: not well formatted");
         return false;
     }
     hex = _chunk.substr(0, index);
@@ -29,11 +30,11 @@ bool Request::getChunkSize() {
         } else {
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with chunked size = erreur with hexa conversion" << std::endl;
+        Logger::warn("Chunked Body: hexa conversion failed");
         return false;
     }
 
-    // set sate to reading
+    Logger::debug("Chunked body size: "), std::cout << _chunkSize << std::endl;;
     _chunkState = READING_BYTES;
     return true;
 }
@@ -58,13 +59,12 @@ void Request::parseChunk() {
             } else {
                 findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error body is higher that client max body size" << std::endl;
+            Logger::warn("Chunked Body: Body size higher than client max body size");
             return ;   
         }
         if (_chunkState == READING_BYTES) {
 
-
-            // get size bytes
+            Logger::debug("Chunked Body: Reading Bytes");
             if ((_chunk.size() >= _chunkSize + 2)) {
                 _body += _chunk.substr(0, _chunkSize);
                 _chunk = _chunk.substr(_chunkSize, _chunk.size());
@@ -76,11 +76,12 @@ void Request::parseChunk() {
                         findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
                     else
                         findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
-                    std::cout << "error with chunked body = \\r\\n missing" << std::endl;
+                    Logger::warn("Chunked Body: not well formatted - missing CRLF");
                     return ;
                 }
 
                 if (_chunkSize == 0 && _chunk == "\r\n") {
+                    Logger::debug("Chunked Body: End found");
                     _chunkState = IS_END;
                     chunkRemaining = false;
                     if (_isMultipart) {
@@ -96,7 +97,7 @@ void Request::parseChunk() {
                         findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
                     else
                         findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
-                    std::cout << "error with chunked body = end not well formated" << std::endl;
+                    Logger::warn("Chunked Body: end not well formatted");
                     return ;
                 }
                 _chunk = _chunk.substr(index + 1, _chunk.size());

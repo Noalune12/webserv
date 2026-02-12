@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "MimeTypes.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -12,12 +13,14 @@
 
 void Request::methodPostHandler() {
 
+    Logger::debug("Entering POST Handler");
+
     if (_body.empty() && _isMultipart == false) {
         if (!_reqLocation->root.empty())
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
-        std::cout << "error with POST, no body" << std::endl;
+        Logger::warn("Post: Body is missing");
         return ;
     }
 
@@ -26,24 +29,28 @@ void Request::methodPostHandler() {
             findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
-        std::cout << "error with POST, trailing after location not handled --> NOT SURE" << std::endl;
+        Logger::warn("Post: Trailing after location");
         return ;
     }
 
     if (_isMultipart == true) {
 
+        Logger::debug("Post: is multipart");
+
         if (!findUploadDir())
             return ;
+
+        Logger::debug("Post: upload directory is " + _postUploadDir);
 
         handleMultipart();
 
         if (_totalUpload != 0 && _failedUpload == _totalUpload) {
             if (!_reqLocation->root.empty()) {
-                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error nothing uploaded for multipart" << std::endl;
+            Logger::warn("Post: All uploads failed");
             return ;
         } else if (_failedUpload == 0 && _totalUpload == 0) {
             err = false;
@@ -62,7 +69,7 @@ void Request::methodPostHandler() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error content type required for POST" << std::endl;
+            Logger::warn("Post: Content Type required");
             return ;
         } else {
 
@@ -72,7 +79,7 @@ void Request::methodPostHandler() {
                 } else {
                     findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error type is not supported" << std::endl;
+                Logger::warn("Post: Content Type is not supportefd");
                 return ;
             }
 
@@ -83,7 +90,7 @@ void Request::methodPostHandler() {
                 } else {
                     findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error type is not supported" << std::endl;
+                Logger::warn("Post: Content Type is not supportefd");
                 return ;
             }
 
@@ -92,6 +99,8 @@ void Request::methodPostHandler() {
         if (!findUploadDir())
             return ;
 
+        Logger::debug("Post: upload directory is " + _postUploadDir);
+        
         std::string filename = "upload_";
         if (!createFileName(filename)) {
             if (!_reqLocation->root.empty()) { 
@@ -102,7 +111,7 @@ void Request::methodPostHandler() {
             return;
         }
 
-        // std::cout << "FILENAME = " << _postFilename << "  in directory = " << _postUploadDir << std::endl;
+        Logger::debug("Post: creating " + _postFilename + " in directory " + _postUploadDir);
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
         if(!outfile) {
@@ -111,6 +120,7 @@ void Request::methodPostHandler() {
             } else {
                 findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
             }
+            Logger::warn("Post: outfile can not be created");
             return;
         }
 
@@ -149,7 +159,7 @@ bool Request::findUploadDir() {
         else {
             findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with POST folder does not exist" << std::endl;
+        Logger::warn("Post: upload dir does not exist");
         return false;
     }
 
@@ -158,7 +168,7 @@ bool Request::findUploadDir() {
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
-        std::cout << "error with POST, upload to is not a folder" << std::endl;
+        Logger::warn("Post: upload dir is not a folder");
         return false;
     }
 
@@ -167,7 +177,7 @@ bool Request::findUploadDir() {
             findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
-        std::cout << "error with POST, no right on folder" << std::endl;
+        Logger::warn("Post: no rights on upload dir");
         return false;
     }
 
@@ -181,7 +191,7 @@ bool Request::findUploadDir() {
 bool Request::checkFilename(const std::string &filename) {
     DIR* dir = opendir(_postUploadDir.c_str());
     if (dir == NULL) {
-        std::cout << "DELETE open dir fail" << std::endl;
+        Logger::warn("Post: opendir failed");
         return false;
     }
 
@@ -199,6 +209,7 @@ bool Request::checkFilename(const std::string &filename) {
             if (!S_ISREG(st.st_mode))
                 continue;
             if (n == filename) {
+                Logger::debug("Post: File with same name exists");
                 closedir(dir);
                 return false;
             }
@@ -220,7 +231,7 @@ bool Request::createFileName(const std::string &filename) {
 
     DIR* dir = opendir(_postUploadDir.c_str()); 
     if (dir == NULL) {
-        std::cout << "DELETE open dir fail" << std::endl;
+        Logger::warn("Post: opendir failed");
         return false;
     }
 
@@ -267,7 +278,7 @@ bool Request::createFileName(const std::string &filename) {
     std::stringstream ss;
     ss << add;
     if (ss.fail()) {
-        std::cout << "error  while converting extension for POST" << std::endl;
+        Logger::warn("Post: extension conversion failed");
         return false;
     }
     std::string addStr = ss.str();
@@ -276,12 +287,12 @@ bool Request::createFileName(const std::string &filename) {
         std::stringstream sss;
         add++;
         if (add > __DBL_MAX__) {
-            std::cout << "Cannot upload more files" << std::endl;
+            Logger::warn("Post: too many files with the same name");
             return false;
         }
         sss << add;
         if (sss.fail()) {
-            std::cout << "error  while converting extension for POST" << std::endl;
+            Logger::warn("Post: extension conversion failed");
             return false;
         }
         addStr = sss.str();
@@ -295,7 +306,7 @@ bool Request::createFileName(const std::string &filename) {
 void Request::printFilename() const {
     std::vector<FilesPost>::const_iterator it = _uplaodFiles.begin();
     for (; it != _uplaodFiles.end(); it++) {
-        std::cout << "File was created with name : " << it->filename << " at location : " << it->location << std::endl;
+        Logger::debug("File was created with name : " + it->filename + " at location : " + it->location);
     }
 }
 
@@ -313,6 +324,7 @@ void Request::handleMultipart() {
                     _failedUpload++, _totalUpload++;
                     continue;
                 }
+                Logger::debug("Post: creating " + it->filename + " in directory " + _postUploadDir);
 
                 outfile << it->body;
 
@@ -366,6 +378,8 @@ void Request::handleMultipart() {
                     _failedUpload++, _totalUpload++;
                     continue;
                 }
+                Logger::debug("Post: creating " + _postFilename + " in directory " + _postUploadDir);
+
                 outfile << it->body;
 
                 outfile.close();

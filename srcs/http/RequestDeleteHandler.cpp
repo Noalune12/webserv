@@ -1,4 +1,6 @@
 #include "Request.hpp"
+#include "Logger.hpp"
+
 #include <iostream>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -6,6 +8,9 @@
 #include <cstdio>
 
 void Request::methodDeleteHandler() {
+
+    Logger::debug("Entering Delete Handler");
+
     if (_trailing.empty()) {
         if (!_reqLocation->root.empty()) {
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -13,7 +18,7 @@ void Request::methodDeleteHandler() {
         else {
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);		
         }
-        std::cout << "error with DELETE nor file or folder mentionned" << std::endl;
+        Logger::warn("Delete: no file or folder");
         return ;
     } else {
         std::string  path;
@@ -28,6 +33,8 @@ void Request::methodDeleteHandler() {
             rootDir = rootDir.substr(1, rootDir.size());
 
         struct stat buf;
+
+        Logger::debug("Delete: Checking existence and rights for root directory : " + rootDir);
         if (stat(rootDir.c_str(), &buf) != 0) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
@@ -35,7 +42,7 @@ void Request::methodDeleteHandler() {
             else {
                 findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
             }
-            std::cout << "error with DELETE file or folder note found" << std::endl;
+            Logger::warn("Delete: root directory does not exist");
             return ;
         }
 
@@ -48,19 +55,22 @@ void Request::methodDeleteHandler() {
             else {
                 findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
             }
-            std::cout << "error with DELETE no rights on root directoru" << std::endl;
+            Logger::warn("Delete: no rights on root directory");
             return ;
         }
 
         if (stat(path.c_str(), &buf) == 0) {
 
             if (S_ISREG(buf.st_mode)) {
+                Logger::debug("Delete: File " + path + " deleted");
                 std::remove(path.c_str());
                 err = false;
                 status = 204;
             }
 
             else if (S_ISDIR(buf.st_mode)) {
+
+                Logger::debug("Delete: " + path + " is a Folder");
 
                 DIR* dir = opendir(path.c_str());
                 if (dir == NULL) {
@@ -70,7 +80,7 @@ void Request::methodDeleteHandler() {
                     else {
                         findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
                     }
-                    std::cout << "error with DELETE opendir failed" << std::endl;
+                    Logger::warn("Delete: Open Dir Failed");
                     return ;
                 }
                 struct dirent* entry;
@@ -88,23 +98,28 @@ void Request::methodDeleteHandler() {
                     if (stat(fullPath.c_str(), &st) == 0) {
 
                         if (S_ISDIR(st.st_mode)) {
-                                if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
-                                    if (!_reqLocation->root.empty()) {
-                                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
-                                    }
-                                    else {
-                                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
-                                    }
-                                    closedir(dir);
-                                    std::cout << "error with DELETE no rights on a directory inside what is to be deleted" << std::endl;
-                                    return ;
+
+                            Logger::debug("Delete: " + fullPath + " is a Folder");
+
+                            if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
+                                if (!_reqLocation->root.empty()) {
+                                    findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
                                 }
-                                if (!deleteFolder(fullPath)) {
-                                    closedir(dir);
-                                    return ;
+                                else {
+                                    findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
                                 }
-                                std::remove(fullPath.c_str());
+                                closedir(dir);
+
+                                Logger::warn("Delete: No rights on directory");
+                                return ;
+                            }
+                            if (!deleteFolder(fullPath)) {
+                                closedir(dir);
+                                return ;
+                            }
+                            std::remove(fullPath.c_str());
                         } else if (S_ISREG(st.st_mode)) {
+                            Logger::debug("Delete: File " + fullPath + " deleted");
                             std::remove(fullPath.c_str());
                         } else {
                             std::remove(fullPath.c_str());
@@ -118,7 +133,7 @@ void Request::methodDeleteHandler() {
                         else {
                             findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
                         }
-                        std::cout << "error with DELETE stats failed" << std::endl;
+                        Logger::warn("Delete: stat failed");
                         return ;
                     }
 
@@ -135,7 +150,7 @@ void Request::methodDeleteHandler() {
             else {
                 findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
             }
-            std::cout << "error with DELETE file or folder note found" << std::endl;
+            Logger::warn("Delete: file or folder not found");
             return ;
         }
     }
@@ -145,6 +160,8 @@ void Request::methodDeleteHandler() {
 
 bool Request::deleteFolder(const std::string& path) {
 
+    Logger::debug("Delete: " + path + " is a Folder");
+
     DIR* dir = opendir(path.c_str());
     if (dir == NULL) {
         if (!_reqLocation->root.empty()) {
@@ -153,7 +170,7 @@ bool Request::deleteFolder(const std::string& path) {
         else {
             findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with DELETE opendir failed" << std::endl;
+        Logger::warn("Delete: Open Dir Failed");
         return false;
     }
 
@@ -175,6 +192,9 @@ bool Request::deleteFolder(const std::string& path) {
 
         if (stat(fullPath.c_str(), &st) == 0) {
             if (S_ISDIR(st.st_mode)) {
+
+                Logger::debug("Delete: " + fullPath + " is a Folder");
+
                 if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
                     if (!_reqLocation->root.empty()) {
                         findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
@@ -182,7 +202,7 @@ bool Request::deleteFolder(const std::string& path) {
                     else {
                         findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
                     }
-                    std::cout << "error with DELETE no rights on a directory inside what is to be deleted" << std::endl;
+                    Logger::warn("Delete: No rights on directory");
                     closedir(dir);
                     return false;
                 }
@@ -192,6 +212,7 @@ bool Request::deleteFolder(const std::string& path) {
                 }
                 std::remove(fullPath.c_str());
             } else if (S_ISREG(st.st_mode)) {
+                Logger::debug("Delete: File " + fullPath + " deleted");
                 std::remove(fullPath.c_str());
     
             } else {
@@ -205,7 +226,7 @@ bool Request::deleteFolder(const std::string& path) {
             else {
                 findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with DELETE stats failed" << std::endl;
+            Logger::warn("Delete: stat failed");
             return false;
         }
 

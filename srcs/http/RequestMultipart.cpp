@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "MimeTypes.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -43,8 +44,10 @@ void Request::checkMultipart(const std::string& content) {
             return ;
         }
         std::transform(type.begin(), type.end(), type.begin(), ::tolower);
-        if (type == "multipart/form-data")
+        if (type == "multipart/form-data") {
+            Logger::debug("Body: is multipart");
             _isMultipart = true;
+        }
     }
 }
 
@@ -93,7 +96,7 @@ bool Request::parseMultipart() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "multipart: no first boundary" << std::endl;
+            Logger::warn("Multipart: No first boundary");
             return false;
 
         } else if (_chunk.size() < _multipartBoundary.size() + 4) {
@@ -115,7 +118,7 @@ bool Request::parseMultipart() {
             } else {
                 findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error body is higher that client max body size for multipart" << std::endl;
+            Logger::warn("Body size higher than client max body size");
             return false ;   
         }
 
@@ -171,6 +174,7 @@ bool Request::handleMultipartHeader() {
 
     } else if (index == 0) {
 
+        Logger::debug("Multipart: Headers end found");
         _chunk = _chunk.substr(index + 2);
         if (!checkMultipartHeader())
             return false;
@@ -186,7 +190,7 @@ bool Request::handleMultipartHeader() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with multipart headers no : or no header name" << std::endl;
+            Logger::warn("Multipart: Header not well defined");
             return false;
         }
         std::string name = header.substr(0, index);
@@ -197,7 +201,7 @@ bool Request::handleMultipartHeader() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with multiparts headers name has WS" << std::endl;
+            Logger::warn("Multipart: Header not well defined");
             return false;
         }
         if (name != "Content-Disposition" && name != "Content-Type") {
@@ -206,7 +210,7 @@ bool Request::handleMultipartHeader() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with multiparts headers invalid" << std::endl;
+            Logger::warn("Multipart: Header Name is invalid");
             return false;
         }
         
@@ -219,7 +223,7 @@ bool Request::handleMultipartHeader() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with headers : is not followed by space" << std::endl;
+            Logger::warn("Multipart: Header not well defined");
             return false;
         }
         content = trimOws(content);
@@ -231,7 +235,7 @@ bool Request::handleMultipartHeader() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with duplicate multipart headers : " << name << std::endl;
+            Logger::warn("Multipart: Header " + name + " is duplicated");
             return false;  
         }
         if (((name == "Content-Disposition") && content.empty())
@@ -241,7 +245,7 @@ bool Request::handleMultipartHeader() {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error multipart header : " << name << " cannot have an empty content" << std::endl;
+            Logger::warn("Multipart: Header " + name + " has empty content");
             return false;
         }
 
@@ -261,7 +265,7 @@ bool Request::checkMultipartHeader() {
         } else {
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with multipart no Content Disposition" << std::endl;
+        Logger::warn("Multipart: Content Dispositon missing");
         return false;
 
     } else {
@@ -281,7 +285,7 @@ bool Request::checkMultipartHeader() {
                 } else {
                     findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error with multipart  no content type and no filename" << std::endl;
+                Logger::warn("Multipart: Content Type and Filename missing");
                 return false;
 
         } else if (it == _multiTemp.headers.end() && !_multiTemp.filename.empty()) {
@@ -292,20 +296,19 @@ bool Request::checkMultipartHeader() {
                     } else {
                         findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                     }
-                    std::cout << "error with multipart  no content type and  filename has wring extension" << std::endl;
+                    Logger::warn("Multipart: No Content Type and Filename has wring extension");
                     return false;
                 }
         }
 
     }
 
-
-    // std::cout << "\nMULTIPART HEADER MAP\n" << std::endl;
-    // std::map<std::string, std::string>::iterator itmap = _multiTemp.headers.begin();
-    // for (; itmap != _multiTemp.headers.end(); itmap++) {
-    //     std::cout << "[" << itmap->first << ", " << itmap->second << "]" << std::endl;
-    // }
-    // std::cout << "NAME = " << _multiTemp.name << "and FILENAME = " << _multiTemp.filename << std::endl;
+    Logger::debug("Multipart Headers");
+    std::map<std::string, std::string>::iterator itmap = _multiTemp.headers.begin();
+    for (; itmap != _multiTemp.headers.end(); itmap++) {
+        std::cout << "[" << itmap->first << ", " << itmap->second << "]" << std::endl;
+    }
+    Logger::debug("Multipart: name = " + _multiTemp.name + " and filename = " + _multiTemp.filename);
 
     _multipartState = IS_BODY;
     return true;
@@ -323,7 +326,7 @@ bool Request::checkContentDisposition(const std::string& content) {
         } else {
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with multipart  Content Disposition does not start with form-data" << std::endl;
+        Logger::warn("Multipart: Content Disposition does not start with form-data");
         return false;
 
     } else {
@@ -336,7 +339,7 @@ bool Request::checkContentDisposition(const std::string& content) {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with multipart  Content Disposition wrong format after form data" << std::endl;
+            Logger::warn("Multipart: Content Disposition not well defined after form-data");
             return false;
         } else {
             contentDispo = contentDispo.substr(1);
@@ -361,7 +364,7 @@ bool Request::checkContentDisposition(const std::string& content) {
                 } else {
                     findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error with multipart  Content Disposition wrong format after name" << std::endl;
+                Logger::warn("Multipart: Content Disposition not well defined after name");
                 return false;
             }
 
@@ -376,7 +379,7 @@ bool Request::checkContentDisposition(const std::string& content) {
                 } else {
                     findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error with multipart  Content Disposition wrong format after filename" << std::endl;
+                Logger::warn("Multipart: Content Disposition not well defined after filename");
                 return false;
             }
 
@@ -386,7 +389,7 @@ bool Request::checkContentDisposition(const std::string& content) {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with multipart  Content Disposition wrong token" << std::endl;
+            Logger::warn("Multipart: Content Disposition has wring token");
             return false;
         }
     }
@@ -401,7 +404,7 @@ bool Request::checkContentType(const std::string& content) {
         } else {
             findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error with multipart  Content Type not supported" << std::endl;
+        Logger::warn("Multipart: Content Type not supported");
         return false;
 
     } else if (!_multiTemp.filename.empty()) {
@@ -414,7 +417,7 @@ bool Request::checkContentType(const std::string& content) {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error with multipart  Content Type extension not same as filename" << std::endl;
+            Logger::warn("Multipart: Content Type and filename extension does not match");
             return false;
         }
     } 
@@ -434,7 +437,7 @@ bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) 
         } else {
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error remaining body after end boundary" << std::endl;
+        Logger::warn("Multipart: Remaining body after final boundary");
         return false;
     }
 
@@ -452,11 +455,11 @@ bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) 
             } else {
                 findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error no content length but existing body for multipart" << std::endl;
+            Logger::warn("Multipart: No Content Lentgh");
             return false;
         } else {
             std::stringstream ss;
-            ss << _fullBody.size(); // protect ?
+            ss << _fullBody.size();
             std::string bodySize = ss.str();
             if (it->second != bodySize) {
                 if (!_reqLocation->root.empty()) {
@@ -464,7 +467,7 @@ bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) 
                 } else {
                     findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error  content length is not equal to existing body size for multipart" << std::endl;
+                Logger::warn("Multipart: Content Lentgh and Body Size do not match");
                 return false;
             }
         }

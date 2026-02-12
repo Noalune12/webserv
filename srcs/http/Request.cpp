@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -109,10 +110,13 @@ void Request::findErrorPage(int code, const std::string& root, const std::map<in
     if (path[0] == '/')
         path = path.substr(1, path.size());
 
+    Logger::debug("Finding Error Page at : " + path);
+    
     std::ifstream file(path.c_str());
     if (!file) {
         return;
     } else {
+        Logger::debug("Error Page Found");
         std::stringstream buffer;
         buffer << file.rdbuf();
         htmlPage = buffer.str();

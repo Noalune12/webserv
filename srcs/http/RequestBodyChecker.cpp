@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "Logger.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -27,7 +28,7 @@ bool Request::bodyChecker() {
                 } else {
                     findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error no content length but existing body for multipart" << std::endl;
+                Logger::warn("Multipart: Content-Length missing");
                 return false;
             }
 
@@ -60,10 +61,10 @@ bool Request::checkChunked() {
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
-        std::cout << "error transfer encoding not well defined" << std::endl;
+        Logger::warn("Transfer Encoding not well defined");
         return false;
     } else if (it != _headers.end() && it->second == "chunked") {
-        std::cout << "PARSE CHUNKED BODY HERE" << std::endl;
+        Logger::debug("Body is Chunked");
         _isChunked = true;
         chunkRemaining = true;
         _chunk = _body;
@@ -82,7 +83,7 @@ bool Request::checkBodySize(const std::string &body) {
             findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
         else
             findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
-        std::cout << "error body is higher that client max body size" << std::endl;
+        Logger::warn("Body size higher than client max body size");
         return false;
     }
 
@@ -93,7 +94,7 @@ bool Request::checkBodySize(const std::string &body) {
         } else {
             findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
         }
-        std::cout << "error no content length but existing body" << std::endl;
+        Logger::warn("Content Length is missing");
         return false;
 
     } else if (it != _headers.end()) {
@@ -108,7 +109,7 @@ bool Request::checkBodySize(const std::string &body) {
             } else {
                 findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
             }
-            std::cout << "error  while converting content len" << std::endl;
+            Logger::warn("Content Length can't be converted");
             return false;
         }
 
@@ -124,7 +125,7 @@ bool Request::checkBodySize(const std::string &body) {
                 } else {
                     findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error  content length is not equal to existing body size" << std::endl;
+                Logger::warn("Body size differs from Content Lentgh");
                 return false;
             }
         } else {
@@ -137,7 +138,7 @@ bool Request::checkBodySize(const std::string &body) {
                 } else {
                     findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
                 }
-                std::cout << "error  content length is not equal to existing body size" << std::endl;
+                Logger::warn("Body size differs from Content Lentgh");
                 return false;
             } else if (bodySize == contentLength) {
                 _fullBody = _body;

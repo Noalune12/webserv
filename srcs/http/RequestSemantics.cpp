@@ -1,4 +1,5 @@
 #include <Request.hpp>
+#include "Logger.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -11,7 +12,7 @@ void Request::checkRequestSem(std::string request) {
 
     if (_req.empty()) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error empty request" << std::endl;
+        Logger::warn("Request is empty");
         return ;
     }
 
@@ -31,7 +32,7 @@ bool Request::extractRequestInfo() {
     size_t index = _req.find("\r\n");
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line : not finished with rn" << std::endl;
+        Logger::warn("Request not well formatted");
         return false;
     }
 
@@ -43,7 +44,7 @@ bool Request::extractRequestInfo() {
     index = _req.find("\r\n\r\n");
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error no header or final WS" << std::endl;
+        Logger::warn("Request not well formatted");
         return false;
     }
 
@@ -64,7 +65,7 @@ bool Request::extractRequestInfo() {
     size_t index = _requestLine.find(' ');
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line: method" << std::endl;
+        Logger::warn("Request Line not well formatted");
         return false;
     }
 
@@ -76,7 +77,7 @@ bool Request::extractRequestInfo() {
     index = remain.find(' ');
     if (index == std::string::npos || index == 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line: uri" << std::endl;
+        Logger::warn("Request Line not well formatted");
         return false;
     }
 
@@ -87,7 +88,7 @@ bool Request::extractRequestInfo() {
 
     if (remain.empty()) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with request line: http" << std::endl;
+        Logger::warn("Request Line not well formatted");
         return false;
     }
 
@@ -103,7 +104,7 @@ bool Request::checkHeaders() {
     while (std::getline(ss, line)) {
         if (line[line.length() - 1] != '\r') {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error with headers no \\r at the end" << std::endl;
+            Logger::warn("Headers not well formatted");
             return false;
         }
 
@@ -111,13 +112,13 @@ bool Request::checkHeaders() {
         size_t index = line.find(":");
         if (index == 0 || index == std::string::npos) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error with headers no : or no header name" << std::endl;
+            Logger::warn("Headers not well formatted");
             return false;
         }
         std::string name = line.substr(0, index);
         if (hasWS(name)) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error with headers name has WS" << std::endl;
+            Logger::warn("Headers not well formatted");
             return false;
         }
 
@@ -126,7 +127,7 @@ bool Request::checkHeaders() {
 
         if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error with headers : is not followed by space" << std::endl;
+            Logger::warn("Headers not well formatted");
             return false;
         }
 
@@ -142,12 +143,12 @@ bool Request::checkHeaders() {
                 || (name == "content-type" && _headers.find("content-type") != _headers.end())
                 || (name == "connection" && _headers.find("connection") != _headers.end())) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error with duplicate headers : " << name << std::endl;
+            Logger::warn("Headers " + name + " is duplicated");
             return false;
         }
         if ((name == "host") && hasWS(content)) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error header : " << name << " has WS in its content" << std::endl;
+            Logger::warn("Headers: Host content has White Spaces");
             return false;
         }
         if (((name == "host") && content.empty())
@@ -156,18 +157,18 @@ bool Request::checkHeaders() {
                 || ((name == "content-type") && content.empty())
                 || ((name == "connection") && content.empty())) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error header : " << name << " cannot have an empty content" << std::endl;
+            Logger::warn("Headers " + name + " can not have an empty content");
             return false;
         }
         if (name == "content-length" && !isOnlyDigits(content)) {
             findErrorPage(400, "/", _globalDir.errPage);
-            std::cout << "error header : " << name << " has to be only digits" << std::endl;
+            Logger::warn("Headers: Content Length is not well formatted");
             return false;
         }
         _headers[name] = content;
     }
 
-    std::cout << "\nHEADER MAP\n" << std::endl;
+    Logger::debug("Headers");
     std::map<std::string, std::string>::iterator it = _headers.begin();
     for (; it != _headers.end(); it++) {
         std::cout << "[" << it->first << ", " << it->second << "]" << std::endl;
@@ -190,30 +191,30 @@ bool Request::checkRequestLine(const std::string& method, const std::string& uri
             && method != "TRACE" && method != "PUT"
             && method != "PATCH" && method != "CONNECT") {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with method" << std::endl;
+        Logger::warn("Request Line: Method is wrong");
         return false;
     }
     if (uri[0] != '/') {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with uri" << std::endl;
+        Logger::warn("Request Line: Uri is wrong");
         return false;
     }
     size_t index = http.find ("HTTP/");
     if (index != 0) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with http index is not 0" << std::endl;
+        Logger::warn("Request Line: HTTP is wrong");
         return false;
     }
 
     std::string version = http.substr(5);
     if (!isValidHTTPVersion(version)) {
         findErrorPage(400, "/", _globalDir.errPage);
-        std::cout << "error with http syntax" << std::endl;
+        Logger::warn("Request Line: HTTP has wring syntaxe");
         return false;
     }
     if (version != "1.1" && version != "1.0") {
         findErrorPage(505, "/", _globalDir.errPage);
-        std::cout << "error with http version" << std::endl;
+        Logger::warn("Request Line: wring HTTP version");
         return false;
     }
     _method = method;
