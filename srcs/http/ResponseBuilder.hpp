@@ -21,7 +21,6 @@ class ResponseBuilder {
 
 		Response	buildFromRequest(const Request& req);
 		Response	buildFromCGI(const std::string& cgiOutput, const Request& req);
-		Response	buildError(int statusCode, bool keepAlive);
 
 		void	initializeResponse(Response& resp, const Request& req);
 
@@ -32,7 +31,7 @@ class ResponseBuilder {
 		void	parseCGIBody(const std::string& cgiOutput, Response& resp);
 		size_t	findHeaderEnd(const std::string& cgiOutput);
 
-		void	setCommonHeaders(Response& resp, bool keepAlive);
+		void	setCommonHeaders(Response& resp, const Request& req);
 		void	setContentType(Response& resp, const std::string& extension);
 		void	setContentTypeFromCGI(Response& resp);
 

@@ -68,20 +68,6 @@ Response	ResponseBuilder::buildFromCGI(const std::string& cgiOutput, const Reque
 	return (resp);
 }
 
-Response	ResponseBuilder::buildError(int statusCode, bool keepAlive) {
-
-	Response	resp;
-
-	setCommonHeaders(resp, keepAlive);
-	setStatus(resp, statusCode);
-
-	std::string errorPage = StatusCodes::generateDefaultErrorPage(statusCode);
-	resp._body.assign(errorPage.begin(), errorPage.end());
-	resp._headers["Content-Type"] = "text/html";
-
-	return (resp);
-}
-
 void	ResponseBuilder::initializeResponse(Response& resp, const Request& req) {
 
 	resp._statusCode = 200;
@@ -90,7 +76,7 @@ void	ResponseBuilder::initializeResponse(Response& resp, const Request& req) {
 	resp._body.clear();
 	resp._bytesSent = 0;
 
-	setCommonHeaders(resp, req._keepAlive);
+	setCommonHeaders(resp, req);
 }
 
 void	ResponseBuilder::setBodyFromFile(Response& resp, const Request& req) {
@@ -204,9 +190,13 @@ size_t	ResponseBuilder::findHeaderEnd(const std::string& cgiOutput) {
 	return (std::string::npos);
 }
 
-void	ResponseBuilder::setCommonHeaders(Response& resp, bool keepAlive) {
+void	ResponseBuilder::setCommonHeaders(Response& resp, const Request& req) {
 	resp._headers["Server"] = "webserv/1.0";
-	resp._headers["Connection"] = keepAlive ? "keep-alive" : "close";
+	if (req._keepAlive) {
+		resp._headers["Connection"] = req.err ? "close" : "keep-alive";
+	} else {
+		resp._headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
+	}
 }
 
 void	ResponseBuilder::setContentType(Response& resp, const std::string& extension) {
