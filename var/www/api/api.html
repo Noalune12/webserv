@@ -27,7 +27,6 @@
 			gap: 0.75rem;
 			text-align: center;
 			max-width: 800px;
-			margin-bottom: 4rem;
 		}
 		h1 {
 			line-height: 1.6;
@@ -102,6 +101,7 @@
 			gap: 40px;
 			box-sizing: border-box;
 			flex-wrap: wrap;
+			margin-top: 4rem;
 		}
 
 		.request-part {
@@ -154,6 +154,14 @@
 			resize: vertical;
 			font-family: inherit;
 			margin-bottom: 15px;
+		}
+
+		.deleteInput {
+			width: 100%;
+			min-height: 20px;
+			padding: 12px;
+			margin-bottom: 15px;
+			border: 1px solid #ddd;
 		}
 
 		.fileInput:hover {
@@ -285,6 +293,24 @@
 		</div>
 	</div>
 
+	<div class="requests">
+		<div class="request-part">
+			<h2>Delete a file from api</h2>
+
+			<input type="text" class="deleteInput" id="deleteIdInputAPI" placeholder="Enter file or folder">
+			<button class="submitBtn" id="deleteBtnAPI">Delete</button>
+
+			<p class="result" id="deleteResultAPI"></p>
+		</div>
+		<div class="request-part">
+			<h2>Delete a file from delete</h2>
+
+			<input type="text" class="deleteInput" id="deleteIdInputDelete" placeholder="Enter file or folder">
+			<button class="submitBtn" id="deleteBtnDelete">Delete</button>
+
+			<p class="result" id="deleteResultDelete"></p>
+		</div>
+	</div>
 
 <script>
 
@@ -424,6 +450,52 @@ document.getElementById("submitAllBtnUpload").addEventListener("click", () => {
     .catch(err => {
         document.getElementById("resultUpload").innerText =
             "Erreur réseau";
+    });
+});
+
+// DELETE from API
+document.getElementById("deleteBtnAPI").addEventListener("click", () => {
+    const id = document.getElementById("deleteIdInputAPI").value.trim();
+
+    if (!id) {
+        document.getElementById("deleteResultAPI").textContent =
+            "Please enter a file or folder name";
+        return;
+    }
+
+    fetch(`http://localhost:8080/api/${id}`, {
+        method: "DELETE"
+    })
+    .then(response => {
+        document.getElementById("deleteResultAPI").textContent =
+            "HTTP status: " + response.status;
+    })
+    .catch(() => {
+        document.getElementById("deleteResultAPI").textContent =
+            "Network error";
+    });
+});
+
+// DELETE from Delete
+document.getElementById("deleteBtnDelete").addEventListener("click", () => {
+    const id = document.getElementById("deleteIdInputDelete").value.trim();
+
+    if (!id) {
+        document.getElementById("deleteResultDelete").textContent =
+            "Please enter a file or folder name";
+        return;
+    }
+
+    fetch(`http://localhost:8080/delete/${id}`, {
+        method: "DELETE"
+    })
+    .then(response => {
+        document.getElementById("deleteResultDelete").textContent =
+            "HTTP status: " + response.status;
+    })
+    .catch(() => {
+        document.getElementById("deleteResultDelete").textContent =
+            "Network error";
     });
 });
 
