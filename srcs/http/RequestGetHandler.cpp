@@ -317,12 +317,12 @@ bool Request::handleAutoindex(const std::string& dirPath) {
             if (S_ISDIR(st.st_mode) && access(fullPath.c_str(), R_OK | X_OK) == 0) {
     
                 Logger::debug("Get (autoindex): Folder " + fullPath);
-                htmlPage += "<a href=\"" + name + "/\">📁 " + name + "</a><br>\n";
+                htmlPage += "<a href=\"" + path + "/" + name + "/\">📁 " + name + "</a><br>\n";
     
             } else if (S_ISREG(st.st_mode) && access(fullPath.c_str(), R_OK) == 0) {
                 
                 Logger::debug("Get (autoindex): File " + fullPath);
-                htmlPage += "<a href=\"" + name + "\">📄 " + name + "</a><br>\n";
+                htmlPage += "<a href=\"" + path + "/" + name + "\">📄 " + name + "</a><br>\n";
     
             }
 
