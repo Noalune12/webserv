@@ -145,6 +145,17 @@
 			transition: all 0.2s ease;
 		}
 
+		.textInput {
+			width: 100%;
+			min-height: 120px;
+			padding: 12px;
+			border-radius: 10px;
+			border: 1px solid #ccc;
+			resize: vertical;
+			font-family: inherit;
+			margin-bottom: 15px;
+		}
+
 		.fileInput:hover {
 			border-color: #535353;
 			background: #fff;
@@ -250,6 +261,15 @@
 			<p class="result" id="resultAPI"></p>
 		</div>
 		<div class="request-part">
+			<h2>Send text to API</h2>
+
+			<textarea class="textInput" id="textInputAPI" placeholder="Enter your text here..."></textarea>
+
+			<button class="submitBtn" id="submitTextBtnAPItext">Send text</button>
+
+			<p class="result" id="resultTextAPI"></p>
+		</div>
+		<div class="request-part">
 			<h2>POST towards upload</h2>
 			<div class="fileInputsContainer" id="fileInputsContainerUpload">
 				<div class="file-row">
@@ -268,7 +288,7 @@
 
 <script>
 
-// POST API
+// POST API multipart
 const container = document.getElementById("fileInputsContainerAPI");
 
 // Add a new file
@@ -320,6 +340,34 @@ document.getElementById("submitAllBtnAPI").addEventListener("click", () => {
     .catch(err => {
         document.getElementById("resultAPI").innerText =
             "Erreur réseau";
+    });
+});
+
+// POST API simple body
+document.getElementById("submitTextBtnAPItext").addEventListener("click", () => {
+    const text = document.getElementById("textInputAPI").value;
+
+    // Vérifier si vide
+    if (!text.trim()) {
+        document.getElementById("resultTextAPI").textContent =
+            "Please enter some text before sending.";
+        return;
+    }
+
+    fetch("http://localhost:8080/api/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/plain"
+        },
+        body: text
+    })
+    .then(response => {
+        document.getElementById("resultTextAPI").textContent =
+            "HTTP status: " + response.status;
+    })
+    .catch(() => {
+        document.getElementById("resultTextAPI").textContent =
+            "Network error";
     });
 });
 
