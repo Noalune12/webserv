@@ -51,7 +51,7 @@
 			color: #222;
 			align-self: flex-start;
 			margin-top: auto;
-			padding-bottom: 2px; /* pas sur ici */
+			padding-top: 2rem; /* pas sur ici */
 		}
 
 		.cta::after {
@@ -235,29 +235,23 @@
 	<div class="page-description">
 		<h1>API PAGE</h1>
 		<p>On this page, you can chose to upload or delete one or more files</p>
-		<a href="/" class="cta">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
-				<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
-			</svg>
-			<span class="hover-underline-animation">Return to homepage</span>
-		</a>
 	</div>
 
 
 	<div class="requests">
 		<div class="request-part">
 			<h2>POST towards API</h2>
-			
+
 			<div class="fileInputsContainer" id="fileInputsContainerAPI">
 				<div class="file-row">
 					<input type="file" class="fileInput fileAPI" required>
 					<button type="button" class="removeBtn">❌</button>
 				</div>
 			</div>
-			
+
 			<button type="button" class="addBtn" id="addFileBtnAPI">Add a file</button>
 			<button class="submitBtn" id="submitAllBtnAPI">Send all files</button>
-			
+
 			<p class="result" id="resultAPI"></p>
 		</div>
 		<div class="request-part">
@@ -277,14 +271,21 @@
 					<button type="button" class="removeBtn">❌</button>
 				</div>
 			</div>
-			
+
 			<button type="button" class="addBtn" id="addFileBtnUpload">Add a file</button>
 			<button class="submitBtn" id="submitAllBtnUpload">Send all files</button>
-			
+
 			<p class="result" id="resultUpload"></p>
 		</div>
 	</div>
-
+	<div>
+		<a href="/" class="cta">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+				<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+			</svg>
+			<span class="hover-underline-animation">Return to homepage</span>
+		</a>
+	</div>
 
 <script>
 
@@ -324,9 +325,9 @@ document.getElementById("submitAllBtnAPI").addEventListener("click", () => {
     });
 
     if (!hasFile) {
-        document.getElementById("resultAPI").textContent = 
+        document.getElementById("resultAPI").textContent =
             "No files were selected";
-        return; 
+        return;
     }
 
     fetch("http://localhost:8080/api/", {
@@ -408,9 +409,9 @@ document.getElementById("submitAllBtnUpload").addEventListener("click", () => {
     });
 
     if (!hasFile) {
-        document.getElementById("resultUpload").textContent = 
+        document.getElementById("resultUpload").textContent =
             "No files were selected";
-        return; 
+        return;
     }
 
     fetch("http://localhost:8080/upload/", {
