@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Interface CGI</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+			background: #fff;
+			color: #222;
+			justify-content: center;
+			min-height: 100vh;
+			padding: 4rem 2rem;
+		}
+
+		main {
+			width: 100%;
+			max-width: 1400px;
+		}
+
+		.hero {
+			text-align: center;
+			margin-bottom: 4rem;
+			max-width: 800px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			margin-bottom: 0.5rem;
+		}
+
+		p {
+			line-height: 1.6;
+			margin-bottom: 1.5rem;
+			color: #444;
+		}
+
+		section {
+			margin-top: 2rem;
+		}
+
+		h2 {
+			font-size: 1.3rem;
+			margin-bottom: 1.5rem;
+			text-align: center;
+		}
+
+		.routes {
+			list-style: none;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+			gap: 2rem;
+			padding: 0;
+		}
+
+		.routes li {
+			background: rgba(255, 255, 255, 0.9);
+			border-radius: 12px;
+			padding: 1.5rem;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+			transition: transform 0.2s ease;
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		.routes li:hover {
+			transform: translateY(-1px);
+		}
+
+		.endpoint {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
+				Consolas, "Liberation Mono", monospace;
+			font-size: 1.05rem;
+			background: linear-gradient(135deg, #f0f2ff, #e8ecff);
+			padding: 0.5rem 1rem;
+			border-radius: 8px;
+			display: inline-block;
+			width: fit-content;
+		}
+
+		.cta {
+			position: relative;
+			border: none;
+			background: none;
+			cursor: pointer;
+			display: inline-block;
+			align-items: center;
+			gap: 8px;
+			text-decoration: none;
+			color: #222;
+			align-self: flex-start;
+			margin-top: auto;
+			padding-bottom: 2px; /* pas sur ici */
+		}
+
+		.cta::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			height: 2px;
+			background-color: #000;
+			transform: scaleX(0);
+			transform-origin: bottom right;
+			transition: transform 0.3s ease;
+		}
+
+		.cta:hover::after {
+			transform: scaleX(1);
+			transform-origin: bottom left;
+		}
+
+		.cta span {
+			padding-bottom: 5px;
+			letter-spacing: 1px;
+			font-size: 14px;
+			padding-right: 15px;
+			text-transform: uppercase;
+			font-weight: 500;
+		}
+
+		.cta svg {
+			transform: translateX(-8px);
+			transition: all 0.3s ease;
+			width: 20px;
+			height: 12px;
+		}
+
+		.cta:hover svg {
+			transform: translateX(0);
+		}
+
+		.cta:active svg {
+			transform: scale(0.9);
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		<div class="hero">
+			<h1>Webserv</h1>
+			<p>
+				User CGI Interface.<br>
+				This page exposes the available CGI scripts the server has.
+			</p>
+		</div>
+
+		<section>
+			<h2>Available scripts</h2>
+			<ul class="routes">
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/cgi-bin-py/test.py</span>
+					<p>Welcoming you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span class="hover-underline-animation">testing what is it</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+			</ul>
+		</section>
+	</main>
+</body>
+</html>
