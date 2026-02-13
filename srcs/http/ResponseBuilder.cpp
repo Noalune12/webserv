@@ -217,7 +217,8 @@ void	ResponseBuilder::setStatus(Response& resp, int code) {
 
 void	ResponseBuilder::setLocation(Response& resp, const Request& req) {
 
-	std::cerr << req._reqLocation->path + req._uplaodFiles[0].filename << std::endl;
+	if (req._uplaodFiles.empty())
+		return ;
 	resp._headers["Location"] = req._uplaodFiles[0].location + req._uplaodFiles[0].filename;
 }
 
