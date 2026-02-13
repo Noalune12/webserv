@@ -122,7 +122,7 @@
 		}
 
 
-		#fileInputsContainer {
+		.fileInputsContainer {
 			display: flex;
 			flex-direction: column;
 			gap: 15px;
@@ -235,9 +235,9 @@
 
 	<div class="requests">
 		<div class="request-part">
-			<h2>Upload de fichiers towards API</h2>
+			<h2>POST towards API</h2>
 			
-			<div id="fileInputsContainerAPI">
+			<div class="fileInputsContainer" id="fileInputsContainerAPI">
 				<div class="file-row">
 					<input type="file" class="fileInput" required>
 					<button type="button" class="removeBtn">❌</button>
@@ -250,8 +250,18 @@
 			<p class="result" id="resultAPI"></p>
 		</div>
 		<div class="request-part">
-			<h2>Upload de fichiers</h2>
-		
+			<h2>POST towards upload</h2>
+			<div class="fileInputsContainer" id="fileInputsContainerUpload">
+				<div class="file-row">
+					<input type="file" class="fileInput" required>
+					<button type="button" class="removeBtn">❌</button>
+				</div>
+			</div>
+			
+			<button type="button" class="addBtn" id="addFileBtnUpload">Add a file</button>
+			<button class="submitBtn" id="submitAllBtnUpload">Send all files</button>
+			
+			<p class="result" id="resultUpload"></p>
 		</div>
 	</div>
 
@@ -315,6 +325,68 @@ document.getElementById("submitAllBtnAPI").addEventListener("click", () => {
     })
     .catch(err => {
         document.getElementById("resultAPI").innerText =
+            "Erreur réseau";
+    });
+});
+
+
+// POST Upload
+const containerUpload = document.getElementById("fileInputsContainerUpload");
+
+// Add a new file
+document.getElementById("addFileBtnUpload").addEventListener("click", () => {
+    const div = document.createElement("div");
+    div.className = "file-row";
+    div.innerHTML = `
+        <input type="file" class="fileInput" required>
+        <button type="button" class="removeBtn">❌</button>
+    `;
+    containerUpload.appendChild(div);
+});
+
+// Remove a file
+containerUpload.addEventListener("click", (e) => {
+    if (e.target.classList.contains("removeBtn")) {
+        e.target.parentElement.remove();
+    }
+});
+
+// Send all files
+document.getElementById("submitAllBtnUpload").addEventListener("click", () => {
+    const formData = new FormData();
+    const fileInputs = document.querySelectorAll(".fileInput");
+
+    let hasFile = false;
+
+    fileInputs.forEach((input) => {
+        if (input.files.length > 0) {
+            formData.append("file", input.files[0]);
+            hasFile = true;
+        }
+    });
+
+    if (!hasFile) {
+        document.getElementById("resultUpload").textContent = 
+            "No files were selected";
+        return; 
+    }
+
+    fileInputs.forEach((input, index) => {
+        if (input.files.length > 0) {
+            formData.append("file", input.files[0]);
+        }
+    });
+
+    fetch("http://localhost:8080/upload/", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => {
+        document.getElementById("resultUpload").innerText =
+            "HTTP status: " + response.status;
+    })
+    .catch(err => {
+        document.getElementById("resultUpload").innerText =
             "Erreur réseau";
     });
 });
