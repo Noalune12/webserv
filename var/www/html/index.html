@@ -16,7 +16,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 			background: #fff;
 			color: #222;
 			justify-content: center;
@@ -78,7 +78,7 @@
 		}
 
 		.routes li:hover {
-			transform: translateY(-3px);
+			transform: translateY(-1px);
 		}
 
 		.endpoint {
@@ -165,9 +165,9 @@
 			<h2>Available routes</h2>
 			<ul class="routes">
 				<li>
-					<span class="endpoint">/api/</span>
-					<p>GET / POST / DELETE API endpoint.</p>
-					<a href="/api/" class="cta">
+					<span class="endpoint">/api</span>
+					<p>POST / DELETE API endpoint</p>
+					<a href="/api" class="cta">
 						<span class="hover-underline-animation">Go to API</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
@@ -176,9 +176,9 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/downloads/</span>
-					<p>Directory listing (autoindex enabled).</p>
-					<a href="/downloads/" class="cta">
+					<span class="endpoint">/downloads</span>
+					<p>Browse an Index of your uploaded files (autoindex enabled)</p>
+					<a href="/downloads" class="cta">
 						<span class="hover-underline-animation">Browse Downloads</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
@@ -187,14 +187,14 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/upload/</span>
-					<p>File upload endpoint (POST only).</p>
+					<span class="endpoint">/upload</span>
+					<p>File upload endpoint (POST only)</p>
 				</li>
 
 				<li>
-					<span class="endpoint">/documentation/</span>
-					<p>Server documentation.</p>
-					<a href="/documentation/" class="cta">
+					<span class="endpoint">/documentation</span>
+					<p>Server documentation</p>
+					<a href="/documentation" class="cta">
 						<span class="hover-underline-animation">Open Docs</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
@@ -203,13 +203,24 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-test/</span>
-					<p>CGI execution endpoint (Python).</p>
+					<span class="endpoint">/cgi-bin-py</span>
+					<p>Python CGI execution endpoint</p>
 				</li>
 
 				<li>
-					<span class="endpoint">/redir/</span>
-					<p>HTTP redirection test.</p>
+					<span class="endpoint">/cgi-bin-php</span>
+					<p>PHP CGI execution endpoint</p>
+					<a href="/cgi-bin-php/fractal.html" class="cta">
+						<span class="hover-underline-animation">Fractal Generator</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
+				</li>
+
+				<li>
+					<span class="endpoint">/redir</span>
+					<p>HTTP redirection</p>
 					<a href="/redir/" class="cta">
 						<span class="hover-underline-animation">Test Redirect</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
@@ -219,7 +230,7 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/hidden/</span>
+					<span class="endpoint">/hidden</span>
 					<p>External redirection (301).</p>
 				</li>
 			</ul>
