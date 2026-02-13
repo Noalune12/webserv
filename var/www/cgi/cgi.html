@@ -44,7 +44,6 @@
 
 		p {
 			line-height: 1.6;
-			margin-bottom: 1.5rem;
 			color: #444;
 		}
 
@@ -148,6 +147,24 @@
 		.cta:active svg {
 			transform: scale(0.9);
 		}
+
+		.custom-input {
+			font-family: inherit;
+			font-size: 0.9rem;
+			padding: 0.25rem;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			width: 95%;
+			margin-bottom: 0.2rem;
+			opacity: 0.8;
+			transition: border-color 0.2s ease, box-shadow 0.2s ease;
+		}
+
+		.custom-input:focus {
+			outline: none;
+			border-color: #7c7c7c;
+			box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+		}
 	</style>
 </head>
 
@@ -192,12 +209,8 @@
 				<li>
 					<span class="endpoint">/cgi-bin-py/show-env.py</span>
 					<p>Printing CGI environment variables</p>
-
-					<!-- Input discret pour query string (style optionnel pour le fondre) -->
 					<form method="GET" action="/cgi-bin-py/show-env.py" style="all: unset; display: contents;">
-						<input type="text" name="test" placeholder="query=test"
-							style="font-family: inherit; font-size: 0.9rem; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px; width: 200px; margin-bottom: 0.5rem; opacity: 0.8;">
-
+						<input type="text" name="test" placeholder="query=string" class="custom-input">
 						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
 							<span class="hover-underline-animation">Show env</span>
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
