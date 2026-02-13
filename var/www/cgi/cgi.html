@@ -168,7 +168,7 @@
 					<span class="endpoint">/cgi-bin-py/test.py</span>
 					<p>Welcoming you with Python</p>
 					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
+						<span class="hover-underline-animation">say hello</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -176,25 +176,35 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/test.py</span>
-					<p>Welcoming you with Python</p>
-					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
-							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
-						</svg>
-					</a>
+					<span class="endpoint">/cgi-bin-py/form.py</span>
+					<p>Fill a form</p>
+					<form method="POST" action="/cgi-bin-py/form.py" style="all: unset; display: contents;">
+						<input type="hidden" name="message" value="Hello from hidden CGI interface!">
+						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
+							<span class="hover-underline-animation">Post with hidden body</span>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+								<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+							</svg>
+						</a>
+					</form>
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/test.py</span>
-					<p>Welcoming you with Python</p>
-					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
-							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
-						</svg>
-					</a>
+					<span class="endpoint">/cgi-bin-py/show-env.py</span>
+					<p>Printing CGI environment variables</p>
+
+					<!-- Input discret pour query string (style optionnel pour le fondre) -->
+					<form method="GET" action="/cgi-bin-py/show-env.py" style="all: unset; display: contents;">
+						<input type="text" name="test" placeholder="query=test"
+							style="font-family: inherit; font-size: 0.9rem; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px; width: 200px; margin-bottom: 0.5rem; opacity: 0.8;">
+
+						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
+							<span class="hover-underline-animation">Show env</span>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+								<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+							</svg>
+						</a>
+					</form>
 				</li>
 
 				<li>
