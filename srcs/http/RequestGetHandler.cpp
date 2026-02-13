@@ -279,8 +279,41 @@ bool Request::handleAutoindex(const std::string& dirPath) {
     std::string path = _reqLocation->path + _trailing;
     if (path[path.size() - 1] == '/')
         path = path.substr(0, path.size() - 1);
-    htmlPage = "<!DOCTYPE html>\n<html>\n<head>\n <meta charset=\"UTF-8\">\n<title>Index</title>\n</head><h1>Index of " + path + "\n\n</h1>";
-
+    htmlPage =
+        "<!DOCTYPE html>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "    <meta charset=\"UTF-8\">\n"
+        "	 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        "    <title>Index of " + path + "</title>\n"
+        "</head>\n"
+        "<style>\n"
+        "* {\n"
+		"	margin: 0;\n"
+		"	padding: 0;\n"
+		"	box-sizing: border-box;\n"
+		"}\n"
+        "body {\n"
+        "   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", monospace;\n"
+        "   padding: 4rem 2rem;\n"
+        "}\n"
+		"h1 {\n"
+		"	line-height: 1.6;\n"
+		"	margin-bottom: 1.5rem;\n"
+		"	color: #444;\n"
+		"}\n"
+        ".file-link {\n"
+        "   font-size: 1rem;\n"
+		"	line-height: 2;\n" 
+        "   color: #000000;\n"
+        "   transition: transform 0.2s ease;"
+        "}\n"
+        ".file-link:visited {\n"
+        "    color: #000000;\n"
+        "}\n"
+        "</style>\n"
+        "<body>\n"
+        "    <h1>Index of " + path + "</h1>\n";
 
     DIR* dir = opendir(dirPath.c_str());
     if (dir == NULL) {
@@ -317,18 +350,21 @@ bool Request::handleAutoindex(const std::string& dirPath) {
             if (S_ISDIR(st.st_mode) && access(fullPath.c_str(), R_OK | X_OK) == 0) {
     
                 Logger::debug("Get (autoindex): Folder " + fullPath);
-                htmlPage += "<a href=\"" + path + "/" + name + "/\">📁 " + name + "</a><br>\n";
+                htmlPage += "<span class=\"icon\">📁</span> <a href=\"" + path + "/" + name + "/\" class=\"file-link\">" + name + "</a><br>\n";
     
             } else if (S_ISREG(st.st_mode) && access(fullPath.c_str(), R_OK) == 0) {
                 
                 Logger::debug("Get (autoindex): File " + fullPath);
-                htmlPage += "<a href=\"" + path + "/" + name + "\">📄 " + name + "</a><br>\n";
+                htmlPage += "<span class=\"icon\">📄</span> <a href=\"" + path + "/" + name + "\" class=\"file-link\"> " + name + "</a><br>\n";
     
             }
 
         }
 
     }
+
+    htmlPage += "</body>\n"
+        "</html>\n";
 
     closedir(dir);
 
