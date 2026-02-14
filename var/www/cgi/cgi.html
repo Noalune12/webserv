@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Interface CGI</title>
+	<title>CGI Interface</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 	<style>
@@ -171,21 +171,18 @@
 <body>
 	<main>
 		<div class="hero">
-			<h1>Webserv</h1>
-			<p>
-				User CGI Interface.<br>
-				This page exposes the available CGI scripts the server has.
-			</p>
+			<h1>CGI Interface</h1>
+			<p>This page exposes the CGI scripts available on the server.</p>
 		</div>
 
 		<section>
 			<h2>Available scripts</h2>
 			<ul class="routes">
 				<li>
-					<span class="endpoint">/cgi-bin-py/test.py</span> <!-- /cgi-bin-py/script-name or just script-name ? -->
-					<p>Welcoming you with Python</p>
+					<span class="endpoint">test.py</span>
+					<p>Welcomes you with Python</p>
 					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">say hello</span>
+						<span class="hover-underline-animation">Say hello</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -193,8 +190,8 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/form.py</span>
-					<p>Fill a form</p>
+					<span class="endpoint">form.py</span>
+					<p>Submits a form</p>
 					<form method="POST" action="/cgi-bin-py/form.py" style="all: unset; display: contents;">
 						<input type="hidden" name="message" value="Hello from hidden CGI interface!">
 						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
@@ -207,8 +204,8 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/show-env.py</span>
-					<p>Printing CGI environment variables</p>
+					<span class="endpoint">show-env.py</span>
+					<p>Shows CGI environment</p>
 					<form method="GET" action="/cgi-bin-py/show-env.py" style="all: unset; display: contents;">
 						<input type="text" name="test" placeholder="query=string" class="custom-input">
 						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
@@ -221,10 +218,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-php/fractal.html</span>
-					<p>Welcoming you with Python</p>
+					<span class="endpoint">fractal.html</span>
+					<p>Generates a fractal</p>
 					<a href="/cgi-bin-php/fractal.html" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
+						<span class="hover-underline-animation">Go to generator</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -232,10 +229,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/test.py</span>
-					<p>Welcoming you with Python</p>
-					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
+					<span class="endpoint">session-set.py</span>
+					<p>Sets a session via cookies</p>
+					<a href="/cgi-bin-py/session-set.py" class="cta">
+						<span class="hover-underline-animation">Set session</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -243,10 +240,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/test.py</span>
-					<p>Welcoming you with Python</p>
-					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
+					<span class="endpoint">session-get.py</span>
+					<p>Shows current session</p>
+					<a href="/cgi-bin-py/session-get.py" class="cta">
+						<span class="hover-underline-animation">Get session</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -254,10 +251,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi-bin-py/test.py</span>
-					<p>Welcoming you with Python</p>
-					<a href="/cgi-bin-py/test.py" class="cta">
-						<span class="hover-underline-animation">testing what is it</span>
+					<span class="endpoint">session-clear.py</span>
+					<p>Clears the session cookies</p>
+					<a href="/cgi-bin-py/session-clear.py" class="cta">
+						<span class="hover-underline-animation">Clear session</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
