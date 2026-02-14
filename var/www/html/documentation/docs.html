@@ -130,18 +130,60 @@
 			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 		}
 
-		.button {
+		.cta {
 			position: absolute;
 			bottom: 0;
-			padding-bottom: 1rem;
-			display: inline-block;
+			border: none;
+			background: none;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
 			text-decoration: none;
-			font-weight: 500;
-			transition: opacity 0.15s ease;
+			color: #222;
+			margin-bottom: 1rem;
 		}
-		.button:hover {
-			opacity: 0.8;
-			text-decoration: underline;
+
+		.cta::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			height: 2px;
+			background-color: #000;
+			transform: scaleX(0);
+			transform-origin: bottom right;
+			transition: transform 0.3s ease;
+		}
+
+		.cta:hover::after {
+			transform: scaleX(1);
+			transform-origin: bottom left;
+		}
+
+		.cta span {
+			padding-bottom: 5px;
+			letter-spacing: 1px;
+			font-size: 14px;
+			padding-right: 15px;
+			text-transform: uppercase;
+			font-weight: 500;
+		}
+
+		.cta svg {
+			transform: translateX(4px) scaleX(-1);
+			transition: all 0.3s ease;
+			width: 20px;
+			height: 12px;
+		}
+
+		.cta:hover svg {
+			transform: translateX(0) scaleX(-1);
+		}
+
+		.cta:active svg {
+			transform: scale(0.9) scaleX(-1);
 		}
 	</style>
 </head>
@@ -166,7 +208,13 @@
 			<li><button onclick="loadDoc('/docs/implementation/config-file.md')">Config file</button></li>
 			<li><button onclick="loadDoc('/docs/implementation/notes.md')">Notes</button></li>
 		</ul>
-		<a href="/" class="button">← Return to homepage</a>
+		<a href="/" class="cta">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+				<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+			</svg>
+			<span class="hover-underline-animation">Return to homepage</span>
+		</a>
+
 	</aside>
 
 	<!-- ===== Content ===== -->
