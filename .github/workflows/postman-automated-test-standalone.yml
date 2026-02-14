@@ -36,10 +36,10 @@ jobs:
           ./webserv config-files/valid/postman-test.conf &
           echo $! > server.pid
 
-      - name: Wait for server to be ready
-        run: |
-          echo "Waiting for server to start..."
-          sleep 3
+      # - name: Wait for server to be ready
+      #   run: |
+      #     echo "Waiting for server to start..."
+      #     sleep 3
 
       - name: Run Postman tests
         id: tests
