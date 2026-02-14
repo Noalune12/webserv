@@ -16,7 +16,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential
+          sudo apt-get install -y build-essential jq
 
       - name: Build webserv
         run: make
@@ -53,19 +53,39 @@ jobs:
         if: always()
         run: |
           echo "=== Test Summary ==="
-          jq '.run.stats' report.json
+          jq '.run.stats' report.json || echo "No report.json"
           echo ""
           echo "=== Failed Tests ==="
-          jq '.run.executions[] | select(.assertions[]?.error) | {name: .item.name, errors: [.assertions[] | select(.error) | .error.message]}' report.json
+          jq '.run.executions[] | select(.assertions[]?.error) | {name: .item.name, errors: [.assertions[] | select(.error) | .error.message]}' report.json || echo "No failed assertions found"
 
       - name: Log summary
         if: always()
         run: |
           if [ -f report.json ]; then
-            echo "Passed: $(jq '.run.stats.assertions.passed' report.json)/$(jq '.run.stats.assertions.total' report.json)"
+            echo "Passed: $(jq '.run.stats.test_passed // .run.stats.assertions.passed' report.json)/$(jq '.run.stats.test_total // .run.stats.assertions.total' report.json)"
           else
-            echo "No report generated"
+            echo "❌ No report generated"
           fi
+
+      - name: Validate ALL tests passed
+        if: always()
+        run: |
+          if [ ! -f report.json ]; then
+            echo "No report.json - tests likely failed to run"
+            exit 1
+          fi
+
+          PASSED=$(jq '.run.stats.test_passed // .run.stats.assertions.passed' report.json)
+          TOTAL=$(jq '.run.stats.test_total // .run.stats.assertions.total' report.json)
+
+          echo "Validation: Passed=$PASSED / Total=$TOTAL"
+
+          if [ "$PASSED" = "null" ] || [ "$TOTAL" = "null" ] || [ "$PASSED" != "$TOTAL" ]; then
+            echo "VALIDATION FAILED: Not all tests passed ($PASSED/$TOTAL)"
+            exit 1  # This FAILS the entire job!
+          fi
+
+          echo "VALIDATION PASSED: All $TOTAL tests succeeded!"
 
       - name: Cleanup
         if: always()
