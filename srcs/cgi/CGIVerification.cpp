@@ -70,6 +70,12 @@ bool	CGIExecutor::verifyCGIScript(const std::string& scriptPath, Connection& cli
 		return (false);
 	}
 
+	if (access(scriptPath.c_str(), X_OK) != 0) {
+		Logger::error("CGI script is not executable: " + scriptPath);
+		client._request.findErrorPage(500, root, client._request._reqLocation->errPage);
+		return (false);
+	}
+
 	return (true);
 }
 
