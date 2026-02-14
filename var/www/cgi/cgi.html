@@ -29,6 +29,25 @@
 			max-width: 1400px;
 		}
 
+		main > div:last-of-type {
+			display: flex;
+			justify-content: center;
+			margin-top: 3rem;
+		}
+
+		main > div:last-of-type .cta svg {
+			transform: translateX(8px) scaleX(-1);
+		}
+
+		main > div:last-of-type .cta:hover svg {
+			transform: translateX(0) scaleX(-1);
+		}
+
+		main > div:last-of-type .cta span {
+			padding-right: 0;
+			padding-left: 0.5rem;
+		}
+
 		.hero {
 			text-align: center;
 			margin-bottom: 4rem;
@@ -262,6 +281,15 @@
 				</li>
 			</ul>
 		</section>
+
+		<div>
+			<a href="/" class="cta">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+					<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+				</svg>
+				<span class="hover-underline-animation">Return to homepage</span>
+			</a>
+		</div>
 	</main>
 </body>
 </html>
