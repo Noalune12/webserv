@@ -3,7 +3,6 @@
 
 # include "CGIExecutor.hpp"
 # include "Connection.hpp"
-# include "ResponseBuilder.hpp"
 # include "ServerManager.hpp"
 
 # define PROXY_AUTH_REQ 407
@@ -22,7 +21,6 @@ class EventLoop {
 		std::map<int, int>          _pipeToClient;	// pipeFd, clientFd
 
 		CGIExecutor     _cgiExecutor;
-		ResponseBuilder _responseBuilder;
 
 	public:
 		EventLoop(ServerManager& serverManager);

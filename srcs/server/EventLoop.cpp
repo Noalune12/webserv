@@ -10,7 +10,7 @@
 #include "EventLoop.hpp"
 #include "Logger.hpp"
 
-EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor(), _responseBuilder() {}
+EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor() {}
 
 EventLoop::~EventLoop() {
 
@@ -294,23 +294,24 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		return ;
 	}
 
-	Response response;
-
 	if (client._sendBuffer.empty()) {
+
+		Response response;
+
 		response.debugPrintRequestData(client._request);
 
 		if (!client._cgi.outputBuff.empty()) {
 			Logger::debug("Building CGI response");
-			response = _responseBuilder.buildFromCGI(client._cgi.outputBuff, client._request);
+			response.buildFromCGI(client._cgi.outputBuff, client._request);
 			client._cgi.outputBuff.clear();
 		} else {
-			response = _responseBuilder.buildFromRequest(client._request);
+			response.buildFromRequest(client._request);
 		}
 
 		client._sendBuffer = response.prepareRawData();
 		client._sendOffset = 0;
 
-		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response._statusCode, response._body.size());
+		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response.getStatusCode(), response.getBodySize());
 	}
 
 	size_t	remaining = client._sendBuffer.size() - client._sendOffset;
