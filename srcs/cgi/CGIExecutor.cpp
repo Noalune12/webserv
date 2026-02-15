@@ -179,6 +179,10 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		oss << cgi.outputBuff.size();
 		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
 
+		// temporary fix
+		client._request.err = true;
+		client._request.status = 500;
+
 		cleanup(cgi, loop);
 		client.setState(SENDING_RESPONSE);
 		client.startTimer(4, 5);
