@@ -379,7 +379,7 @@ void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 
 size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
-	char	buffer[4096];
+	char	buffer[8192];
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {
