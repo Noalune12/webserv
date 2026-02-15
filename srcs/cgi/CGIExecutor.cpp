@@ -1,14 +1,10 @@
-#include "errno.h"
 #include <cstdlib>
 #include <cstring>
+#include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <sstream>
 #include <sys/epoll.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
-#include "CGIExecutor.hpp"
 #include "colors.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
