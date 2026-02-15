@@ -354,6 +354,11 @@ std::string	Response::loadErrorPageFile(const std::string& uriPath, const Reques
 	content << file.rdbuf();
 	file.close();
 
+	if (content.str().empty()) {
+		Logger::warn("Error page file was empty or read failed: " + fullPath);
+		return ("");
+	}
+
 	Logger::debug("Successfully loaded custom error page: " + fullPath);
 	return (content.str());
 }
