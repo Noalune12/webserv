@@ -210,18 +210,7 @@ void	Response::parseCGIHeaders(const std::string& cgiOutput) {
 				ss >> statusCode;
 
 				if (ss) {
-					_statusCode = statusCode;
-
-					std::string	statusText;
-					std::getline(ss, statusText);
-					if (!statusText.empty() && statusText[0] == ' ') {
-						statusText = statusText.substr(1);
-					}
-					if (!statusText.empty()) {
-						_statusText = statusText;
-					} else {
-						_statusText = StatusCodes::getReasonPhrase(statusCode);
-					}
+					setStatus(statusCode);
 				}
 			} else {
 				_headers[name] = value;
