@@ -97,12 +97,12 @@ function displayCell($red, $green, $blue) {
 
 // echo "Hello World!";
 
-if ($_POST['heigth']) {
-	$heigth = $_POST['heigth'];
-} else if ($_GET['heigth']) {
-	$heigth = $_GET['heigth'];
+if ($_POST['height']) {
+	$height = $_POST['height'];
+} else if ($_GET['height']) {
+	$height = $_GET['height'];
 } else {
-	$heigth = 100.0;
+	$height = 100.0;
 }
 
 if ($_POST['width']) {
@@ -187,9 +187,9 @@ echo "<!DOCTYPE html>
 <body>
         <table>\n";
 
-for ($y=0; $y < $heigth; $y++) {
+for ($y=0; $y < $height; $y++) {
         echo "<tr>";
-        $scale = 1 / max($width, $heigth) / $camera_zoom;
+        $scale = 1 / max($width, $height) / $camera_zoom;
         for ($x=0; $x < $width; $x++) {
                 $z = array(
                         'real' => 0.285,
@@ -197,7 +197,7 @@ for ($y=0; $y < $heigth; $y++) {
                 );
                 $c = array(
                         'real' => ($x - $width/2.0) * $scale + $camera_pos['x'],
-                        'imag' => ($y - $heigth/2.0) * $scale + $camera_pos['y'],
+                        'imag' => ($y - $height/2.0) * $scale + $camera_pos['y'],
                 );
                 // print_r ($z);
                 // print_r ($c);
