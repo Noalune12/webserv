@@ -194,8 +194,11 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 	close(cgi.pipeOut[0]);	// Close read end of stdout
 
 	// redirect stdin/stdout
-	dup2(cgi.pipeIn[0], STDIN_FILENO);
-	dup2(cgi.pipeOut[1], STDOUT_FILENO);
+	if (dup2(cgi.pipeIn[0], STDIN_FILENO) < 0 || dup2(cgi.pipeOut[1], STDOUT_FILENO) < 0) {
+		close(cgi.pipeIn[0]);
+		close(cgi.pipeOut[1]);
+		throw std::runtime_error("dup2() failed: " + std::string(strerror(errno)));
+	}
 
 	// close original pipe fds
 	close(cgi.pipeIn[0]);
@@ -209,9 +212,7 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 
 	// chdir to cgi binary
 	if (chdir(scriptDir.c_str()) != 0) {
-		std::cerr << "chdir() failed: " << strerror(errno) << std::endl;
-		// leak fd, need to close first
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("chdir() failed: " + std::string(strerror(errno)));
 	}
 
 	client._request._scriptPath = scriptFile;
@@ -234,7 +235,7 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 
 	// if execve failed
 	std::cerr << "execve failed: " << strerror(errno) << std::endl;
-	exit(EXIT_FAILURE);
+	throw std::runtime_error("CGI execve failed");
 }
 
 void	CGIExecutor::transitionToReadingCGI(CGIContext& cgi, Connection& client, int clientFd, EventLoop& loop) {
