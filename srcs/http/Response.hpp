@@ -10,7 +10,7 @@ class Response {
 		std::string							_statusText;
 		std::map<std::string, std::string>	_headers;
 		std::vector<char>					_body;
-		size_t								_bytesSent;
+
 		std::string	getCustomErrorPage(int statusCode, const Request& req);
 		std::string	loadErrorPageFile(const std::string& path, const Request& req);
 
@@ -45,7 +45,6 @@ class Response {
 		const std::string&					getStatusText(void) const;
 		const std::vector<char>&			getBody(void) const;
 		size_t								getBodySize(void) const;
-		size_t								getBytesSent(void) const;
 
 		void	debugPrintRequestData(const Request& req);
 };

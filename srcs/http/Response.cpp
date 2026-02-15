@@ -8,7 +8,7 @@
 #include "Response.hpp"
 #include "StatusCodes.hpp"
 
-Response::Response() : _statusCode(200), _statusText("OK"), _headers(), _body(), _bytesSent(0) {}
+Response::Response() : _statusCode(200), _statusText("OK"), _headers(), _body() {}
 
 Response::~Response() {}
 
@@ -97,9 +97,6 @@ size_t	Response::getBodySize(void) const {
 	return (_body.size());
 }
 
-size_t	Response::getBytesSent(void) const {
-	return (_bytesSent);
-}
 
 void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << CYAN "\n========== RESPONSE DEBUG ==========" RESET << std::endl;
@@ -141,7 +138,6 @@ void	Response::initializeResponse(const Request& req) {
 	_statusText = "OK";
 	_headers.clear();
 	_body.clear();
-	_bytesSent = 0;
 
 	setCommonHeaders(req);
 }
