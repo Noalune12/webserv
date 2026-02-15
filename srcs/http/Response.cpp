@@ -40,14 +40,9 @@ void	Response::buildFromRequest(const Request& req) {
 		} else {
 			setBodyFromError(req.status, req);
 		}
-	}
-	else if (!req.htmlPage.empty() || (req.htmlPage.empty() && !req.err)) {
+	} else {
 		setStatus(req.status);
 		setBodyFromFile(req);
-	}
-	else {
-		setStatus(req.err ? req.status : 500);
-		setBodyFromError(_statusCode, req);
 	}
 }
 
@@ -267,10 +262,10 @@ size_t	Response::findHeaderEnd(const std::string& cgiOutput) {
 
 void	Response::setCommonHeaders(const Request& req) {
 	_headers["Server"] = "webserv/1.0";
-	if (req._keepAlive) {
-		_headers["Connection"] = req.err ? "close" : "keep-alive";
+	if (req._keepAlive && !req.err) {
+		_headers["Connection"] = "keep-alive";
 	} else {
-		_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
+		_headers["Connection"] = "close";
 	}
 }
 
@@ -293,6 +288,9 @@ void	Response::setLocation(const Request& req) {
 }
 
 void	Response::setAllow(const Request& req) {
+
+	if (req._reqLocation == NULL)
+		return ;
 
 	std::string	allowedMethods = "";
 
