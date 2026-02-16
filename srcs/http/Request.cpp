@@ -111,8 +111,8 @@ void Request::findErrorPage(int code, const std::string& root, const std::map<in
         path = path.substr(1, path.size());
 
     Logger::debug("Finding Error Page at : " + path);
-    
-    std::ifstream file(path.c_str());
+
+    std::ifstream file(path.c_str(), std::ios::binary);
     if (!file) {
         return;
     } else {

@@ -40,7 +40,7 @@ void	FileReader::extensionVerification(const std::string& configFile)
 
 void	FileReader::readFile(void) {
 
-	std::ifstream fileName(_filePath.c_str());
+	std::ifstream fileName(_filePath.c_str(), std::ios::binary);
 
 	if (!fileName.is_open()) {
 		throw std::runtime_error("Cannot open file: " + _filePath);
