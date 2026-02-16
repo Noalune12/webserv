@@ -399,8 +399,7 @@ Trailing slashes are preserved and affect directory handling.
 
   * Check if `filename` is present
   * If filename already exists:
-
-    * ???
+    * Create a specific filename
   * Create the file in the target location
 
 ---
