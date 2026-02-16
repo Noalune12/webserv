@@ -25,9 +25,9 @@ void	signalHandler(int signum) {
 	Logger::notice("shutting down...");
 }
 
-// add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
 void	setupSignalHandlers(void) {
 	signal(SIGINT, signalHandler);
+	signal(SIGPIPE, SIG_IGN);
 }
 
 int	main(int ac, char **av) {
