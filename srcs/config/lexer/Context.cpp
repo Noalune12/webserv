@@ -1,10 +1,7 @@
-#include "Context.hpp"
-
-#include <string>
 #include <iostream>
-#include <sstream>
 
 #include "colors.hpp"
+#include "Context.hpp"
 #include "Utils.hpp"
 
 Context::Context(std::string name, std::string context): _name(name), _bindingsInfo(), _isIgnored(false) {

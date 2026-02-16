@@ -1,7 +1,7 @@
-#include <cstdlib>
+#include <cerrno>
 #include <cstring>
-#include <errno.h>
 #include <fcntl.h>
+#include <iostream>
 #include <sstream>
 #include <sys/epoll.h>
 
@@ -36,8 +36,8 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	cgi.pid = fork();
 
 	if (cgi.pid == -1) {
-		cleanup(cgi, loop); // add loop as parameter to removeFromEpoll properly
-		Logger::error("fork() failed");
+		cleanup(cgi, loop);
+		Logger::error("fork() failed" + std::string(std::strerror(errno)));
 		return (false);
 	}
 
@@ -51,9 +51,16 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 	cgi.pipeOut[1] = -1;
 
 	if (cgi.pipeIn[1] != -1) {
-		fcntl(cgi.pipeIn[1], F_SETFL, O_NONBLOCK); // protect
+		if (fcntl(cgi.pipeIn[1], F_SETFL, O_NONBLOCK) < 0) {
+			Logger::error("fnctl failed on CGI pipe write end: " + std::string(std::strerror(errno)));
+			return (false);
+		}
 	}
-	fcntl(cgi.pipeOut[0], F_SETFL, O_NONBLOCK); // protect
+
+	if (fcntl(cgi.pipeOut[0], F_SETFL, O_NONBLOCK) < 0) {
+		Logger::error("fnctl failed on CGI pipe read end: " + std::string(std::strerror(errno)));
+		return (false);
+	}
 
 	if (!client._request._body.empty()) {
 		cgi.inputBody = client._request._body;
@@ -65,7 +72,7 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 		}
 
 		loop.registerPipe(cgi.pipeIn[1], clientFd);
-		Logger::debug("CGI body to write, registered pipeIn for EPOLLOUT");
+		// Logger::debug("CGI body to write, registered pipeIn for EPOLLOUT");
 	} else {
 		close(cgi.pipeIn[1]);
 		cgi.pipeIn[1] = -1;
@@ -75,7 +82,7 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 			return (false);
 		}
 		loop.registerPipe(cgi.pipeOut[0], clientFd);
-		Logger::debug("No CGI body, registering pipeOut for EPOLLIN");
+		// Logger::debug("No CGI body, registering pipeOut for EPOLLIN");
 	}
 
 	return (true);
@@ -126,8 +133,9 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	CGIContext& cgi = client._cgi;
 
 	if (events & EPOLLERR) {
-		std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
-		Logger::error("CGI pipe error");
+		std::ostringstream oss;
+		oss << "EPOLLER - fd[" << clientFd << "]";
+		Logger::error(oss.str());
 		cleanup(cgi, loop);
 		client._request.err = true;
 		client._request.status = 502;
@@ -142,14 +150,14 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 
 		if (bytesRead > 0) {
 			client.startTimer(3, 3); // CGI_TIMEOUT -> same here, define ?
-			std::ostringstream	oss;
-			oss << bytesRead;
-			Logger::debug("CGI: read " + oss.str() + " bytes");
+			// std::ostringstream	oss;
+			// oss << bytesRead;
+			// Logger::debug("CGI: read " + oss.str() + " bytes");
 		}
 		else if (bytesRead == 0) { // EOF - CGI finished
-			std::ostringstream oss;
-			oss << cgi.outputBuff.size();
-			Logger::debug("CGI finished (EOF), output size: " + oss.str());
+			// std::ostringstream oss;
+			// oss << cgi.outputBuff.size();
+			// Logger::debug("CGI finished (EOF), output size: " + oss.str());
 
 			cleanup(cgi, loop);
 			client.setState(SENDING_RESPONSE);
@@ -170,11 +178,6 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	}
 
 	if (events & (EPOLLHUP | EPOLLRDHUP)) {
-		if (events & EPOLLHUP) {
-			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "] (which is the expected behavior)" RESET << std::endl;
-		} else if (events & EPOLLRDHUP) {
-			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
-		}
 		std::ostringstream oss;
 		oss << cgi.outputBuff.size();
 		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
@@ -193,8 +196,8 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLoop& loop) {
 
 	// close unused pipe
-	close(cgi.pipeIn[1]);	// Close write end of stdin
-	close(cgi.pipeOut[0]);	// Close read end of stdout
+	close(cgi.pipeIn[1]);
+	close(cgi.pipeOut[0]);
 
 	// redirect stdin/stdout
 	if (dup2(cgi.pipeIn[0], STDIN_FILENO) < 0 || dup2(cgi.pipeOut[1], STDOUT_FILENO) < 0) {
@@ -207,13 +210,11 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 	close(cgi.pipeIn[0]);
 	close(cgi.pipeOut[1]);
 
-	// close all server file descriptors
 	closeAllFds(loop);
 
-	std::string scriptDir = getDirectoryFromPath(client._request._scriptPath);  // "var/www/cgi-bin-py"
-	std::string scriptFile = client._request._scriptPath.substr(scriptDir.length() + 1);  // "show-env.py"
+	std::string scriptDir = getDirectoryFromPath(client._request._scriptPath);
+	std::string scriptFile = client._request._scriptPath.substr(scriptDir.length() + 1);
 
-	// chdir to cgi binary
 	if (chdir(scriptDir.c_str()) != 0) {
 		throw std::runtime_error("chdir() failed: " + std::string(strerror(errno)));
 	}
@@ -262,7 +263,6 @@ void	CGIExecutor::transitionToReadingCGI(CGIContext& cgi, Connection& client, in
 
 	client.setState(CGI_RUNNING);
 	client.startTimer(3, 5); // CGI_TIMEOUT
-	Logger::debug("CGI body fully written -> CGI_RUNNING");
 }
 
 ssize_t	CGIExecutor::readFromPipe(int pipeFd, std::string& buffer) {

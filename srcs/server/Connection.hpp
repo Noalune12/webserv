@@ -1,7 +1,6 @@
 #ifndef CONNECTION_HPP
 # define CONNECTION_HPP
 
-# include <sys/types.h>
 # include <unistd.h>
 
 # include "Response.hpp"

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/epoll.h>
 #include <sys/wait.h>
+# include <iostream>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"

@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <sstream>
 #include <unistd.h>
+# include <iostream>
 
 #include "colors.hpp"
 #include "Logger.hpp"
@@ -62,8 +63,8 @@ void	ServerManager::setupListenSockets(void) {
 		std::cerr << RED << "Not a single socket has been created." << RESET << std::endl;
 		return ;
 	}
-	// debug
-	printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later
+	// prettier debug
+	// printEndpoints(); // call to Logger in the loop above is enough
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {

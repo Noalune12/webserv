@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 
 #include "colors.hpp"
 #include "rules.h"
@@ -36,7 +37,7 @@
 
 static const int	error_codes[] = {
 	301, 302, 303, 307, 308,
-	400, 403, 404, 405, 408, 413, 429, // might remove 429
+	400, 403, 404, 405, 408, 413,
 	500, 501, 502, 504, 505
 };
 
@@ -83,8 +84,8 @@ void	Validator::initAllowedContext(void) {
 	_allowedInContext[LOCATION_VALUE].second.push_back(UPLOAD_TO);
 	_allowedInContext[LOCATION_VALUE].second.push_back(RETURN);
 	_allowedInContext[LOCATION_VALUE].second.push_back(ALIAS);
-	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_PATH); // started, not finished
-	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_EXT); // started, not finished
+	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_PATH);
+	_allowedInContext[LOCATION_VALUE].second.push_back(CGI_EXT);
 }
 
 void	Validator::initValidators(void) {

@@ -42,10 +42,10 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 
 	if (client._request._reqLocation && client._request._reqServer &&
 		!client._request._reqServer->lis.empty() && !client._request._reqServer->serverName.empty()) {
-		std::stringstream	ss;
-		ss << client._request._reqServer->lis[0].port;
+		std::ostringstream	oss;
+		oss << client._request._reqServer->lis[0].port;
 		envStrings.push_back(buildEnvVar("SERVER_NAME", client._request._reqServer->serverName[0]));
-		envStrings.push_back(buildEnvVar("SERVER_PORT", ss.str()));
+		envStrings.push_back(buildEnvVar("SERVER_PORT", oss.str()));
 	}
 
 	envStrings.push_back(buildEnvVar("REMOTE_ADDR", client.getIP()));
