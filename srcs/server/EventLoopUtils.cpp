@@ -1,17 +1,7 @@
 #include <netinet/in.h>
 #include <sstream>
-#include <iostream>
 
 #include "EventLoop.hpp"
-
-void printWithoutR(std::string what, std::string line) {
-    std::string l;
-    for (size_t i = 0; i < line.size(); i++) {
-        if (line[i] != '\r')
-            l.push_back(line[i]);
-    }
-    std::cout << what <<" = \'" << l << "\' -" << std::endl;
-}
 
 void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port) {
 

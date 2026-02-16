@@ -2,7 +2,6 @@
 # define EVENTLOOP_HPP
 
 # include "CGIExecutor.hpp"
-# include "Connection.hpp"
 # include "ServerManager.hpp"
 
 # define PROXY_AUTH_REQ 407
