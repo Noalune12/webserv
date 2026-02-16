@@ -345,7 +345,7 @@ void Request::handleMultipart() {
                         filename = filename.substr(0, index);
                         _postExt = it->filename.substr(index);
                     }
-                    if (!createFileName(filename)) {
+                    if (!createFileName(filename + "_")) {
                         _failedUpload++, _totalUpload++;
                         continue;
                     }
