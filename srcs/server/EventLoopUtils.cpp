@@ -1,5 +1,6 @@
 #include <netinet/in.h>
 #include <sstream>
+#include <iostream>
 
 #include "EventLoop.hpp"
 
