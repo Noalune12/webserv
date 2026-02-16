@@ -153,10 +153,8 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			handleReadingBody(client, clientFd, ev);
 			break ;
 		case CGI_WRITING_BODY:
-			handleCGIRunning(client, clientFd, ev);
-			break ;
 		case CGI_RUNNING:
-			handleCGIRunning(client, clientFd, ev);
+			handleCGIClientEvent(client, clientFd, ev);
 			break ;
 		case SENDING_RESPONSE:
 			handleSendingResponse(client, clientFd, ev);
@@ -273,7 +271,7 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	}
 }
 
-void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) {
+void	EventLoop::handleCGIClientEvent(Connection& client, int clientFd, uint32_t ev) {
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
 		if (client._cgi.pid > 0) {
 			kill(client._cgi.pid, SIGKILL);
@@ -294,7 +292,7 @@ void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) 
 				kill(client._cgi.pid, SIGKILL);
 			_cgiExecutor.cleanup(client._cgi, *this);
 			closeConnection(clientFd);
-			return;
+			return ;
 		}
 	}
 	Logger::debug("CGI_RUNNING: waiting for CGI to complete");
