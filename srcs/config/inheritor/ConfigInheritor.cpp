@@ -1,10 +1,10 @@
-#include "ConfigInheritor.hpp"
-#include "rules.h"
-#include "colors.hpp"
-
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+
+#include "colors.hpp"
+#include "ConfigInheritor.hpp"
+#include "rules.h"
 
 ConfigInheritor::ConfigInheritor() {}
 
@@ -13,7 +13,6 @@ ConfigInheritor::~ConfigInheritor() {}
 void ConfigInheritor::inherit(Tokenizer& tokens) {
     getGlobalDir(tokens.getGlobalDirective());
     getServer(tokens.getVectorContext());
-    // printContent();
 }
 
 
@@ -497,4 +496,3 @@ void ConfigInheritor::printContent() const {
 
 std::vector<server>&    ConfigInheritor::getServers(void) { return (_server); }
 globalDir&              ConfigInheritor::getGlobalDir(void) { return (_globalDir); }
-

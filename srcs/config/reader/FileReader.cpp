@@ -1,7 +1,5 @@
-#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <stdexcept>
 
 #include "FileReader.hpp"
 
@@ -48,7 +46,7 @@ void	FileReader::readFile(void) {
 		throw std::runtime_error("Cannot open file: " + _filePath);
 	}
 
-	std::stringstream buffer;
+	std::ostringstream buffer;
 
 	buffer << fileName.rdbuf();
 	if (!buffer) {

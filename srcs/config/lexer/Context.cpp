@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "colors.hpp"
 #include "Context.hpp"
