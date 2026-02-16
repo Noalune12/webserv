@@ -279,12 +279,24 @@ void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) 
 			kill(client._cgi.pid, SIGKILL);
 		}
 		Logger::debug("Client disconnection while CGI running");
-		// client._request.status = 500; -> sending 500 or 504 ?
 		_cgiExecutor.cleanup(client._cgi, *this);
 		closeConnection(clientFd);
 		return ;
 	}
 
+	if (ev & EPOLLIN) {
+		char	buf[1];
+		ssize_t	n = recv(clientFd, buf, 1, MSG_PEEK | MSG_DONTWAIT); //
+		if (n == 0) {
+			// EOF — client closed the connection
+			Logger::debug("Client closed connection while CGI running");
+			if (client._cgi.pid > 0)
+				kill(client._cgi.pid, SIGKILL);
+			_cgiExecutor.cleanup(client._cgi, *this);
+			closeConnection(clientFd);
+			return;
+		}
+	}
 	Logger::debug("CGI_RUNNING: waiting for CGI to complete");
 }
 
