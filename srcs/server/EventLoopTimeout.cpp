@@ -1,22 +1,8 @@
-#include <algorithm>
-#include <arpa/inet.h>
-#include <cerrno>
 #include <climits>
-#include <cstdlib>
-#include <cstring>
-#include <fcntl.h>
-#include <iostream>
-#include <netinet/in.h>
-#include <sstream>
-#include <sys/epoll.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
-#include "colors.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
-#include "StatusCodes.hpp"
 
 void	EventLoop::checkTimeouts(void) {
 

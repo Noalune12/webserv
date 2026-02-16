@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Webserv</title>
+	<title>CGI Interface</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 	<style>
@@ -29,6 +29,25 @@
 			max-width: 1400px;
 		}
 
+		main > div:last-of-type {
+			display: flex;
+			justify-content: center;
+			margin-top: 3rem;
+		}
+
+		main > div:last-of-type .cta svg {
+			transform: translateX(8px) scaleX(-1);
+		}
+
+		main > div:last-of-type .cta:hover svg {
+			transform: translateX(0) scaleX(-1);
+		}
+
+		main > div:last-of-type .cta span {
+			padding-right: 0;
+			padding-left: 0.5rem;
+		}
+
 		.hero {
 			text-align: center;
 			margin-bottom: 4rem;
@@ -44,7 +63,6 @@
 
 		p {
 			line-height: 1.6;
-			margin-bottom: 1.5rem;
 			color: #444;
 		}
 
@@ -97,7 +115,7 @@
 			border: none;
 			background: none;
 			cursor: pointer;
-			display: inline-flex;
+			display: inline-block;
 			align-items: center;
 			gap: 8px;
 			text-decoration: none;
@@ -148,27 +166,42 @@
 		.cta:active svg {
 			transform: scale(0.9);
 		}
+
+		.custom-input {
+			font-family: inherit;
+			font-size: 0.9rem;
+			padding: 0.25rem;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			width: 95%;
+			margin-bottom: 0.2rem;
+			opacity: 0.8;
+			transition: border-color 0.2s ease, box-shadow 0.2s ease;
+		}
+
+		.custom-input:focus {
+			outline: none;
+			border-color: #7c7c7c;
+			box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+		}
 	</style>
 </head>
 
 <body>
 	<main>
 		<div class="hero">
-			<h1>Webserv</h1>
-			<p>
-				Custom HTTP server implementation.<br>
-				This page exposes the available endpoints configured on the server.
-			</p>
+			<h1>CGI Interface</h1>
+			<p>This page exposes the CGI scripts available on the server.</p>
 		</div>
 
 		<section>
-			<h2>Available routes</h2>
+			<h2>Available scripts</h2>
 			<ul class="routes">
 				<li>
-					<span class="endpoint">/api</span>
-					<p>POST / DELETE API endpoint</p>
-					<a href="/api" class="cta">
-						<span>API endpoint</span>
+					<span class="endpoint">test.py</span>
+					<p>Welcomes you with Python</p>
+					<a href="/cgi-bin-py/test.py" class="cta">
+						<span>Say hello</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -176,10 +209,38 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/downloads</span>
-					<p>Browse an Index of your uploaded files (autoindex enabled)</p>
-					<a href="/downloads" class="cta">
-						<span>Browse Downloads</span>
+					<span class="endpoint">form.py</span>
+					<p>Submits a form</p>
+					<form method="POST" action="/cgi-bin-py/form.py" style="all: unset; display: contents;">
+						<input type="hidden" name="message" value="Hello from hidden CGI interface!">
+						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
+							<span>Post with hidden body</span>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+								<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+							</svg>
+						</a>
+					</form>
+				</li>
+
+				<li>
+					<span class="endpoint">show-env.py</span>
+					<p>Shows CGI environment</p>
+					<form method="GET" action="/cgi-bin-py/show-env.py" style="all: unset; display: contents;">
+						<input type="text" name="test" placeholder="query=string" class="custom-input">
+						<a href="#" onclick="this.parentNode.submit(); return false;" class="cta">
+							<span>Show env</span>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+								<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+							</svg>
+						</a>
+					</form>
+				</li>
+
+				<li>
+					<span class="endpoint">fractal.html</span>
+					<p>Generates a fractal</p>
+					<a href="/cgi-bin-php/" class="cta">
+						<span>Go to generator</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -187,15 +248,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/upload</span>
-					<p>File upload endpoint (POST only)</p>
-				</li>
-
-				<li>
-					<span class="endpoint">/documentation</span>
-					<p>Server documentation</p>
-					<a href="/documentation" class="cta">
-						<span>Open Docs</span>
+					<span class="endpoint">session-set.py</span>
+					<p>Sets a session via cookies</p>
+					<a href="/cgi-bin-py/session-set.py" class="cta">
+						<span>Set session</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -203,10 +259,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/cgi</span>
-					<p>CGI execution endpoint</p>
-					<a href="/cgi/" class="cta">
-						<span>CGI endpoint</span>
+					<span class="endpoint">session-get.py</span>
+					<p>Shows current session</p>
+					<a href="/cgi-bin-py/session-get.py" class="cta">
+						<span>Get session</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -214,10 +270,10 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/redir</span>
-					<p>HTTP redirection</p>
-					<a href="/redir/" class="cta">
-						<span>Test Redirect</span>
+					<span class="endpoint">session-clear.py</span>
+					<p>Clears the session cookies</p>
+					<a href="/cgi-bin-py/session-clear.py" class="cta">
+						<span>Clear session</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
 							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
 						</svg>
@@ -225,11 +281,26 @@
 				</li>
 
 				<li>
-					<span class="endpoint">/hidden</span>
-					<p>External redirection (301).</p>
+					<span class="endpoint">crash.php</span>
+					<p>Wrong cgi_path</p>
+					<a href="/cgi-bin-crash/crash.php" class="cta">
+						<span>Gets you a 500</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+							<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+						</svg>
+					</a>
 				</li>
 			</ul>
 		</section>
+
+		<div>
+			<a href="/" class="cta">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+					<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+				</svg>
+				<span>Return to homepage</span>
+			</a>
+		</div>
 	</main>
 </body>
 </html>

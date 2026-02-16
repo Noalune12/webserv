@@ -176,13 +176,8 @@ void Request::checkRequestContent() {
     }
 
     if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
-        if (_trailing.empty() /*|| _method != "POST" */) // IMPORTANT -> discussion about that method check
+        if (_trailing.empty())
             return;
-        // size_t index = _trailing.find('?'); //what if the folder has a ?
-        // if (index != std::string::npos) {
-        //     _queryString = _trailing.substr(index);
-        //     _trailing = _trailing.substr(0, index);
-        // }
         if (!_reqLocation->root.empty())
             _scriptPath = getPath(_reqLocation->root + _uri, _trailing);
         else

@@ -1,10 +1,8 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
-#include <iostream>
 #include <netinet/in.h>
 #include <sstream>
-#include <sys/socket.h>
 #include <unistd.h>
 
 #include "colors.hpp"

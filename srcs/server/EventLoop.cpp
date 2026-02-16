@@ -1,31 +1,25 @@
-#include <arpa/inet.h>
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
-#include <iostream>
 #include <netinet/in.h>
 #include <sstream>
 #include <sys/epoll.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
 
-EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor(), _responseBuilder(), _responseSender() {}
+EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor() {}
 
 EventLoop::~EventLoop() {
-
 
 	std::map<int, Connection>::iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
 		Connection& client = it->second;
-        if (client._cgi.isActive()) {
-            _cgiExecutor.cleanup(client._cgi, *this);
-        }
+		if (client._cgi.isActive()) {
+			_cgiExecutor.cleanup(client._cgi, *this);
+		}
 		close(it->first);
 	}
 	_connections.clear();
@@ -69,7 +63,6 @@ void	EventLoop::run(void) {
 	while (_running) {
 		int timeout = calculateEpollTimeout() * 1000;
 		int nfds = epoll_wait(_epollFd, events, MAX_EVENTS, timeout);
-
 		if (nfds == -1) {
 			if (errno == EINTR) // errno code for signal interruption
 				continue ;
@@ -118,12 +111,12 @@ void	EventLoop::acceptConnection(int listenFd) {
 	std::string	ip;
 	int			port;
 	getClientInfo(clientAddr, ip, port);
-	Connection newClient(clientFd, ip, port, _serverManager.getServers(), _serverManager.getGlobalDir());
+	Connection newClient(clientFd, ip, _serverManager.getServers(), _serverManager.getGlobalDir());
 
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
 
-	if (!addToEpoll(clientFd, EPOLLIN)) { // not sure if I HAVE to add EPOLLIN and EPOLLOUT here
+	if (!addToEpoll(clientFd, EPOLLIN)) { // no EPOLLOUT here to avoid triggering epoll_wait once for each socket after creation
 		close(clientFd);
 		return ;
 	}
@@ -160,10 +153,8 @@ void	EventLoop::handleClientEvent(int clientFd, uint32_t ev) {
 			handleReadingBody(client, clientFd, ev);
 			break ;
 		case CGI_WRITING_BODY:
-			handleCGIRunning(client, clientFd, ev);
-			break ;
 		case CGI_RUNNING:
-			handleCGIRunning(client, clientFd, ev);
+			handleCGIClientEvent(client, clientFd, ev);
 			break ;
 		case SENDING_RESPONSE:
 			handleSendingResponse(client, clientFd, ev);
@@ -280,18 +271,30 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	}
 }
 
-void	EventLoop::handleCGIRunning(Connection& client, int clientFd, uint32_t ev) {
+void	EventLoop::handleCGIClientEvent(Connection& client, int clientFd, uint32_t ev) {
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
 		if (client._cgi.pid > 0) {
 			kill(client._cgi.pid, SIGKILL);
 		}
 		Logger::debug("Client disconnection while CGI running");
-		// client._request.status = 500; -> sending 500 or 504 ?
 		_cgiExecutor.cleanup(client._cgi, *this);
 		closeConnection(clientFd);
 		return ;
 	}
 
+	if (ev & EPOLLIN) {
+		char	buf[1];
+		ssize_t	n = recv(clientFd, buf, 1, MSG_PEEK | MSG_DONTWAIT); //
+		if (n == 0) {
+			// EOF — client closed the connection
+			Logger::debug("Client closed connection while CGI running");
+			if (client._cgi.pid > 0)
+				kill(client._cgi.pid, SIGKILL);
+			_cgiExecutor.cleanup(client._cgi, *this);
+			closeConnection(clientFd);
+			return ;
+		}
+	}
 	Logger::debug("CGI_RUNNING: waiting for CGI to complete");
 }
 
@@ -301,27 +304,42 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		return ;
 	}
 
-	Response response;
+	if (client._sendBuffer.empty()) {
 
-	response.debugPrintRequestData(client._request);
+		Response response;
 
-	if (!client._cgi.outputBuff.empty()) {
-		Logger::debug("Building CGI response");
-		response = _responseBuilder.buildFromCGI(client._cgi.outputBuff, client._request);
-		client._cgi.outputBuff.clear();
-	} else {
-		response = _responseBuilder.buildFromRequest(client._request);
+		response.debugPrintRequestData(client._request);
+
+		if (!client._cgi.outputBuff.empty()) {
+			Logger::debug("Building CGI response");
+			response.buildFromCGI(client._cgi.outputBuff, client._request);
+			client._cgi.outputBuff.clear();
+		} else {
+			response.buildFromRequest(client._request);
+		}
+
+		client._sendBuffer = response.prepareRawData();
+		client._sendOffset = 0;
+
+		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response.getStatusCode(), response.getBodySize());
 	}
 
-	ssize_t bytesSent = _responseSender.send(clientFd, response);
+	size_t	remaining = client._sendBuffer.size() - client._sendOffset;
+	ssize_t	bytesSent = ::send(clientFd, &client._sendBuffer[client._sendOffset], remaining, MSG_NOSIGNAL);
 
 	if (bytesSent < 0) {
 		Logger::error("Failed to send response");
+		client.clearSendBuffer();
 		closeConnection(clientFd);
 		return ;
 	}
 
-	Logger::accessLog(client.getIP(), client._request._method, client._request._uri, "HTTP/1.1", response._statusCode, response._body.size());
+	client._sendOffset += bytesSent;
+
+	if (client._sendOffset < client._sendBuffer.size())
+		return ;
+
+	client.clearSendBuffer();
 
 	if (!client._request._keepAlive) {
 		closeConnection(clientFd);
@@ -329,7 +347,6 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		transitionToIDLE(client, clientFd);
 		client.clearBuffer();
 	}
-	
 }
 
 void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
@@ -374,7 +391,7 @@ void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 
 size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 
-	char	buffer[4096];
+	char	buffer[8192];
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {

@@ -16,7 +16,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential
+          sudo apt-get install -y build-essential jq
 
       - name: Build webserv
         run: make
@@ -36,36 +36,34 @@ jobs:
           ./webserv config-files/valid/postman-test.conf &
           echo $! > server.pid
 
-      - name: Wait for server to be ready
-        run: |
-          echo "Waiting for server to start..."
-          sleep 3
-
       - name: Run Postman tests
         id: tests
         continue-on-error: true
         run: |
           postman collection run "52021088-71de474d-a92c-437b-99d7-5cc6eee513a8" \
             -e "52021088-580ece52-37d3-4dd2-9ca1-a242d70d68b0" \
+            --ignore-redirects \
             -r cli,json --reporter-json-export report.json
 
       - name: Show detailed results
         if: always()
         run: |
-          echo "=== Test Summary ==="
-          jq '.run.stats' report.json
-          echo ""
-          echo "=== Failed Tests ==="
-          jq '.run.executions[] | select(.assertions[]?.error) | {name: .item.name, errors: [.assertions[] | select(.error) | .error.message]}' report.json
+          if [ -f report.json ]; then
+            echo "=== Test Summary ==="
+            jq '.run.stats // empty' report.json || echo "No stats in JSON"
+            echo ""
+            echo "=== Failed Tests ==="
+            jq '.run.executions[] | select(.assertions[]?.error) | {name: .item.name, errors: [.assertions[] | select(.error) | .error.message]}' report.json || echo "No failed assertions"
+          fi
 
-      - name: Log summary
+      - name: Validate (CLI Exit Code)
         if: always()
         run: |
-          if [ -f report.json ]; then
-            echo "Passed: $(jq '.run.stats.assertions.passed' report.json)/$(jq '.run.stats.assertions.total' report.json)"
-          else
-            echo "No report generated"
+          if postman collection run "52021088-71de474d-a92c-437b-99d7-5cc6eee513a8" -e "52021088-580ece52-37d3-4dd2-9ca1-a242d70d68b0" --ignore-redirects -r cli --reporter-cli-no-summary -n 1 | grep -q "failed.*[1-9]"; then
+            echo "Tests have failures"
+            exit 1
           fi
+          echo "No failures detected"
 
       - name: Cleanup
         if: always()

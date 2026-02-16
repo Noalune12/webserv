@@ -13,7 +13,7 @@ void Request::checkMultipart(const std::string& content) {
 
     if (index == std::string::npos)
         return ;
-    else { 
+    else {
         type = content.substr(0, index);
         boundary = content.substr(index + 1);
         boundary = trimOws(boundary);
@@ -109,7 +109,7 @@ bool Request::parseMultipart() {
         }
     }
 
-    
+
     while (_multipartState != IS_MULTI_END) {
 
         if (_reqLocation->bodySize < fullBody.size()) {

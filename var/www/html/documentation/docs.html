@@ -9,126 +9,182 @@
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 	<style>
-	/* ===== Reset ===== */
-	* {
-		margin: 0;
-		padding: 0;
-		box-sizing: border-box;
-	}
+		/* ===== Reset ===== */
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
 
-	/* ===== Layout ===== */
-	body {
-		font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
-		display: flex;
-		height: 100vh;
-		color: #222;
-		background: #fff;
-	}
+		/* ===== Layout ===== */
+		body {
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+			display: flex;
+			height: 100vh;
+			color: #222;
+			background: #fff;
+		}
 
-	/* ===== Sidebar ===== */
-	aside {
-		width: 260px;
-		border-right: 1px solid #e5e5e5;
-		padding: 1rem;
-		overflow-y: auto;
-	}
+		/* ===== Sidebar ===== */
+		aside {
+			width: 260px;
+			border-right: 1px solid #e5e5e5;
+			padding: 1rem;
+			overflow-y: auto;
+		}
 
-	aside h2 {
-		font-size: 0.9rem;
-		font-weight: 600;
-		margin-bottom: 0.5rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: #555;
-	}
+		aside h2 {
+			font-size: 0.9rem;
+			font-weight: 600;
+			margin-bottom: 0.5rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			color: #555;
+		}
 
-	.nav {
-		list-style: none;
-		margin-bottom: 1rem;
-	}
+		.nav {
+			list-style: none;
+			margin-bottom: 1rem;
+		}
 
-	.nav li {
-		margin: 0.25rem 0;
-	}
+		.nav li {
+			margin: 0.25rem 0;
+		}
 
-	.nav button {
-		all: unset;
-		cursor: pointer;
-		font-size: 0.95rem;
-		color: #333;
-		padding: 0.2rem 0;
-	}
+		.nav button {
+			all: unset;
+			cursor: pointer;
+			font-size: 0.95rem;
+			color: #333;
+			padding: 0.2rem 0;
+		}
 
-	.nav button:hover {
-		text-decoration: underline;
-	}
+		.nav button:hover {
+			text-decoration: underline;
+		}
 
-	/* Sub-section */
-	.nav.sub {
-		margin-left: 1rem;
-		border-left: 2px solid #eee;
-		padding-left: 0.75rem;
-	}
+		/* Sub-section */
+		.nav.sub {
+			margin-left: 1rem;
+			border-left: 2px solid #eee;
+			padding-left: 0.75rem;
+		}
 
-	/* ===== Content ===== */
-	main {
-		flex: 1;
-		padding: 2rem;
-		overflow-y: auto;
-		display: flex;
-		justify-content: center;
-	}
+		/* ===== Content ===== */
+		main {
+			flex: 1;
+			padding: 2rem;
+			overflow-y: auto;
+			display: flex;
+			justify-content: center;
+			align-items: flex-start;
+		}
 
 
-	#content {
-		max-width: 800px;
-		width: 100%;
-	}
+		#content {
+			max-width: 800px;
+			width: 100%;
+		}
 
-	/* ===== Markdown Styling ===== */
-	#content h1 {
-		font-size: 2.2rem;
-		margin-bottom: 1rem;
-	}
+		/* ===== Markdown Styling ===== */
+		#content h1 {
+			font-size: 2.2rem;
+			margin-bottom: 1rem;
+		}
 
-	#content h2 {
-		font-size: 1.6rem;
-		margin-top: 2rem;
-		margin-bottom: 0.75rem;
-	}
+		#content h2 {
+			font-size: 1.6rem;
+			margin-top: 2rem;
+			margin-bottom: 0.75rem;
+		}
 
-	#content h3 {
-		font-size: 1.3rem;
-		margin-top: 1.5rem;
-		margin-bottom: 0.5rem;
-	}
+		#content h3 {
+			font-size: 1.3rem;
+			margin-top: 1.5rem;
+			margin-bottom: 0.5rem;
+		}
 
-	#content p {
-		line-height: 1.6;
-		margin-bottom: 1rem;
-	}
+		#content p {
+			line-height: 1.6;
+			margin-bottom: 1rem;
+		}
 
-	#content ul {
-		margin-left: 1.2rem;
-		margin-bottom: 1rem;
-	}
+		#content ul {
+			margin-left: 1.2rem;
+			margin-bottom: 1rem;
+		}
 
-	#content li {
-		margin: 0.25rem 0;
-	}
+		#content li {
+			margin: 0.25rem 0;
+		}
 
-	#content pre {
-		background: #f6f8fa;
-		padding: 1rem;
-		overflow-x: auto;
-		margin-bottom: 1rem;
-		font-size: 0.9rem;
-	}
+		#content pre {
+			background: #f6f8fa;
+			padding: 1rem;
+			overflow-x: auto;
+			margin-bottom: 1rem;
+			font-size: 0.9rem;
+		}
 
-	#content code {
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-			"Liberation Mono", monospace;
-	}
+		#content code {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+		}
+
+		.cta {
+			position: absolute;
+			bottom: 0;
+			border: none;
+			background: none;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			text-decoration: none;
+			color: #222;
+			margin-bottom: 1rem;
+		}
+
+		.cta::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			height: 2px;
+			background-color: #000;
+			transform: scaleX(0);
+			transform-origin: bottom right;
+			transition: transform 0.3s ease;
+		}
+
+		.cta:hover::after {
+			transform: scaleX(1);
+			transform-origin: bottom left;
+		}
+
+		.cta span {
+			padding-bottom: 5px;
+			letter-spacing: 1px;
+			font-size: 14px;
+			padding-right: 15px;
+			text-transform: uppercase;
+			font-weight: 500;
+		}
+
+		.cta svg {
+			transform: translateX(4px) scaleX(-1);
+			transition: all 0.3s ease;
+			width: 20px;
+			height: 12px;
+		}
+
+		.cta:hover svg {
+			transform: translateX(0) scaleX(-1);
+		}
+
+		.cta:active svg {
+			transform: scale(0.9) scaleX(-1);
+		}
 	</style>
 </head>
 
@@ -150,8 +206,16 @@
 			<li><button onclick="loadDoc('/docs/implementation/project-architecture.md')">Project architecture</button></li>
 			<li><button onclick="loadDoc('/docs/implementation/parsing-complexity.md')">Parsing complexity</button></li>
 			<li><button onclick="loadDoc('/docs/implementation/config-file.md')">Config file</button></li>
+			<li><button onclick="loadDoc('/docs/implementation/postman-api-tests.md')">Postman Github Action</button></li>
 			<li><button onclick="loadDoc('/docs/implementation/notes.md')">Notes</button></li>
 		</ul>
+		<a href="/" class="cta">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+				<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+			</svg>
+			<span>Return to homepage</span>
+		</a>
+
 	</aside>
 
 	<!-- ===== Content ===== -->

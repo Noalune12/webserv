@@ -1,12 +1,8 @@
 #ifndef EVENTLOOP_HPP
 # define EVENTLOOP_HPP
 
-# include <stdint.h>
-
 # include "CGIExecutor.hpp"
 # include "Connection.hpp"
-# include "ResponseBuilder.hpp"
-# include "ResponseSender.hpp"
 # include "ServerManager.hpp"
 
 # define PROXY_AUTH_REQ 407
@@ -25,8 +21,6 @@ class EventLoop {
 		std::map<int, int>          _pipeToClient;	// pipeFd, clientFd
 
 		CGIExecutor     _cgiExecutor;
-		ResponseBuilder _responseBuilder;
-		ResponseSender  _responseSender;
 
 	public:
 		EventLoop(ServerManager& serverManager);
@@ -62,7 +56,7 @@ class EventLoop {
 		void	handleIdle(Connection& client, int clientFd, uint32_t ev);
 		void	handleReadingHeaders(Connection& client, int clientFd, uint32_t ev);
 		void	handleReadingBody(Connection& client, int clientFd, uint32_t ev);
-		void	handleCGIRunning(Connection& client, int clientFd, uint32_t ev);
+		void	handleCGIClientEvent(Connection& client, int clientFd, uint32_t ev);
 		void	handleSendingResponse(Connection& client, int clientFd, uint32_t ev);
 
 		void	transitionToIDLE(Connection& client, int clientFd);

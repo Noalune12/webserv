@@ -25,12 +25,10 @@ struct CGIContext {
 	int			pipeIn[2];	// stdin (server then CGI)
 	int			pipeOut[2];	// stdout (CGI then server)
 	std::string	outputBuff;
-	bool		headerParsed;
-	size_t		bodyStart;
 	std::string	inputBody;
 	size_t		inputOffset;
 
-	CGIContext() : pid(-1), headerParsed(false), bodyStart(0) {
+	CGIContext() : pid(-1) {
 		pipeIn[0] = -1;
 		pipeIn[1] = -1;
 		pipeOut[0] = -1;
@@ -61,31 +59,21 @@ struct CGIContext {
 	}
 };
 
-// On pourrait la renommer Client la classe
-// Avec l'architecture que j'ai en tete, c'est ici qu'on stock absolument toutes les donnees de chaque clients
-// Informations, etats, buffers, truc pour les CGI, tout!
-
 class Connection {
 
 	private:
-		int					_clientFd;
 		std::string			_ip;
-		int					_port;
 		ConnectionState		_state;
 		time_t				_timers[5];
 		std::string			_buffer;
-		ssize_t				_bufferLenght; // or is it _requestLenght ? -> might be able to help you identify chunked mode
-		bool				_keepAlive;
 		std::string			_chunkBuffer;
-
 		std::vector<server>	_servers;
-
 		std::string 		_serverIP;
 		int					_serverPort;
 
 	public:
 		Connection(); // cannot compile without it
-		Connection(int& clientFd, std::string& ip, int& port, std::vector<server>	servers, globalDir globalDir);
+		Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir);
 		~Connection();
 
 		/* timeout related functions */
@@ -106,11 +94,13 @@ class Connection {
 
 		void				clearChunkBuffer();
 		void				clearBuffer();
-
+		void				clearSendBuffer();
 		void 				parseRequest();
 
 		Request				_request;
 		CGIContext			_cgi;
+		std::vector<char>   _sendBuffer;
+		size_t              _sendOffset;
 };
 
 #endif

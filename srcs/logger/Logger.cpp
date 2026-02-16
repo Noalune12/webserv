@@ -65,7 +65,7 @@ const char*	Logger::matchLevelToColor(LogLevel level) {
 
 std::string	Logger::formatTimestamp(void) {
 
-	time_t		curr = time(NULL);
+	time_t		curr = std::time(NULL);
 	struct tm*	t = localtime(&curr);
 	char		buf[20];
 
@@ -82,7 +82,7 @@ void	Logger::log(LogLevel level, const std::string& m) {
 	const char*	color = matchLevelToColor(level);
 	const char*	reset = _colored ? RESET : "";
 
-	std::cout << color
+	std::cerr << color
 		<< formatTimestamp() << " "
 		<< "[" << matchLevelToString(level) << "] "
 		<< m << reset << std::endl;

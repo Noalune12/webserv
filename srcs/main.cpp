@@ -36,6 +36,11 @@ int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
 
+	if (ac > 2) {
+		std::cerr << "error message for too many arguments, cerr or logging it like nginx ?" << std::endl;
+		return (EXIT_FAILURE);
+	}
+
 	try
 	{
 		Logger::notice("loading configuration file from " + configFile);
@@ -47,7 +52,9 @@ int	main(int ac, char **av) {
 		serverManager.setupListenSockets();
 
 		EventLoop	eventLoop(serverManager);
-		eventLoop.init(); // not checking the return value yet
+		if (!eventLoop.init()) {
+			return (EXIT_FAILURE);
+		}
 
 		// ctrl+c only for now
 		g_eventLoop = &eventLoop;
@@ -68,7 +75,7 @@ int	main(int ac, char **av) {
 	}
 	catch(const std::exception& e)
 	{
-		Logger::error(std::string("server initialization failed: ") + e.what());
+		Logger::error(std::string("server error: ") + e.what());
 		return (EXIT_FAILURE);
 	}
 	return (EXIT_SUCCESS);

@@ -1,5 +1,5 @@
-#ifndef COLORS_H
-# define COLORS_H
+#ifndef COLORS_HPP
+# define COLORS_HPP
 
 # define RED		"\033[31m"
 # define GREEN		"\033[32m"
