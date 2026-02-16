@@ -1,8 +1,8 @@
 #ifndef DEFINE_H
-#define DEFINE_H
+# define DEFINE_H
 
-#include <vector>
-#include <string>
+# include <vector>
+# include <string>
 
 typedef std::vector<
             std::pair<

@@ -1,8 +1,8 @@
 #include "ConfigInheritor.hpp"
 #include "rules.h"
+#include "colors.hpp"
 
 #include <algorithm>
-#include "colors.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -227,7 +227,6 @@ void ConfigInheritor::getLocation(std::vector<Context>	loc, server& server) {
             getReturnFromServer(server, temp);
         } else {
             setReturn(it, temp);
-            // getReturnFromServer(server, temp);
         }
 
         server.loc.push_back(temp);
@@ -255,13 +254,6 @@ void ConfigInheritor::getErrPageFromServer(server& server, location& location) {
 }
 
 void ConfigInheritor::getReturnFromServer(server& server, location& location) {
-    // std::map<int, std::string>::iterator it = server.ret.begin();
-
-    // for (; it != server.ret.end(); it++) {
-    //     if (location.ret.find(it->first) ==  location.ret.end()) {
-    //         location.ret[it->first] = it->second;
-    //     }
-    // }
     location.returnPath = server.returnPath;
     location.returnStatus = server.returnStatus;
 }
@@ -301,7 +293,7 @@ void ConfigInheritor::setErrorPage(PairVector::iterator& it, T& t) {
             }
             code.clear();
         } else {
-            int value;
+            double value;
             std::istringstream iss(*itArg);
             iss >> value;
             code.push_back(value);
@@ -317,7 +309,7 @@ void ConfigInheritor::setBodySize(PairVector::iterator& it, T& t) {
         std::istringstream iss(s);
         iss >> t.bodySize;
         char suffix = arg[arg.size() - 2];
-        switch (std::toupper(suffix)) { // overflow ?
+        switch (std::toupper(suffix)) {
             case 'K': t.bodySize *= 1000; break;
             case 'M': t.bodySize *= 1000000; break;
             case 'G': t.bodySize *= 1000000000; break;
@@ -339,12 +331,11 @@ void ConfigInheritor::setIndex(PairVector::iterator& it, T& t) {
 template <typename T>
 void ConfigInheritor::setReturn(PairVector::iterator& it, T& t) {
     std::vector<std::string>::iterator itArg = it->second.begin();
-    int value;
+    double value;
     for (; itArg != it->second.end(); itArg++) {
         if (*itArg == " ")
             continue;
         if (itArg->find(';') != std::string::npos) {
-            // t.ret[value] = (*itArg).substr(0, (*itArg).size() - 1);
             t.returnStatus = value;
             t.returnPath = (*itArg).substr(0, (*itArg).size() - 1);
             break ;
@@ -413,7 +404,7 @@ void ConfigInheritor::setListen(PairVector::iterator& it, server& s) {
 
 
 void ConfigInheritor::printContent() const {
-    std::cout << RED << "\nINHERITOR FINAL\n" << RESET << std::endl;
+
     std::cout << BLUE << "GLOBAL DIRECTIVES" << RESET << std::endl;
 
     std::cout << "error page : ";
@@ -421,14 +412,18 @@ void ConfigInheritor::printContent() const {
     for (; it != _globalDir.errPage.end(); it++) {
         std::cout << it->first << " " << it->second << " -- ";
     }
+
     std::cout << "\nclient max body size : ";
     std::cout << std::fixed <<_globalDir.bodySize << " k" << std::endl;
 
-    std::cout << GREEN << "\nSERVER" << RESET << std::endl;
+
     std::vector<server>::const_iterator itt = _server.begin();
+
     int i = 1;
+
     for (; itt != _server.end(); itt++) {
-        std::cout << YELLOW << "\nsevrer n*" << i << RESET << std::endl;
+
+        std::cout << GREEN << "\nSERVER n*" << i << RESET << std::endl;
         std::cout << "error page : ";
         std::map<int, std::string>::const_iterator it = itt->errPage.begin();
         for (; it != itt->errPage.end(); it++) {
@@ -436,7 +431,7 @@ void ConfigInheritor::printContent() const {
         }
         std::cout << "\nclient max body size : ";
         std::cout << std::fixed << itt->bodySize << " k" << std::endl;
-        std::cout << "\nroot : ";
+        std::cout << "root : ";
         std::cout << std::fixed << itt->root << std::endl;
         std::cout << "index : ";
         std::vector<std::string>::const_iterator vecstring_it = itt->index.begin();
@@ -452,11 +447,7 @@ void ConfigInheritor::printContent() const {
         std::cout << "auto index : ";
         if (itt->autoIndex == true) {std::cout << "on" << std::endl;} else if (itt->autoIndex == false) {std::cout << "off" << std::endl;}
         if (!itt->returnPath.empty()) {std::cout << "return : " << itt->returnStatus << ", " << itt->returnPath << std::endl;}
-        // it = itt->ret.begin();
-        // for (; it != itt->ret.end(); it++) {
-        //     std::cout << it->first << " " << it->second << " -- ";
-        // }
-        std::cout << "\nserver name: ";
+        std::cout << "server name: ";
         vecstring_it = itt->serverName.begin();
         for (; vecstring_it != itt->serverName.end(); vecstring_it++)
             std::cout << *vecstring_it << ", ";
@@ -467,7 +458,6 @@ void ConfigInheritor::printContent() const {
             std::cout << "[" << lisit->port << "] - " << lisit->ip << " , ";
         }
 
-        std::cout << GREEN << "\nLOCATION" << RESET << std::endl;
         std::vector<location>::const_iterator itl = itt->loc.begin();
         int j = 1;
         for (; itl != itt->loc.end(); itl++) {
@@ -498,11 +488,6 @@ void ConfigInheritor::printContent() const {
             std::cout << "auto index : ";
             if (itl->autoIndex == true) {std::cout << "on" << std::endl;} else if (itl->autoIndex == false) {std::cout << "off" << std::endl;}
             if (!itl->returnPath.empty()) {std::cout << "return : " << itl->returnStatus << ", " << itl->returnPath << std::endl;}
-            // it = itl->ret.begin();
-            // for (; it != itl->ret.end(); it++) {
-            //     std::cout << it->first << " " << it->second << " -- ";
-            // }
-            std::cout << std::endl;
             std::cout << "CGI : " << itl->cgiPath << " with extension " << itl->cgiExt << std::endl;
             j++;
         }

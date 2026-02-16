@@ -64,9 +64,15 @@ bool	CGIExecutor::verifyCGIScript(const std::string& scriptPath, Connection& cli
 		return (false);
 	}
 
-	if (access(scriptPath.c_str(), R_OK) != 0) { // R_OK -> readable file
+	if (access(scriptPath.c_str(), R_OK) != 0) {
 		Logger::error("CGI script is not readable: " + scriptPath);
 		client._request.findErrorPage(403, root, client._request._reqLocation->errPage);
+		return (false);
+	}
+
+	if (access(scriptPath.c_str(), X_OK) != 0) {
+		Logger::error("CGI script is not executable: " + scriptPath);
+		client._request.findErrorPage(500, root, client._request._reqLocation->errPage);
 		return (false);
 	}
 
@@ -78,11 +84,11 @@ std::string	CGIExecutor::getDirectoryFromPath(const std::string& path) {
 	size_t	lastSlash = path.find_last_of('/');
 
 	if (lastSlash == std::string::npos) {
-		return (".");  // current directory
+		return (".");
 	}
 
 	if (lastSlash == 0) {
-		return ("/");  // root file
+		return ("/");
 	}
 
 	return (path.substr(0, lastSlash));

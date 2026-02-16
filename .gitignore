@@ -49,11 +49,5 @@ servertest
 
 out
 usr/*
-*.html
 
-.gitignore
-
-config-files
-*.conf
-default.conf
-upload*
+uplo*

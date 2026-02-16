@@ -23,7 +23,6 @@ Context::Context(std::string name, std::string context): _name(name), _bindingsI
 
         if (!content.empty() && index != 0) {
             while (!content.empty()) {
-                // std::cout << "content : " << content << std::endl;
                 std::size_t semiCol = content.find(';');
                 if (semiCol == std::string::npos) {
                     addDirective(content);
@@ -33,7 +32,6 @@ Context::Context(std::string name, std::string context): _name(name), _bindingsI
                         semiCol++;
                     std::string dir = content.substr(0, semiCol);
                     content = content.substr(semiCol);
-                    // std::cout << "extracted dir : " << dir << "       content : " << content << std::endl;
                     addDirective(dir);
                 }
             }
@@ -43,8 +41,6 @@ Context::Context(std::string name, std::string context): _name(name), _bindingsI
 
         if (index != std::string::npos) {
             _context.push_back(Utils::handleContext(f, content));
-            // std::cout << "CONTENT AFTER END CONTEXT : " << content << std::endl;
-            // content.clear();
         }
     }
 

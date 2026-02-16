@@ -1,20 +1,7 @@
-#include <arpa/inet.h>
-#include <cerrno>
-#include <cstring>
-#include <fcntl.h>
-#include <iostream>
 #include <netinet/in.h>
 #include <sstream>
-// #include <stdlib.h>
-#include <cstdlib>
-#include <sys/epoll.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
-#include "colors.hpp"
 #include "EventLoop.hpp"
-#include "Logger.hpp"
 
 void printWithoutR(std::string what, std::string line) {
     std::string l;

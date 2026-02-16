@@ -167,16 +167,11 @@ bool	MimeTypes::isSupportedType(const std::string& contentType) {
 			return false;
 		}
 	}
-	std::cout << contentType <<std::endl;;
-
-	// std::cout << "\nIS SUPPORTED TYPE" << std::endl;
 	std::map<std::string, std::string>::iterator it = _types.begin();
 	for (; it != _types.end(); it++) {
-		// std::cout << it->second << " ---- ";
 		if (contentType == it->second || isTextType(contentType))
 			return true;
 	}
-	std::cout << std::endl;
 	return false;
 }
 
@@ -186,16 +181,13 @@ std::string  MimeTypes::getExtensionFromType(const std::string& contentType) {
 			return "";
 		}
 	}
-	// std::cout << contentType <<std::endl;;
 
 	if (contentType == "application/x-www-form-urlencoded")
 		return ".txt";
 	if (contentType == "application/xml")
 		return ".xml";
-	// std::cout << "\nGet extension" << std::endl;
 	std::map<std::string, std::string>::iterator it = _types.begin();
 	for (; it != _types.end(); it++) {
-		// std::cout << it->second << " ---- ";
 		if (contentType == it->second)
 			return it->first;
 	}

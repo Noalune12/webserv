@@ -59,13 +59,12 @@ override HTTPSRC	:= \
 	RequestChunkHandler \
 	RequestSemantics \
 	Response \
-	ResponseBuilder \
-	ResponseSender \
 	StatusCodes \
 	RequestGetHandler \
 	RequestDeleteHandler \
 	RequestPostHandler \
-	RequestMultipart
+	RequestMultipart \
+	RequestBodyChecker
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 

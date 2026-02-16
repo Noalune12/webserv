@@ -8,112 +8,496 @@
 		* {
 			margin: 0;
 			padding: 0;
+			box-sizing: border-box;
 		}
 		body {
-			font-family: Favorit,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif;
 			display: flex;
-			justify-content: center;
+			flex-direction: column;
 			align-items: center;
-			height: 90vh;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+			background: #fff;
+			color: #222;
+			justify-content: center;
+			min-height: 100vh;
+			padding: 4rem 2rem;
 		}
-		.error-container {
+		.page-description {
 			display: flex;
 			flex-direction: column;
 			gap: 0.75rem;
 			text-align: center;
-			max-width: 600px;
-		}
-		.error-container img {
-			max-width: 200px;
-			margin: 0 auto;
-			opacity: 0.9;
+			max-width: 800px;
 		}
 		h1 {
-			font-size: 3rem;
-			font-weight: 600;
+			line-height: 1.6;
+			margin-bottom: 1.5rem;
+			color: #444;
 		}
 		p {
 			font-size: 1rem;
 			line-height: 1.3;
 		}
-		.button {
-			display: inline-block;
+		.cta {
+			position: relative;
+			border: none;
+			background: none;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
 			text-decoration: none;
+			color: #222;
+			align-self: flex-start;
+			margin-top: auto;
+			padding-top: 2rem; /* pas sur ici */
+		}
+
+		.cta::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			height: 2px;
+			background-color: #000;
+			transform: scaleX(0);
+			transform-origin: bottom right;
+			transition: transform 0.3s ease;
+		}
+
+		.cta:hover::after {
+			transform: scaleX(1);
+			transform-origin: bottom left;
+		}
+
+		.cta span {
+			padding-bottom: 5px;
+			padding-top: 15px;
+			letter-spacing: 1px;
+			font-size: 14px;
+			padding-left: 15px;
+			text-transform: uppercase;
 			font-weight: 500;
-			transition: opacity 0.15s ease;
 		}
-		.button:hover {
-			opacity: 0.8;
-			text-decoration: underline;
+
+		.cta svg {
+			transform: scaleX(-1) translateX(-8px);
+			transition: all 0.3s ease;
+			width: 20px;
+			height: 12px;
 		}
+
+		.cta:hover svg {
+			transform: scaleX(-1) translateX(0);
+		}
+
+		.cta:active svg {
+			transform: scaleX(-1) scale(0.9);
+		}
+
+		.requests {
+			display: flex;
+			gap: 40px;
+			box-sizing: border-box;
+			flex-wrap: wrap;
+			margin-top: 4rem;
+		}
+
+		.request-part {
+			flex: 1;
+			min-width: 420px;
+			background: #ffffff;
+			padding: 30px;
+			border-radius: 16px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+			display: flex;
+			flex-direction: column;
+		}
+
+		.request-part h2 {
+			font-size: 1.3rem;
+			margin-bottom: 1.5rem;
+			text-align: center;
+		}
+
+
+		.fileInputsContainer {
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+			margin-bottom: 20px;
+		}
+
+		.file-row {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.fileInput {
+			flex: 1;
+			padding: 8px;
+			border-radius: 8px;
+			border: 1px solid #ddd;
+			background: #fafafa;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		.textInput {
+			width: 100%;
+			min-height: 120px;
+			padding: 12px;
+			border-radius: 10px;
+			border: 1px solid #ccc;
+			resize: vertical;
+			font-family: inherit;
+			margin-bottom: 15px;
+		}
+
+		.deleteInput {
+			width: 100%;
+			min-height: 20px;
+			padding: 12px;
+			margin-bottom: 15px;
+			border: 1px solid #ddd;
+		}
+
+		.fileInput:hover {
+			border-color: #535353;
+			background: #fff;
+		}
+
+
+		.removeBtn {
+			background: #fee2e2;
+			border: none;
+			padding: 8px 10px;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			font-size: 14px;
+		}
+
+		.removeBtn:hover {
+			background: #fca5a5;
+			transform: scale(1.05);
+		}
+		.addBtn,
+		.submitBtn {
+			padding: 10px 16px;
+			border-radius: 10px;
+			border: none;
+			font-weight: 500;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			margin-bottom: 10px;
+		}
+
+		.addBtn {
+			display: block;
+			width: 50%;
+			background: #e9e9e9;
+			color: #000000;
+			margin: 0 auto;
+			margin-bottom: 20px;
+			margin-top: 20px;
+		}
+
+		.addBtn:hover {
+			background: #c9c9c9;
+		}
+
+		.submitBtn {
+			background: linear-gradient(135deg, #6b7280, #4b5563);
+			color: #ffffff;
+			box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+		}
+
+		.submitBtn:hover {
+			background: linear-gradient(135deg, #4b5563, #374151);
+			transform: translateY(-2px);
+			box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+		}
+
+		.submitBtn:active {
+			transform: translateY(0);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		}
+
+		.result {
+			margin-top: 20px;
+			font-size: 14px;
+			color: #444;
+			background: #f9fafb;
+			padding: 12px;
+			border-radius: 8px;
+			min-height: 40px;
+			text-align: center;
+		}
+
 	</style>
 </head>
 <body>
-	<div class="error-container">
-		<h1>API TEST FRONTPAGE</h1>
-		<p>Message to be defined</p>
-		<a href="/" class="button">← Return to homepage</a>
+	<div class="page-description">
+		<h1>API PAGE</h1>
+		<p>On this page, you can chose to upload or delete one or more files</p>
 	</div>
 
-<h2>Upload de fichiers</h2>
 
-<div id="fileInputsContainer">
-    <div class="file-row">
-        <input type="file" class="fileInput" required>
-        <button type="button" class="removeBtn">❌</button>
-    </div>
-</div>
+	<div class="requests">
+		<div class="request-part">
+			<h2>POST towards API</h2>
 
-<button type="button" id="addFileBtn">Ajouter un fichier</button>
-<br><br>
-<button id="submitAllBtn">Envoyer tous les fichiers</button>
+			<div class="fileInputsContainer" id="fileInputsContainerAPI">
+				<div class="file-row">
+					<input type="file" class="fileInput fileAPI" required>
+					<button type="button" class="removeBtn">❌</button>
+				</div>
+			</div>
 
-<p id="result"></p>
+			<button type="button" class="addBtn" id="addFileBtnAPI">Add a file</button>
+			<button class="submitBtn" id="submitAllBtnAPI">Send all files</button>
 
+			<p class="result" id="resultAPI"></p>
+		</div>
+		<div class="request-part">
+			<h2>Send text to API</h2>
+
+			<textarea class="textInput" id="textInputAPI" placeholder="Enter your text here..."></textarea>
+
+			<button class="submitBtn" id="submitTextBtnAPItext">Send text</button>
+
+			<p class="result" id="resultTextAPI"></p>
+		</div>
+		<div class="request-part">
+			<h2>POST towards upload</h2>
+			<div class="fileInputsContainer" id="fileInputsContainerUpload">
+				<div class="file-row">
+					<input type="file" class="fileInput fileUpload" required>
+					<button type="button" class="removeBtn">❌</button>
+				</div>
+			</div>
+
+			<button type="button" class="addBtn" id="addFileBtnUpload">Add a file</button>
+			<button class="submitBtn" id="submitAllBtnUpload">Send all files</button>
+
+			<p class="result" id="resultUpload"></p>
+		</div>
+	</div>
+
+	<div class="requests">
+		<div class="request-part">
+			<h2>Delete a file from api</h2>
+
+			<input type="text" class="deleteInput" id="deleteIdInputAPI" placeholder="Enter file or folder">
+			<button class="submitBtn" id="deleteBtnAPI">Delete</button>
+
+			<p class="result" id="deleteResultAPI"></p>
+		</div>
+		<div class="request-part">
+			<h2>Delete a file from delete</h2>
+
+			<input type="text" class="deleteInput" id="deleteIdInputDelete" placeholder="Enter file or folder">
+			<button class="submitBtn" id="deleteBtnDelete">Delete</button>
+
+			<p class="result" id="deleteResultDelete"></p>
+		</div>
+	</div>
+	<div>
+		<a href="/" class="cta">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
+				<path d="M8,0,6.545,1.455l5.506,5.506H-30V9.039H12.052L6.545,14.545,8,16l8-8Z" transform="translate(30)"/>
+			</svg>
+			<span class="hover-underline-animation">Return to homepage</span>
+		</a>
+	</div>
 
 <script>
-const container = document.getElementById("fileInputsContainer");
 
-// Ajouter un nouveau fichier
-document.getElementById("addFileBtn").addEventListener("click", () => {
+// POST API multipart
+const container = document.getElementById("fileInputsContainerAPI");
+
+// Add a new file
+document.getElementById("addFileBtnAPI").addEventListener("click", () => {
     const div = document.createElement("div");
     div.className = "file-row";
     div.innerHTML = `
-        <input type="file" class="fileInput" required>
+        <input type="file" class="fileInput fileAPI" required>
         <button type="button" class="removeBtn">❌</button>
     `;
     container.appendChild(div);
 });
 
-// Retirer un fichier
+// Remove a file
 container.addEventListener("click", (e) => {
     if (e.target.classList.contains("removeBtn")) {
         e.target.parentElement.remove();
     }
 });
 
-// Envoyer tous les fichiers
-document.getElementById("submitAllBtn").addEventListener("click", () => {
+// Send all files
+document.getElementById("submitAllBtnAPI").addEventListener("click", () => {
     const formData = new FormData();
-    const fileInputs = document.querySelectorAll(".fileInput");
+    const fileInputs = document.querySelectorAll(".fileAPI");
 
-    fileInputs.forEach((input, index) => {
+    let hasFile = false;
+
+    fileInputs.forEach((input) => {
         if (input.files.length > 0) {
             formData.append("file", input.files[0]);
+            hasFile = true;
         }
     });
+
+    if (!hasFile) {
+        document.getElementById("resultAPI").textContent =
+            "No files were selected";
+        return;
+    }
 
     fetch("http://localhost:8080/api/", {
         method: "POST",
         body: formData
     })
     .then(response => {
-        document.getElementById("result").innerText =
+        document.getElementById("resultAPI").innerText =
             "HTTP status: " + response.status;
     })
     .catch(err => {
-        document.getElementById("result").innerText =
+        document.getElementById("resultAPI").innerText =
             "Erreur réseau";
+    });
+});
+
+// POST API simple body
+document.getElementById("submitTextBtnAPItext").addEventListener("click", () => {
+    const text = document.getElementById("textInputAPI").value;
+
+    // Vérifier si vide
+    if (!text.trim()) {
+        document.getElementById("resultTextAPI").textContent =
+            "Please enter some text before sending.";
+        return;
+    }
+
+    fetch("http://localhost:8080/api/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "text/plain"
+        },
+        body: text
+    })
+    .then(response => {
+        document.getElementById("resultTextAPI").textContent =
+            "HTTP status: " + response.status;
+    })
+    .catch(() => {
+        document.getElementById("resultTextAPI").textContent =
+            "Network error";
+    });
+});
+
+
+// POST Upload
+const containerUpload = document.getElementById("fileInputsContainerUpload");
+
+// Add a new file
+document.getElementById("addFileBtnUpload").addEventListener("click", () => {
+    const div = document.createElement("div");
+    div.className = "file-row";
+    div.innerHTML = `
+        <input type="file" class="fileInput fileUpload" required>
+        <button type="button" class="removeBtn">❌</button>
+    `;
+    containerUpload.appendChild(div);
+});
+
+// Remove a file
+containerUpload.addEventListener("click", (e) => {
+    if (e.target.classList.contains("removeBtn")) {
+        e.target.parentElement.remove();
+    }
+});
+
+// Send all files
+document.getElementById("submitAllBtnUpload").addEventListener("click", () => {
+    const formData = new FormData();
+    const fileInputs = document.querySelectorAll(".fileUpload");
+
+    let hasFile = false;
+
+    fileInputs.forEach((input) => {
+        if (input.files.length > 0) {
+            formData.append("file", input.files[0]);
+            hasFile = true;
+        }
+    });
+
+    if (!hasFile) {
+        document.getElementById("resultUpload").textContent =
+            "No files were selected";
+        return;
+    }
+
+    fetch("http://localhost:8080/upload/", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => {
+        document.getElementById("resultUpload").innerText =
+            "HTTP status: " + response.status;
+    })
+    .catch(err => {
+        document.getElementById("resultUpload").innerText =
+            "Erreur réseau";
+    });
+});
+
+// DELETE from API
+document.getElementById("deleteBtnAPI").addEventListener("click", () => {
+    const id = document.getElementById("deleteIdInputAPI").value.trim();
+
+    if (!id) {
+        document.getElementById("deleteResultAPI").textContent =
+            "Please enter a file or folder name";
+        return;
+    }
+
+    fetch(`http://localhost:8080/api/${id}`, {
+        method: "DELETE"
+    })
+    .then(response => {
+        document.getElementById("deleteResultAPI").textContent =
+            "HTTP status: " + response.status;
+    })
+    .catch(() => {
+        document.getElementById("deleteResultAPI").textContent =
+            "Network error";
+    });
+});
+
+// DELETE from Delete
+document.getElementById("deleteBtnDelete").addEventListener("click", () => {
+    const id = document.getElementById("deleteIdInputDelete").value.trim();
+
+    if (!id) {
+        document.getElementById("deleteResultDelete").textContent =
+            "Please enter a file or folder name";
+        return;
+    }
+
+    fetch(`http://localhost:8080/delete/${id}`, {
+        method: "DELETE"
+    })
+    .then(response => {
+        document.getElementById("deleteResultDelete").textContent =
+            "HTTP status: " + response.status;
+    })
+    .catch(() => {
+        document.getElementById("deleteResultDelete").textContent =
+            "Network error";
     });
 });
 

@@ -1,14 +1,102 @@
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
 #include "colors.hpp"
+#include "Logger.hpp"
+#include "MimeTypes.hpp"
 #include "Response.hpp"
 #include "StatusCodes.hpp"
-#include "MimeTypes.hpp"
 
-Response::Response() : _statusCode(200), _statusText("OK"), _headers(), _body(), _bytesSent(0) {}
+Response::Response() : _statusCode(200), _statusText("OK"), _headers(), _body() {}
 
 Response::~Response() {}
+
+void	Response::buildFromRequest(const Request& req) {
+
+	initializeResponse(req);
+
+	if (req._return) {
+		setStatus(req.status);
+		_headers["Location"] = req._returnPath;
+		_headers["Content-Type"] = "text/html";
+		return ;
+	}
+
+	if (req.err && req.status == 405) {
+		setAllow(req);
+	}
+
+	if (req.status == 201 || (req._method == "POST" && req.status == 200)) {
+		setLocation(req);
+		setStatus(req.status);
+		return ;
+	}
+
+	if (req.err) {
+		setStatus(req.status);
+		if (!req.htmlPage.empty()) {
+			_body.assign(req.htmlPage.begin(), req.htmlPage.end());
+		} else {
+			setBodyFromError(req.status, req);
+		}
+	} else {
+		setStatus(req.status);
+		setBodyFromFile(req);
+	}
+}
+
+void	Response::buildFromCGI(const std::string& cgiOutput, const Request& req) {
+
+	initializeResponse(req);
+	setStatus(200);
+
+	parseCGIHeaders(cgiOutput);
+	parseCGIBody(cgiOutput);
+	setContentTypeFromCGI();
+}
+
+std::vector<char>	Response::prepareRawData(void) {
+
+	std::ostringstream	oss;
+	oss << "HTTP/1.1 " << _statusCode << " " << _statusText << "\r\n";
+
+	std::ostringstream	lenOss;
+	lenOss << _body.size();
+	_headers["Content-Length"] = lenOss.str();
+
+	std::map<std::string, std::string>::const_iterator	it;
+	for (it = _headers.begin(); it != _headers.end(); ++it) {
+		oss << it->first << ": " << it->second << "\r\n";
+	}
+	oss << "\r\n";
+
+	std::string			headerStr = oss.str();
+	std::vector<char>	res;
+
+	res.reserve(headerStr.size() + _body.size());
+	res.insert(res.end(), headerStr.begin(), headerStr.end());
+	res.insert(res.end(), _body.begin(), _body.end());
+
+	return (res);
+}
+
+int	Response::getStatusCode(void) const {
+	return (_statusCode);
+}
+
+const std::string&	Response::getStatusText(void) const {
+	return (_statusText);
+}
+
+const std::vector<char>&	Response::getBody(void) const {
+	return (_body);
+}
+
+size_t	Response::getBodySize(void) const {
+	return (_body.size());
+}
+
 
 void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << CYAN "\n========== RESPONSE DEBUG ==========" RESET << std::endl;
@@ -21,7 +109,6 @@ void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << "  method = \"" << req._method << "\"" << std::endl;
 	std::cout << "  uri    = \"" << req._uri << "\"" << std::endl;
 	std::cout << "  trailing    = \"" << req._trailing << "\"" << std::endl;
-
 
 	std::cout << YELLOW "htmlPage:" RESET << std::endl;
 	if (req.htmlPage.empty()) {
@@ -45,119 +132,218 @@ void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << CYAN "====================================\n" RESET << std::endl;
 }
 
-void	Response::prepare(const Request& req) {
+void	Response::initializeResponse(const Request& req) {
+
 	_statusCode = 200;
 	_statusText = "OK";
 	_headers.clear();
 	_body.clear();
-	_bytesSent = 0;
 
-	_headers["Server"] = "webserv/1.0";
-	_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
+	setCommonHeaders(req);
+}
 
-	if (req.err) {
-		_statusCode = req.status;
-		_statusText = StatusCodes::getReasonPhrase(req.status);
+void	Response::setStatus(int code) {
+	_statusCode = code;
+	_statusText = StatusCodes::getReasonPhrase(code);
+}
+
+void	Response::setBodyFromFile(const Request& req) {
+	_body.assign(req.htmlPage.begin(), req.htmlPage.end());
+	setContentType(req._trailing);
+}
+
+void	Response::setBodyFromError(int statusCode, const Request& req) {
+
+	std::string customErrorPath = getCustomErrorPage(statusCode, req);
+
+	if (!customErrorPath.empty()) {
+		std::string customPage = loadErrorPageFile(customErrorPath, req);
+		if (!customPage.empty()) {
+			_body.assign(customPage.begin(), customPage.end());
+			_headers["Content-Type"] = "text/html";
+			Logger::debug("Loaded custom error page: " + customErrorPath);
+			return ;
+		}
 	}
 
-	if (!req.htmlPage.empty()) {
-		_body.assign(req.htmlPage.begin(), req.htmlPage.end());
-		std::string type = MimeTypes::getType(req._trailing);
-		_headers["Content-Type"] = type.empty() ? "text/html" : type;
-		std::cout << RED << req._trailing << " -> " << _headers["Content-Type"] << RESET << std::endl;
-		return ;
-	}
-
-	if (req.err || _statusCode == 200) {
-		_statusCode = req.err ? req.status : 500;
-		_statusText = StatusCodes::getReasonPhrase(_statusCode);
-	}
-	std::string errorPage = StatusCodes::generateDefaultErrorPage(_statusCode);
+	std::string errorPage = StatusCodes::generateDefaultErrorPage(statusCode);
 	_body.assign(errorPage.begin(), errorPage.end());
 	_headers["Content-Type"] = "text/html";
 }
 
-void	Response::prepareCGI(const std::string& cgiOutput, const Request& req) {
-	_statusCode = 200;
-	_statusText = "OK";
-	_headers.clear();
-	_body.clear();
-	_bytesSent = 0;
+void	Response::parseCGIHeaders(const std::string& cgiOutput) {
 
-	_headers["Server"] = "webserv/1.0";
-	_headers["Connection"] = req._keepAlive ? "keep-alive" : "close";
-
-	size_t headerEnd = cgiOutput.find("\r\n\r\n");
-	size_t bodyStart = 4;
+	size_t	headerEnd = findHeaderEnd(cgiOutput);
 
 	if (headerEnd == std::string::npos) {
-		headerEnd = cgiOutput.find("\n\n");
-		bodyStart = 2;
+		return ; // no headers, only body
 	}
 
-	std::string headerSection;
-	std::string bodySection;
-
-	if (headerEnd == std::string::npos) {
-		bodySection = cgiOutput;
-	} else {
-		headerSection = cgiOutput.substr(0, headerEnd);
-		bodySection = cgiOutput.substr(headerEnd + bodyStart);
-	}
-
+	std::string			headerSection = cgiOutput.substr(0, headerEnd);
 	std::istringstream	headerStream(headerSection);
 	std::string			line;
 
 	while (std::getline(headerStream, line)) {
-
+		// remove \r
 		if (!line.empty() && line[line.size() - 1] == '\r') {
 			line.erase(line.size() - 1);
 		}
 
 		size_t	colonPos = line.find(':');
-		if (colonPos != std::string::npos) {
-			std::string	name = line.substr(0, colonPos);
-			std::string	value = line.substr(colonPos + 1);
 
-			size_t	start = value.find_first_not_of(" \t");
+		if (colonPos != std::string::npos) {
+			std::string name = line.substr(0, colonPos);
+			std::string value = line.substr(colonPos + 1);
+
+			size_t start = value.find_first_not_of(" \t");
 			if (start != std::string::npos) {
 				value = value.substr(start);
 			}
-			_headers[name] = value;
+
+			if (name == "Status") {
+				std::istringstream	ss(value);
+				int					statusCode;
+				ss >> statusCode;
+
+				if (ss) {
+					setStatus(statusCode);
+				}
+			} else {
+				_headers[name] = value;
+			}
 		}
+	}
+}
+
+void	Response::parseCGIBody(const std::string& cgiOutput) {
+
+	size_t		headerEnd = findHeaderEnd(cgiOutput);
+	std::string	bodySection;
+
+	if (headerEnd == std::string::npos) {
+		bodySection = cgiOutput;
+	} else {
+		size_t bodyStart = (cgiOutput[headerEnd] == '\r') ? 4 : 2; // 4 = CRLF ("\r\n\r\n") and 2 = LF ("\n\n")
+		bodySection = cgiOutput.substr(headerEnd + bodyStart);
 	}
 
 	_body.assign(bodySection.begin(), bodySection.end());
+}
 
+size_t	Response::findHeaderEnd(const std::string& cgiOutput) {
+
+	size_t	pos = cgiOutput.find("\r\n\r\n");
+	if (pos != std::string::npos) {
+		return (pos);
+	}
+
+	pos = cgiOutput.find("\n\n");
+	if (pos != std::string::npos) {
+		return (pos);
+	}
+
+	return (std::string::npos);
+}
+
+void	Response::setCommonHeaders(const Request& req) {
+	_headers["Server"] = "webserv/1.0";
+	if (req._keepAlive && !req.err) {
+		_headers["Connection"] = "keep-alive";
+	} else {
+		_headers["Connection"] = "close";
+	}
+}
+
+void	Response::setContentType(const std::string& extension) {
+	std::string type = MimeTypes::getType(extension);
+	_headers["Content-Type"] = type.empty() ? "text/html" : type;
+}
+
+void	Response::setContentTypeFromCGI(void) {
 	if (_headers.find("Content-Type") == _headers.end()) {
 		_headers["Content-Type"] = "text/html";
 	}
 }
 
-std::vector<char>	Response::buildRaw(void) {
+void	Response::setLocation(const Request& req) {
 
-	std::ostringstream	oss;
-	oss << "HTTP/1.1 " << _statusCode << " " << _statusText << "\r\n";
+	if (req._uplaodFiles.empty())
+		return ;
+	_headers["Location"] = req._uplaodFiles[0].location + req._uplaodFiles[0].filename;
+}
 
-	std::ostringstream lenOss;
-	lenOss << _body.size();
-	_headers["Content-Length"] = lenOss.str();
+void	Response::setAllow(const Request& req) {
 
-	std::map<std::string, std::string>::const_iterator it;
-	for (it = _headers.begin(); it != _headers.end(); ++it) {
-		oss << it->first << ": " << it->second << "\r\n";
+	if (req._reqLocation == NULL)
+		return ;
+
+	std::string	allowedMethods = "";
+
+	if (req._reqLocation->methods.get)
+		allowedMethods += "GET";
+
+	if (req._reqLocation->methods.post) {
+		if (!allowedMethods.empty())
+			allowedMethods += ", ";
+		allowedMethods += "POST";
 	}
-	oss << "\r\n"; // last CRLF (double \r\n)
 
-	std::string	headerStr = oss.str();
-	std::vector<char>	result;
+	if (req._reqLocation->methods.del) {
+		if (!allowedMethods.empty())
+			allowedMethods += ", ";
+		allowedMethods += "DELETE";
+	}
 
-	result.reserve(headerStr.size() + _body.size());
+	_headers["Allow"] = allowedMethods;
+}
 
-	// headers
-	result.insert(result.end(), headerStr.begin(), headerStr.end());
-	// body
-	result.insert(result.end(), _body.begin(), _body.end());
+std::string	Response::getCustomErrorPage(int statusCode, const Request& req) {
 
-	return (result);
+	if (req._reqLocation == NULL) {
+		return ("");
+	}
+
+	std::map<int, std::string>::const_iterator	it;
+	it = req._reqLocation->errPage.find(statusCode);
+
+	if (it != req._reqLocation->errPage.end()) {
+		return (it->second);
+	}
+
+	return ("");
+}
+
+std::string	Response::loadErrorPageFile(const std::string& uriPath, const Request& req) {
+
+	if (req._reqLocation == NULL) {
+		return ("");
+	}
+
+	std::string	fullPath;
+
+	if (!req._reqLocation->alias.empty()) {
+		fullPath = req._reqLocation->alias + uriPath;
+	} else {
+		fullPath = req._reqLocation->root + uriPath;
+	}
+
+	Logger::debug("Trying to load error page: " + fullPath);
+
+	std::ifstream file(fullPath.c_str(), std::ios::binary);
+	if (!file.is_open()) {
+		Logger::warn("Could not open custom error page: " + fullPath);
+		return ("");
+	}
+
+	std::ostringstream content;
+	content << file.rdbuf();
+	file.close();
+
+	if (content.str().empty()) {
+		Logger::warn("Error page file was empty or read failed: " + fullPath);
+		return ("");
+	}
+
+	Logger::debug("Successfully loaded custom error page: " + fullPath);
+	return (content.str());
 }
