@@ -24,10 +24,6 @@ bool	EventLoop::isRunning(void) const {
 	return (_running);
 }
 
-size_t	EventLoop::getConnectionCount(void) const {
-	return (_connections.size());
-}
-
 std::vector<int>	EventLoop::getListenSocketFds(void) const {
 	return (_serverManager.getListenSocketFds());
 }

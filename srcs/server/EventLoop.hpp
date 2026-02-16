@@ -21,18 +21,6 @@ class EventLoop {
 
 		CGIExecutor     _cgiExecutor;
 
-	public:
-		EventLoop(ServerManager& serverManager);
-		~EventLoop();
-
-		bool	init(void);
-		void	run(void);
-		void	stop(void);
-
-		bool	addToEpoll(int fd, uint32_t events);
-		bool	modifyEpoll(int fd, uint32_t events);
-		bool	removeFromEpoll(int fd);
-
 		void	acceptConnection(int listenFd);
 		void	closeConnection(int clientFd);
 
@@ -42,15 +30,6 @@ class EventLoop {
 		void	checkTimeouts(void);
 		int		calculateEpollTimeout(void);
 		int		getActiveTimer(ConnectionState s);
-
-		bool				isRunning(void) const;
-		size_t				getConnectionCount(void) const;
-		std::vector<int>	getAllClientFds(void) const;
-		std::vector<int>	getListenSocketFds(void) const;
-		void				closeEpollFd(void);
-
-		void	registerPipe(int pipeFd, int clientFd);
-		void	unregisterPipe(int pipeFd);
 
 		void	handleIdle(Connection& client, int clientFd, uint32_t ev);
 		void	handleReadingHeaders(Connection& client, int clientFd, uint32_t ev);
@@ -69,6 +48,28 @@ class EventLoop {
 		bool	checkTimeout(Connection& client, int clientFd);
 
 		void	getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port);
+
+	public:
+		EventLoop(ServerManager& serverManager);
+		~EventLoop();
+
+		bool	init(void);
+		void	run(void);
+		void	stop(void);
+
+		bool	addToEpoll(int fd, uint32_t events);
+		bool	modifyEpoll(int fd, uint32_t events);
+		bool	removeFromEpoll(int fd);
+
+
+
+		bool				isRunning(void) const;
+		std::vector<int>	getAllClientFds(void) const;
+		std::vector<int>	getListenSocketFds(void) const;
+		void				closeEpollFd(void);
+
+		void	registerPipe(int pipeFd, int clientFd);
+		void	unregisterPipe(int pipeFd);
 };
 
 
