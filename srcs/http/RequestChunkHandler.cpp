@@ -22,23 +22,23 @@ bool Request::convertHexa(std::string& hex) {
     return true;
 }
 
-static void printStr(std::string str) {
-    size_t i = 0;
-    for (; i != str.size(); i++) {
-        if (str[i] == '\n')
-            std::cout << "\\n";
-        if (str[i] == '\r')
-            std::cout << "\\r";
-        else
-            std::cout << str[i];
-    }
-}
+// static void printStr(std::string str) {
+//     size_t i = 0;
+//     for (; i != str.size(); i++) {
+//         if (str[i] == '\n')
+//             std::cout << "\\n";
+//         if (str[i] == '\r')
+//             std::cout << "\\r";
+//         else
+//             std::cout << str[i];
+//     }
+// }
 
 bool Request::getChunkSize() {
     Logger::debug("Chunked Body: Getting Size");
     // char* end = NULL;
     std::string hex;
-    size_t index = _chunk.find("\r\n");
+    size_t index = chunk.find("\r\n");
     if (index == 0) {
         if (!_reqLocation->root.empty()) {
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -48,8 +48,8 @@ bool Request::getChunkSize() {
         Logger::warn("Chunked Body: not well formatted");
         return false;
     }
-    hex = _chunk.substr(0, index);
-    _chunk = _chunk.substr(index + 2, _chunk.size());
+    hex = chunk.substr(0, index);
+    chunk = chunk.substr(index + 2, chunk.size());
 
     // std::cout << "Hex = ", printStr(hex), std::cout << " \nand chunk is : ", printStr(_chunk), std::cout << std::endl;
 
@@ -71,8 +71,8 @@ bool Request::getChunkSize() {
 void Request::parseChunk() {
 
     if (_chunkState == GETTING_FIRST_SIZE) {
-        if (_chunk.size() >= 2 &&
-                _chunk.compare(_chunk.size() - 2, 2, "\r\n") == 0) {
+        if (chunk.size() >= 2 &&
+                chunk.compare(chunk.size() - 2, 2, "\r\n") == 0) {
             if (!getChunkSize())
                 return ;
         } else {
@@ -94,11 +94,11 @@ void Request::parseChunk() {
         if (_chunkState == READING_BYTES) {
 
             Logger::debug("Chunked Body: Reading Bytes");
-            if ((_chunk.size() >= _chunkSize + 2)) {
-                _body += _chunk.substr(0, _chunkSize);
-                _chunk = _chunk.substr(_chunkSize, _chunk.size());
+            if ((chunk.size() >= _chunkSize + 2)) {
+                _body += chunk.substr(0, _chunkSize);
+                chunk = chunk.substr(_chunkSize, chunk.size());
 
-                size_t index = _chunk.find("\r\n");
+                size_t index = chunk.find("\r\n");
 
                 if (index != 0) {
                     if (!_reqLocation->root.empty())
@@ -109,14 +109,14 @@ void Request::parseChunk() {
                     return ;
                 }
 
-                if (_chunkSize == 0 && _chunk == "\r\n") {
+                if (_chunkSize == 0 && chunk == "\r\n") {
                     Logger::debug("Chunked Body: End found");
                     _chunkState = IS_END;
                     chunkRemaining = false;
-                    if (_isMultipart) {
+                    if (isMultipart) {
                         _multipartState = GETTING_FIRST_BOUNDARY;
-                        _fullBody = _body;
-                        _chunk = _body;
+                        fullBody = _body;
+                        chunk = _body;
                         parseMultipart();
                     }
                     return ;
@@ -129,7 +129,7 @@ void Request::parseChunk() {
                     Logger::warn("Chunked Body: end not well formatted");
                     return ;
                 }
-                _chunk = _chunk.substr(index + 2, _chunk.size());
+                chunk = chunk.substr(index + 2, chunk.size());
 
                 _chunkSize = -1;
                 _chunkState = GETTING_SIZE;
@@ -139,8 +139,8 @@ void Request::parseChunk() {
             }
         } else if (_chunkState == GETTING_SIZE) {
 
-            if (_chunk.size() >= 2 &&
-                    _chunk.compare(_chunk.size() - 2, 2, "\r\n") == 0) {
+            if (chunk.size() >= 2 &&
+                    chunk.compare(chunk.size() - 2, 2, "\r\n") == 0) {
                 if (!getChunkSize())
                     return ;
             } else {

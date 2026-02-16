@@ -7,14 +7,14 @@
 
 Request::Request(): _chunkSize(-1), _chunkState(GETTING_FIRST_SIZE), _multipartState(GETTING_FIRST_BOUNDARY), \
     _failedUpload(0), _totalUpload(0), _indexFound(false), err(false), status(0), _keepAlive(false), \
-    _reqServer(NULL), _reqLocation(NULL), _cgi(false), _return(false), chunkRemaining(false), _isChunked(false), \
-    _isMultipart(false), _multipartRemaining(false), _remainingBody(false) {}
+    _reqServer(NULL), _reqLocation(NULL), _cgi(false), _return(false), chunkRemaining(false), isChunked(false), \
+    isMultipart(false), multipartRemaining(false), remainingBody(false) {}
 
 Request::Request(std::vector<server> servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), \
     _chunkSize(-1), _chunkState(GETTING_FIRST_SIZE), _multipartState(GETTING_FIRST_BOUNDARY), \
     _failedUpload(0), _totalUpload(0), _indexFound(false), err(false), status(0), _keepAlive(false), \
-    _reqServer(NULL), _reqLocation(NULL), _cgi(false), _return(false), chunkRemaining(false), _isChunked(false), \
-    _isMultipart(false), _multipartRemaining(false), _remainingBody(false) {}
+    _reqServer(NULL), _reqLocation(NULL), _cgi(false), _return(false), chunkRemaining(false), isChunked(false), \
+    isMultipart(false), multipartRemaining(false), remainingBody(false) {}
 
 
 Request::~Request() {}
@@ -31,16 +31,16 @@ void Request::printWithoutR(const std::string& what, const std::string& line) co
 void Request::clearPreviousRequest() {
     _reqServer = NULL, _reqLocation = NULL;
 
-    _cgi = false, _return = false, _indexFound = false, _isMultipart = false, \
-    _multipartRemaining = false, _isChunked = false, _remainingBody = false, \
+    _cgi = false, _return = false, _indexFound = false, isMultipart = false, \
+    multipartRemaining = false, isChunked = false, remainingBody = false, \
     _keepAlive = false, chunkRemaining = false;
 
     _failedUpload = 0, _totalUpload = 0;
 
     htmlPage.clear(), _headersStr.clear(), _requestLine.clear(), _body.clear(), _headers.clear(), \
-    _chunk.clear(), _trailing.clear(), _scriptPath.clear(), _queryString.clear(), _postExt.clear(), \
+    chunk.clear(), _trailing.clear(), _scriptPath.clear(), _queryString.clear(), _postExt.clear(), \
     _postFilename.clear(), _getPath.clear(), _multipartBoundary.clear(), _multipartContent.clear(), \
-    _fullBody.clear(), _method.clear(), _uri.clear(), _version.clear(), _uplaodFiles.clear(), \
+    fullBody.clear(), _method.clear(), _uri.clear(), _version.clear(), _uplaodFiles.clear(), \
     _multiTemp.headers.clear(), _multiTemp.body.clear(), _multiTemp.filename.clear(), _multiTemp.name.clear();
 }
 

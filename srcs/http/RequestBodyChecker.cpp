@@ -18,7 +18,7 @@ bool Request::bodyChecker() {
 
         checkMultipart(it->second);
 
-        if (_isMultipart && !chunkRemaining) {
+        if (isMultipart && !chunkRemaining) {
 
             it = _headers.find("content-length");
 
@@ -33,8 +33,8 @@ bool Request::bodyChecker() {
             }
 
             _multipartState = GETTING_FIRST_BOUNDARY;
-            _chunk = _body;
-            _fullBody = _body;
+            chunk = _body;
+            fullBody = _body;
 
             if (!parseMultipart())
                 return false;
@@ -44,7 +44,7 @@ bool Request::bodyChecker() {
         }
     }
 
-    if (_isChunked)
+    if (isChunked)
          return true;
 
     if (!checkBodySize(_body))
@@ -65,9 +65,9 @@ bool Request::checkChunked() {
         return false;
     } else if (it != _headers.end() && it->second == "chunked") {
         Logger::debug("Body is Chunked");
-        _isChunked = true;
+        isChunked = true;
         chunkRemaining = true;
-        _chunk = _body;
+        chunk = _body;
         _body.clear();
         _chunkState = GETTING_FIRST_SIZE;
         parseChunk();
@@ -115,9 +115,9 @@ bool Request::checkBodySize(const std::string &body) {
 
         double bodySize = static_cast<double>(body.size());
 
-        if (_remainingBody == true) {
+        if (remainingBody == true) {
             if (bodySize == contentLength) {
-                _remainingBody = false;
+                remainingBody = false;
                 return true;
             } else if (bodySize > contentLength) {
                 if (!_reqLocation->root.empty()) {
@@ -130,8 +130,8 @@ bool Request::checkBodySize(const std::string &body) {
             }
         } else {
             if (bodySize < contentLength) {
-                _remainingBody = true;
-                _fullBody = _body;
+                remainingBody = true;
+                fullBody = _body;
             } else if (bodySize > contentLength) {
                 if (!_reqLocation->root.empty()) {
                     findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
@@ -141,7 +141,7 @@ bool Request::checkBodySize(const std::string &body) {
                 Logger::warn("Body size differs from Content Lentgh");
                 return false;
             } else if (bodySize == contentLength) {
-                _fullBody = _body;
+                fullBody = _body;
             }
         }
 

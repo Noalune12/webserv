@@ -146,12 +146,12 @@ class Request {
 
         // BODY
         bool chunkRemaining;
-        bool _isChunked;
-        std::string _chunk;
-        bool _isMultipart;
-        std::string _fullBody;
-        bool _multipartRemaining;
-        bool _remainingBody;
+        bool isChunked;
+        std::string chunk;
+        bool isMultipart;
+        std::string fullBody;
+        bool multipartRemaining;
+        bool remainingBody;
         
         // POST
         std::vector<FilesPost> _uplaodFiles;

@@ -46,7 +46,7 @@ void Request::checkMultipart(const std::string& content) {
         std::transform(type.begin(), type.end(), type.begin(), ::tolower);
         if (type == "multipart/form-data") {
             Logger::debug("Body: is multipart");
-            _isMultipart = true;
+            isMultipart = true;
         }
     }
 }
@@ -88,9 +88,9 @@ bool Request::isMultipartCarac(const std::string &boundary) {
 bool Request::parseMultipart() {
 
     if (_multipartState == GETTING_FIRST_BOUNDARY) {
-        size_t index = _chunk.find("--" + _multipartBoundary + "\r\n");
+        size_t index = chunk.find("--" + _multipartBoundary + "\r\n");
 
-        if (index != 0 && _chunk.size() > _multipartBoundary.size() + 4 ) {
+        if (index != 0 && chunk.size() > _multipartBoundary.size() + 4 ) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
             } else {
@@ -99,12 +99,12 @@ bool Request::parseMultipart() {
             Logger::warn("Multipart: No first boundary");
             return false;
 
-        } else if (_chunk.size() < _multipartBoundary.size() + 4) {
-            _multipartRemaining = true;
+        } else if (chunk.size() < _multipartBoundary.size() + 4) {
+            multipartRemaining = true;
             return true;
 
         } else {
-            _chunk = _chunk.substr(index + _multipartBoundary.size() + 4);
+            chunk = chunk.substr(index + _multipartBoundary.size() + 4);
             _multipartState = IS_HEADERS;
         }
     }
@@ -112,7 +112,7 @@ bool Request::parseMultipart() {
     
     while (_multipartState != IS_MULTI_END) {
 
-        if (_reqLocation->bodySize < _fullBody.size()) {
+        if (_reqLocation->bodySize < fullBody.size()) {
             if (!_reqLocation->root.empty()) {
                 findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
             } else {
@@ -132,11 +132,11 @@ bool Request::parseMultipart() {
 
             std::string interBoundary = "\r\n--" + _multipartBoundary + "\r\n";
 
-            size_t index = _chunk.find(interBoundary);
+            size_t index = chunk.find(interBoundary);
             if (index != std::string::npos) {
-                std::string b = _chunk.substr(0, index);
+                std::string b = chunk.substr(0, index);
 
-                _chunk = _chunk.substr(index + interBoundary.size());
+                chunk = chunk.substr(index + interBoundary.size());
                 _multiTemp.body = b;
                 _multipartState = IS_HEADERS;
                 _multipartContent.push_back(_multiTemp);
@@ -146,7 +146,7 @@ bool Request::parseMultipart() {
             }
 
             std::string finalBoundary = "\r\n--" + _multipartBoundary + "--";
-            size_t endIndex = _chunk.find(finalBoundary);
+            size_t endIndex = chunk.find(finalBoundary);
             if (endIndex != std::string::npos) {
                 
                 if (!checkLastBoundary(endIndex, finalBoundary))
@@ -156,7 +156,7 @@ bool Request::parseMultipart() {
                 continue ;
             }
             
-            _multipartRemaining = true;
+            multipartRemaining = true;
             return true;
         }
     }
@@ -166,22 +166,22 @@ bool Request::parseMultipart() {
 
 bool Request::handleMultipartHeader() {
     
-    size_t index = _chunk.find("\r\n");
+    size_t index = chunk.find("\r\n");
 
     if (index == std::string::npos) {
-        _multipartRemaining = true;
+        multipartRemaining = true;
         return true;
 
     } else if (index == 0) {
 
         Logger::debug("Multipart: Headers end found");
-        _chunk = _chunk.substr(index + 2);
+        chunk = chunk.substr(index + 2);
         if (!checkMultipartHeader())
             return false;
 
     } else {
-        std::string header = _chunk.substr(0, index);
-        _chunk = _chunk.substr(index + 2);
+        std::string header = chunk.substr(0, index);
+        chunk = chunk.substr(index + 2);
 
         size_t index = header.find(":");
         if (index == 0 || index == std::string::npos) {
@@ -426,12 +426,12 @@ bool Request::checkContentType(const std::string& content) {
 
 bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) {
 
-    std::string b = _chunk.substr(0, endIndex);
+    std::string b = chunk.substr(0, endIndex);
 
-    _chunk = _chunk.substr(endIndex + finalBoundary.size());
-    _chunk = trimFirstCRLF(_chunk);
+    chunk = chunk.substr(endIndex + finalBoundary.size());
+    chunk = trimFirstCRLF(chunk);
 
-    if (!_chunk.empty()) {
+    if (!chunk.empty()) {
         if (!_reqLocation->root.empty()) {
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         } else {
@@ -443,10 +443,10 @@ bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) 
 
     _multiTemp.body = b;
     _multipartState = IS_MULTI_END;
-    _multipartRemaining = false;
+    multipartRemaining = false;
     _multipartContent.push_back(_multiTemp);
 
-    if (!_isChunked) {
+    if (!isChunked) {
 
         std::map<std::string, std::string>::iterator it = _headers.find("content-length");
         if (it == _headers.end()) {
@@ -459,7 +459,7 @@ bool Request::checkLastBoundary(int endIndex, const std::string &finalBoundary) 
             return false;
         } else {
             std::stringstream ss;
-            ss << _fullBody.size();
+            ss << fullBody.size();
             std::string bodySize = ss.str();
             if (it->second != bodySize) {
                 if (!_reqLocation->root.empty()) {

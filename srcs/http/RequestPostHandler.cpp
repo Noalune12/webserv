@@ -15,7 +15,7 @@ void Request::methodPostHandler() {
 
     Logger::debug("Entering POST Handler");
 
-    if (_body.empty() && _isMultipart == false) {
+    if (_body.empty() && isMultipart == false) {
         if (!_reqLocation->root.empty())
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         else
@@ -33,7 +33,7 @@ void Request::methodPostHandler() {
         return ;
     }
 
-    if (_isMultipart == true) {
+    if (isMultipart == true) {
 
         Logger::debug("Post: is multipart");
 
@@ -73,7 +73,7 @@ void Request::methodPostHandler() {
             return ;
         } else {
 
-            if (_isMultipart == false &&  !MimeTypes::isSupportedType(it->second)) {
+            if (isMultipart == false &&  !MimeTypes::isSupportedType(it->second)) {
                 if (!_reqLocation->root.empty()) {
                     findErrorPage(415, _reqLocation->root, _reqLocation->errPage);
                 } else {
@@ -124,7 +124,7 @@ void Request::methodPostHandler() {
             return;
         }
 
-        outfile << _fullBody;
+        outfile << fullBody;
 
         outfile.close();
 
