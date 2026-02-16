@@ -226,7 +226,7 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 	client.parseRequest();
 
 	// check if need to read body (chunked request)
-	if (client._request.chunkRemaining || client._request._multipartRemaining || client._request._remainingBody) {
+	if ((client._request.chunkRemaining || client._request._multipartRemaining || client._request._remainingBody) && !client._request.err) {
 		transitionToReadingBody(client, clientFd);
 		return ;
 	}

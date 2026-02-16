@@ -116,6 +116,7 @@ class Request {
         bool hasWS(const std::string& line) const;
         bool isOnlyDigits(const std::string& line) const;
         void printWithoutR(const std::string& what, const std::string& line) const;
+        bool convertHexa(std::string& hex);
 
     public:
         Request();
