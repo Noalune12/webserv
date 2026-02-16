@@ -11,9 +11,8 @@
  * - Les directives locales surchargent les directives héritées (override)
  */
 
-# include <vector>
 # include <map>
-# include <string>
+
 # include "Tokenizer.hpp"
 
 struct globalDir {
