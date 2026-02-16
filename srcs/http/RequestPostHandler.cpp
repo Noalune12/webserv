@@ -13,8 +13,6 @@
 
 void Request::methodPostHandler() {
 
-    std::cout << fullBody << std::endl;
-
     Logger::debug("Entering POST Handler");
 
     if (fullBody.empty() && isMultipart == false) {
