@@ -13,9 +13,11 @@
 
 void Request::methodPostHandler() {
 
+    std::cout << fullBody << std::endl;
+
     Logger::debug("Entering POST Handler");
 
-    if (_body.empty() && isMultipart == false) {
+    if (fullBody.empty() && isMultipart == false) {
         if (!_reqLocation->root.empty())
             findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
         else

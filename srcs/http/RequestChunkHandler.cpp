@@ -113,6 +113,7 @@ void Request::parseChunk() {
                     Logger::debug("Chunked Body: End found");
                     _chunkState = IS_END;
                     chunkRemaining = false;
+                    fullBody = _body;
                     if (isMultipart) {
                         _multipartState = GETTING_FIRST_BOUNDARY;
                         fullBody = _body;
