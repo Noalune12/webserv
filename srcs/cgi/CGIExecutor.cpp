@@ -179,7 +179,6 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		oss << cgi.outputBuff.size();
 		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
 
-		// temporary fix
 		client._request.err = true;
 		client._request.status = 500;
 
@@ -236,10 +235,7 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 		NULL
 	};
 	execve(argv[0], argv, &env[0]);
-
-	// if execve failed
-	std::cerr << "execve failed: " << strerror(errno) << std::endl;
-	throw std::runtime_error("CGI execve failed");
+	throw std::runtime_error("CGI execve failed: " + std::string(strerror(errno)));
 }
 
 void	CGIExecutor::transitionToReadingCGI(CGIContext& cgi, Connection& client, int clientFd, EventLoop& loop) {
