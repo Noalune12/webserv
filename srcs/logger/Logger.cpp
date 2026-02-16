@@ -82,7 +82,7 @@ void	Logger::log(LogLevel level, const std::string& m) {
 	const char*	color = matchLevelToColor(level);
 	const char*	reset = _colored ? RESET : "";
 
-	std::cout << color
+	std::cerr << color
 		<< formatTimestamp() << " "
 		<< "[" << matchLevelToString(level) << "] "
 		<< m << reset << std::endl;

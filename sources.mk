@@ -59,7 +59,6 @@ override HTTPSRC	:= \
 	RequestChunkHandler \
 	RequestSemantics \
 	Response \
-	ResponseBuilder \
 	StatusCodes \
 	RequestGetHandler \
 	RequestDeleteHandler \

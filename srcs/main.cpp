@@ -75,7 +75,7 @@ int	main(int ac, char **av) {
 	}
 	catch(const std::exception& e)
 	{
-		Logger::error(std::string("server initialization failed: ") + e.what());
+		Logger::error(std::string("server error: ") + e.what());
 		return (EXIT_FAILURE);
 	}
 	return (EXIT_SUCCESS);
