@@ -396,7 +396,7 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {
-		std::cerr << "recv failed: " << strerror(errno) << std::endl; // not checking errno, only logging it for now (this check might be deleted)
+		Logger::error("recv failed");
 	}
 
 	if (bytesRead > 0) {

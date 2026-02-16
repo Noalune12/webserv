@@ -117,7 +117,7 @@ void	CGIExecutor::handleCGIWriteEvent(Connection& client, int clientFd, int pipe
 				transitionToReadingCGI(cgi, client, clientFd, loop);
 			}
 		} else if (written == -1) {
-			Logger::error("CGI stdin write error:" + std::string(strerror(errno)));
+			Logger::error("CGI stdin write error.");
 			cleanup(cgi, loop);
 			client._request.err = true;
 			client._request.status = 502;
@@ -166,7 +166,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 			return ;
 		}
 		else if (bytesRead == -1) {
-			Logger::error("CGI read error: " + std::string(strerror(errno)));
+			Logger::error("CGI read error.");
 			cleanup(cgi, loop);
 			client._request.err = true;
 			client._request.status = 502;
@@ -182,8 +182,10 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		oss << cgi.outputBuff.size();
 		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
 
-		client._request.err = true;
-		client._request.status = 500;
+		if (cgi.outputBuff.empty()) {
+			client._request.err = true;
+			client._request.status = 500;
+		}
 
 		cleanup(cgi, loop);
 		client.setState(SENDING_RESPONSE);
