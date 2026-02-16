@@ -63,7 +63,8 @@ override HTTPSRC	:= \
 	RequestGetHandler \
 	RequestDeleteHandler \
 	RequestPostHandler \
-	RequestMultipart
+	RequestMultipart \
+	RequestBodyChecker
 
 SRC += $(addprefix $(CONFIGDIR), $(addsuffix .cpp, $(CONFIGSRC)))
 
