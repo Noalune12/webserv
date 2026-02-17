@@ -95,6 +95,9 @@ void Request::findErrorPage(int code, const std::string& root, const std::map<in
     err = true;
     status = code;
 
+    if (root.empty())
+        return ;
+
     std::map<int, std::string>::const_iterator itErr = errPage.find(code);
     if (itErr == errPage.end())
         return;

@@ -316,6 +316,8 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 			response.buildFromCGI(client._cgi.outputBuff, client._request);
 			client._cgi.outputBuff.clear();
 		} else {
+			if (client._request.err && client._request._reqLocation)
+				client._request.findErrorPage(client._request.status, client._request._reqLocation->root, client._request._reqLocation->errPage);
 			response.buildFromRequest(client._request);
 		}
 
