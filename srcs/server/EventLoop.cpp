@@ -339,8 +339,12 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	client._sendOffset += bytesSent;
 
-	if (client._sendOffset < client._sendBuffer.size())
+	if (client._sendOffset < client._sendBuffer.size()) {
+		// client.setState(SENDING_RESPONSE);
+		client.startTimer(4, 5);
 		return ;
+
+	}
 
 	client.clearSendBuffer();
 
