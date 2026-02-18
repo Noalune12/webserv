@@ -33,7 +33,7 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 	envStrings.push_back(buildEnvVar("REQUEST_METHOD", client.request.method));
 	envStrings.push_back(buildEnvVar("QUERY_STRING", qstring));
 	envStrings.push_back(buildEnvVar("SCRIPT_FILENAME", client.request.scriptPath));
-	envStrings.push_back(buildEnvVar("SCRIPT_NAME", script_name));
+	envStrings.push_back(buildEnvVar("SCRIPT_NAME", client.request.uri + script_name));
 	envStrings.push_back(buildEnvVar("PATH_INFO", path_info));
 	envStrings.push_back(buildEnvVar("SERVER_PROTOCOL", std::string("HTTP/") + client.request.version));
 	envStrings.push_back(buildEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));
