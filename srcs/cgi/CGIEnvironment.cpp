@@ -6,22 +6,10 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 
 	std::vector<std::string>	envStrings;
 
-	std::string	full_path = client._request._uri;
-	size_t		queryPos = full_path.find('?');
-	if (queryPos != std::string::npos) {
-		full_path = full_path.substr(0, queryPos);
-	}
-
 	std::string	script_name = client._request._scriptPath;
 	size_t		script_query = script_name.find('?');
 	if (script_query != std::string::npos) {
 		script_name = script_name.substr(0, script_query);
-	}
-
-	std::string	path_info = "";
-	size_t		script_pos = full_path.find(script_name);
-	if (script_pos != std::string::npos && static_cast<size_t>(script_pos + script_name.length()) < full_path.length()) {
-		path_info = full_path.substr(script_pos + script_name.length());
 	}
 
 	std::string qstring = client._request._queryString;
@@ -34,7 +22,6 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 	envStrings.push_back(buildEnvVar("QUERY_STRING", qstring));
 	envStrings.push_back(buildEnvVar("SCRIPT_FILENAME", client._request._scriptPath));
 	envStrings.push_back(buildEnvVar("SCRIPT_NAME", script_name));
-	envStrings.push_back(buildEnvVar("PATH_INFO", path_info));
 	envStrings.push_back(buildEnvVar("SERVER_PROTOCOL", std::string("HTTP/") + client._request._version));
 	envStrings.push_back(buildEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));
 	envStrings.push_back(buildEnvVar("REDIRECT_STATUS", "200"));
