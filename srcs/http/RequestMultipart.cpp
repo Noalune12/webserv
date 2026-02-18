@@ -45,7 +45,6 @@ void Request::checkMultipart(const std::string& content) {
         }
         std::transform(type.begin(), type.end(), type.begin(), ::tolower);
         if (type == "multipart/form-data") {
-            Logger::debug("Body: is multipart");
             isMultipart = true;
         }
     }
@@ -163,7 +162,6 @@ bool Request::handleMultipartHeader() {
 
     } else if (index == 0) {
 
-        Logger::debug("Multipart: Headers end found");
         chunk = chunk.substr(index + 2);
         if (!checkMultipartHeader())
             return false;
@@ -291,13 +289,6 @@ bool Request::checkMultipartHeader() {
         }
 
     }
-
-    Logger::debug("Multipart Headers");
-    std::map<std::string, std::string>::iterator itmap = _multiTemp.headers.begin();
-    for (; itmap != _multiTemp.headers.end(); itmap++) {
-        std::cout << "[" << itmap->first << ", " << itmap->second << "]" << std::endl;
-    }
-    Logger::debug("Multipart: name = " + _multiTemp.name + " and filename = " + _multiTemp.filename);
 
     _multipartState = IS_BODY;
     return true;

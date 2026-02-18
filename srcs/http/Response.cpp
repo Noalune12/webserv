@@ -161,7 +161,6 @@ void	Response::setBodyFromError(int statusCode, const Request& req) {
 		if (!customPage.empty()) {
 			_body.assign(customPage.begin(), customPage.end());
 			_headers["Content-Type"] = "text/html";
-			Logger::debug("Loaded custom error page: " + customErrorPath);
 			return ;
 		}
 	}
@@ -327,8 +326,6 @@ std::string	Response::loadErrorPageFile(const std::string& uriPath, const Reques
 		fullPath = req.reqLocation->root + uriPath;
 	}
 
-	Logger::debug("Trying to load error page: " + fullPath);
-
 	std::ifstream file(fullPath.c_str(), std::ios::binary);
 	if (!file.is_open()) {
 		Logger::warn("Could not open custom error page: " + fullPath);
@@ -344,6 +341,5 @@ std::string	Response::loadErrorPageFile(const std::string& uriPath, const Reques
 		return ("");
 	}
 
-	Logger::debug("Successfully loaded custom error page: " + fullPath);
 	return (content.str());
 }

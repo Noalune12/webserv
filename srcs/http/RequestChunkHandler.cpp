@@ -22,20 +22,8 @@ bool Request::convertHexa(std::string& hex) {
     return true;
 }
 
-// static void printStr(std::string str) {
-//     size_t i = 0;
-//     for (; i != str.size(); i++) {
-//         if (str[i] == '\n')
-//             std::cout << "\\n";
-//         if (str[i] == '\r')
-//             std::cout << "\\r";
-//         else
-//             std::cout << str[i];
-//     }
-// }
 
 bool Request::getChunkSize() {
-    Logger::debug("Chunked Body: Getting Size");
     std::string hex;
     size_t index = chunk.find("\r\n");
     if (index == 0) {
@@ -50,8 +38,6 @@ bool Request::getChunkSize() {
     hex = chunk.substr(0, index);
     chunk = chunk.substr(index + 2, chunk.size());
 
-    // std::cout << "Hex = ", printStr(hex), std::cout << " \nand chunk is : ", printStr(_chunk), std::cout << std::endl;
-
     if (!convertHexa(hex)) {
         if (!reqLocation->root.empty()) {
             findErrorPage(400, reqLocation->root, reqLocation->errPage);
@@ -62,7 +48,6 @@ bool Request::getChunkSize() {
         return false;
     }
 
-    Logger::debug("Chunked body size: "), std::cout << _chunkSize << std::endl;;
     _chunkState = READING_BYTES;
     return true;
 }
@@ -92,7 +77,6 @@ void Request::parseChunk() {
         }
         if (_chunkState == READING_BYTES) {
 
-            Logger::debug("Chunked Body: Reading Bytes");
             if ((chunk.size() >= _chunkSize + 2)) {
                 _body += chunk.substr(0, _chunkSize);
                 chunk = chunk.substr(_chunkSize, chunk.size());
@@ -109,7 +93,6 @@ void Request::parseChunk() {
                 }
 
                 if (_chunkSize == 0 && chunk == "\r\n") {
-                    Logger::debug("Chunked Body: End found");
                     _chunkState = IS_END;
                     chunkRemaining = false;
                     fullBody = _body;
@@ -133,7 +116,6 @@ void Request::parseChunk() {
 
                 _chunkSize = -1;
                 _chunkState = GETTING_SIZE;
-                // std::cout << "Body is : ", printStr(body), std::cout << " \nchunk i : ", printStr(_chunk), std::cout << std::endl;
             } else {
                 return ;
             }

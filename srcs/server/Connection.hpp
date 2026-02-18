@@ -95,6 +95,7 @@ class Connection {
 		CGIContext			cgi;
 		std::vector<char>   sendBuffer;
 		size_t              sendOffset;
+		int					debug;
 };
 
 #endif

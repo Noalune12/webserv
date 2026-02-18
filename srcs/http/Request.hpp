@@ -107,7 +107,6 @@ class Request {
         bool findUploadDir();
         bool checkFilename(const std::string &filename);
         bool createFileName(const std::string &filename);
-        void printFilename() const;
         void handleMultipart();
 
         // UTILS

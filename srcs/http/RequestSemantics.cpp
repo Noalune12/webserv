@@ -168,12 +168,6 @@ bool Request::checkHeaders() {
         headers[name] = content;
     }
 
-    Logger::debug("Headers");
-    std::map<std::string, std::string>::iterator it = headers.begin();
-    for (; it != headers.end(); it++) {
-        std::cout << "[" << it->first << ", " << it->second << "]" << std::endl;
-    }
-
     return true;
 }
 

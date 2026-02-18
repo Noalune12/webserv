@@ -64,7 +64,6 @@ bool Request::checkChunked() {
         Logger::warn("Transfer Encoding not well defined");
         return false;
     } else if (it != headers.end() && it->second == "chunked") {
-        Logger::debug("Body is Chunked");
         isChunked = true;
         chunkRemaining = true;
         chunk = _body;

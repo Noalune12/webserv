@@ -42,7 +42,9 @@ void	ServerManager::setupListenSockets(void) {
 
 		int sockFd = createListenSocket(ep.addr, ep.port);
 		if (sockFd < 0) {
-			std::cerr << RED << "Failed to create socket for " << ep.addr << ":" << ep.port << RESET << std::endl;
+			std::ostringstream oss;
+			oss << "failed to create socket for " << ep.addr << ":" << ep.port << std::endl;
+			Logger::error(oss.str());
 			continue ;
 		}
 
@@ -60,18 +62,15 @@ void	ServerManager::setupListenSockets(void) {
 	}
 
 	if (!oneSuccess) {
-		std::cerr << RED << "Not a single socket has been created." << RESET << std::endl;
+		Logger::error("not a single socket has been created.");
 		return ;
 	}
-	// prettier debug
-	// printEndpoints(); // call to Logger in the loop above is enough
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
 
 	int	socketFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketFd < 0) {
-		// throw error instead ?
 		Logger::error("socket() failed: " + std::string(std::strerror(errno)));
 		return (-1);
 	}
@@ -90,14 +89,14 @@ int	ServerManager::createListenSocket(const std::string& address, int port) {
 	addr.sin_addr.s_addr = ipv4_str_to_int(address);
 
 	if (bind(socketFd, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
-		std::cerr << "bind() failed: " << strerror(errno) << std::endl;
+		Logger::error("bind() failed: " + std::string(std::strerror(errno)));
 		close(socketFd);
 		return (-1);
 	}
 
 	// found 512 in /proc/sys/net/ipv4/tcp_max_syn_backlog
 	if (listen(socketFd, 512) == -1) {
-		std::cerr << "listen() failed: " << strerror(errno) << std::endl;
+		Logger::error("listen() failed: " + std::string(std::strerror(errno)));
 		close(socketFd);
 		return (-1);
 	}
@@ -148,12 +147,12 @@ bool	ServerManager::configureSocket(int socketFd) {
 	// allow address reuse (avoid "Address already in use" when restarting server/while developping)
 	int optval = 1;
 	if (setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-		std::cerr << "setsockopt(SO_REUSEADDR) failed: " << strerror(errno) << std::endl;
+		Logger::error("setsockopt(SO_REUSEADDR) failed: " + std::string(std::strerror(errno)));
 		return (false);
 	}
 
 	if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0) {
-		std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed: " << strerror(errno) << std::endl;
+		Logger::error("fcntl(F_SETFL, O_NONBLOCK) failed: " + std::string(std::strerror(errno)));
 		return (false);
 	}
 
