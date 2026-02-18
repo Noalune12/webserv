@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/epoll.h>
 #include <sys/wait.h>
+# include <iostream>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
@@ -223,13 +224,13 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 	}
 
 	// check if CGI
-	if (client._request._cgi && !client._request.err) {
+	if (client._request.isCgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 		return ;
 	}
 
 	// Normal request
-	if (!client._request.err && !client._request._cgi && !client._request._return) {
+	if (!client._request.err && !client._request.isCgi && !client._request.returnDirective) {
 		client._request.methodHandler();
 	}
 
@@ -257,12 +258,12 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	else if (client._request.remainingBody)
 		client._request.checkBodySize(client._request.fullBody);
 
-	if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return \
+	if (!client._request.chunkRemaining && !client._request.err && !client._request.isCgi && !client._request.returnDirective \
 		&& !client._request.multipartRemaining && !client._request.remainingBody) {
 		client._request.methodHandler();
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
-	} else if (client._request._cgi && !client._request.err) {
+	} else if (client._request.isCgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 	}
 	else if ((!client._request.chunkRemaining && !client._request.multipartRemaining && !client._request.remainingBody) || client._request.err) {
@@ -315,13 +316,17 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 			response.buildFromCGI(client._cgi.outputBuff, client._request);
 			client._cgi.outputBuff.clear();
 		} else {
+			if (client._request.err && client._request.reqLocation) {
+				std::string	root = client._request.reqLocation->root.empty() ? client._request.reqLocation->alias : client._request.reqLocation->root;
+				client._request.findErrorPage(client._request.status, root, client._request.reqLocation->errPage);
+			}
 			response.buildFromRequest(client._request);
 		}
 
 		client._sendBuffer = response.prepareRawData();
 		client._sendOffset = 0;
 
-		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response.getStatusCode(), response.getBodySize());
+		Logger::accessLog(client.getIP(), client._request.method, client._request.uri, client._request.version, response.getStatusCode(), response.getBodySize());
 	}
 
 	size_t	remaining = client._sendBuffer.size() - client._sendOffset;
@@ -336,12 +341,15 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	client._sendOffset += bytesSent;
 
-	if (client._sendOffset < client._sendBuffer.size())
+	if (client._sendOffset < client._sendBuffer.size()) {
+		client.startTimer(4, 5);
 		return ;
+
+	}
 
 	client.clearSendBuffer();
 
-	if (!client._request._keepAlive) {
+	if (!client._request.keepAlive) {
 		closeConnection(clientFd);
 	} else {
 		transitionToIDLE(client, clientFd);
@@ -395,7 +403,7 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {
-		std::cerr << "recv failed: " << strerror(errno) << std::endl; // not checking errno, only logging it for now (this check might be deleted)
+		Logger::error("recv failed");
 	}
 
 	if (bytesRead > 0) {

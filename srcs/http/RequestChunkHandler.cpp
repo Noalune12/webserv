@@ -40,10 +40,10 @@ bool Request::getChunkSize() {
     std::string hex;
     size_t index = chunk.find("\r\n");
     if (index == 0) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(400, reqLocation->root, reqLocation->errPage);
         } else {
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(400, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Chunked Body: not well formatted");
         return false;
@@ -54,10 +54,10 @@ bool Request::getChunkSize() {
     // std::cout << "Hex = ", printStr(hex), std::cout << " \nand chunk is : ", printStr(_chunk), std::cout << std::endl;
 
     if (!convertHexa(hex)) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(400, reqLocation->root, reqLocation->errPage);
         } else {
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(400, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Chunked Body: hexa conversion failed");
         return false;
@@ -82,11 +82,11 @@ void Request::parseChunk() {
 
 
     while (_chunkState != IS_END) {
-        if (_reqLocation->bodySize < _body.size()) {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
+        if (reqLocation->bodySize < _body.size()) {
+            if (!reqLocation->root.empty()) {
+                findErrorPage(413, reqLocation->root, reqLocation->errPage);
             } else {
-                findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(413, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Chunked Body: Body size higher than client max body size");
             return ;   
@@ -101,10 +101,10 @@ void Request::parseChunk() {
                 size_t index = chunk.find("\r\n");
 
                 if (index != 0) {
-                    if (!_reqLocation->root.empty())
-                        findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty())
+                        findErrorPage(400, reqLocation->root, reqLocation->errPage);
                     else
-                        findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(400, reqLocation->alias, reqLocation->errPage);
                     Logger::warn("Chunked Body: not well formatted - missing CRLF");
                     return ;
                 }
@@ -123,10 +123,10 @@ void Request::parseChunk() {
                     return ;
 
                 } else if (_chunkSize == 0) {
-                    if (!_reqLocation->root.empty())
-                        findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty())
+                        findErrorPage(400, reqLocation->root, reqLocation->errPage);
                     else
-                        findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(400, reqLocation->alias, reqLocation->errPage);
                     Logger::warn("Chunked Body: end not well formatted");
                     return ;
                 }
@@ -134,7 +134,7 @@ void Request::parseChunk() {
 
                 _chunkSize = -1;
                 _chunkState = GETTING_SIZE;
-                // std::cout << "Body is : ", printStr(_body), std::cout << " \nchunk i : ", printStr(_chunk), std::cout << std::endl; 
+                // std::cout << "Body is : ", printStr(body), std::cout << " \nchunk i : ", printStr(_chunk), std::cout << std::endl; 
             } else {
                 return ;
             }

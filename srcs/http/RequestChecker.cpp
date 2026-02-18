@@ -27,46 +27,46 @@ void Request::findServer() {
         std::vector<std::string>::iterator itServerName = candidateServer.serverName.begin();
         for (; itServerName != candidateServer.serverName.end(); itServerName++) {
             if (*itServerName == _serverName) {
-                _reqServer = &_servers[serverIndex];
+                reqServer = &_servers[serverIndex];
                 break;
             }
         }
-        if (_reqServer != NULL)
+        if (reqServer != NULL)
             break;
     }
 
-    if (_reqServer == NULL && possibleServerIndices.size() > 0) { 
+    if (reqServer == NULL && possibleServerIndices.size() > 0) { 
         size_t serverIndex = possibleServerIndices[0];
-        _reqServer = &_servers[serverIndex];
+        reqServer = &_servers[serverIndex];
     }
 }
 
 
 void Request::findLocation() {
-    size_t  query_pos = _uri.find('?');
+    size_t  query_pos = uri.find('?');
     if (query_pos != std::string::npos) {
-        _queryString = _uri.substr(query_pos + 1);
-        _uri = _uri.substr(0, query_pos);
+        queryString = uri.substr(query_pos + 1);
+        uri = uri.substr(0, query_pos);
     }
 
-    while (!_uri.empty()) {
-        std::vector<location>::iterator itLocation = _reqServer->loc.begin();
-        for (; itLocation != _reqServer->loc.end(); itLocation++) {
-            if (_uri == itLocation->path || _uri + "/" == itLocation->path || _uri == itLocation->path + "/") {
-                _reqLocation = &(*itLocation);
+    while (!uri.empty()) {
+        std::vector<location>::iterator itLocation = reqServer->loc.begin();
+        for (; itLocation != reqServer->loc.end(); itLocation++) {
+            if (uri == itLocation->path || uri + "/" == itLocation->path || uri == itLocation->path + "/") {
+                reqLocation = &(*itLocation);
                 return ;
             }
         }
-        if (_uri == "/")
+        if (uri == "/")
             break;
-        size_t index = _uri.rfind('/');
-        if (index == _uri.size() - 1) {
-            _uri = _uri.substr(0, index);
-            _trailing = "/" + _trailing;
-            index = _uri.rfind('/');
+        size_t index = uri.rfind('/');
+        if (index == uri.size() - 1) {
+            uri = uri.substr(0, index);
+            trailing = "/" + trailing;
+            index = uri.rfind('/');
         }
-        _trailing = _uri.substr(index + 1, _uri.size()) + _trailing;
-        _uri = _uri.substr(0, index + 1);
+        trailing = uri.substr(index + 1, uri.size()) + trailing;
+        uri = uri.substr(0, index + 1);
     }
 }
 
@@ -74,8 +74,8 @@ void Request::findLocation() {
 
 bool Request::hostChecker() {
     // Host check
-	std::map<std::string, std::string>::iterator it = _headers.find("host");
-	if (it == _headers.end()) {
+	std::map<std::string, std::string>::iterator it = headers.find("host");
+	if (it == headers.end()) {
 		findErrorPage(400, "/", _globalDir.errPage);
 	    Logger::warn("Headers: missing Host");
 		return false;
@@ -116,15 +116,15 @@ bool Request::hostChecker() {
 	}
 
     findServer();
-	if (_reqServer == NULL) {
+	if (reqServer == NULL) {
 		findErrorPage(400, "/", _globalDir.errPage);
         Logger::warn("Headers: no compatible server found");
 		return false;
 	}
 
     findLocation();
-	if (_reqLocation == NULL) {
-        findErrorPage(404, _reqServer->root, _reqServer->errPage);
+	if (reqLocation == NULL) {
+        findErrorPage(404, reqServer->root, reqServer->errPage);
 	    Logger::warn("Headers: no location found");
 		return false;
 	}
@@ -134,11 +134,11 @@ bool Request::hostChecker() {
 
 void Request::checkRequestContent() {
 
-    std::map<std::string, std::string>::iterator it = _headers.find("connection");
-    if (it == _headers.end() || it->second == "close")
-        _keepAlive = false;
+    std::map<std::string, std::string>::iterator it = headers.find("connection");
+    if (it == headers.end() || it->second == "close")
+        keepAlive = false;
     else if (it->second == "keep-alive")
-        _keepAlive = true;
+        keepAlive = true;
     else {
         findErrorPage(400, "/", _globalDir.errPage);
         Logger::warn("Headers: Connection not well defined");
@@ -150,16 +150,16 @@ void Request::checkRequestContent() {
     }
 
 	// method check
-	if ((_method == "GET" && _reqLocation->methods.get == false)
-			|| (_method == "POST" && _reqLocation->methods.post == false)
-            || (_method == "DELETE" && _reqLocation->methods.del == false)
-            || _method == "HEAD" || _method == "OPTIONS"
-            || _method == "TRACE" || _method == "PUT"
-            || _method == "PATCH" || _method == "CONNECT") {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(405, _reqLocation->root, _reqLocation->errPage);
+	if ((method == "GET" && reqLocation->methods.get == false)
+			|| (method == "POST" && reqLocation->methods.post == false)
+            || (method == "DELETE" && reqLocation->methods.del == false)
+            || method == "HEAD" || method == "OPTIONS"
+            || method == "TRACE" || method == "PUT"
+            || method == "PATCH" || method == "CONNECT") {
+        if (!reqLocation->root.empty()) {
+            findErrorPage(405, reqLocation->root, reqLocation->errPage);
         } else {
-            findErrorPage(405, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(405, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Headers: Method is not supported");
 		return ;
@@ -167,33 +167,33 @@ void Request::checkRequestContent() {
 
     bodyChecker();
 
-    if (!_reqLocation->returnPath.empty()) {
-        if (!_trailing.empty())
+    if (!reqLocation->returnPath.empty()) {
+        if (!trailing.empty())
             return;
-        status = _reqLocation->returnStatus;
-        _returnPath = _reqLocation->returnPath;
-        _return = true;
+        status = reqLocation->returnStatus;
+        returnPath = reqLocation->returnPath;
+        returnDirective = true;
     }
 
-    if (!_reqLocation->cgiExt.empty() && !_reqLocation->cgiPath.empty()) {
-        if (_trailing.empty())
+    if (!reqLocation->cgiExt.empty() && !reqLocation->cgiPath.empty()) {
+        if (trailing.empty())
             return;
-        if (!_reqLocation->root.empty())
-            _scriptPath = getPath(_reqLocation->root + _uri, _trailing);
+        if (!reqLocation->root.empty())
+            scriptPath = getPath(reqLocation->root + uri, trailing);
         else
-            _scriptPath = getPath(_reqLocation->alias, _trailing);
+            scriptPath = getPath(reqLocation->alias, trailing);
         struct stat buf;
 
-        if (stat(_scriptPath.c_str(), &buf) == 0) {
+        if (stat(scriptPath.c_str(), &buf) == 0) {
             Logger::debug("CGI: File Found");
-            _cgi = true;
+            isCgi = true;
         }
         else {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(404, reqLocation->root, reqLocation->errPage);
             }
             else {
-                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(404, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("CGI: path not found");
         }

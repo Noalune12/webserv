@@ -1,10 +1,8 @@
-#include "Context.hpp"
-
-#include <string>
 #include <iostream>
 #include <sstream>
 
 #include "colors.hpp"
+#include "Context.hpp"
 #include "Utils.hpp"
 
 Context::Context(std::string name, std::string context): _name(name), _bindingsInfo(), _isIgnored(false) {
@@ -169,22 +167,4 @@ void	Context::addServerName(const std::string& name, const std::string& filePath
 		return ;
 	}
 	_bindingsInfo.serverNames.push_back(name);
-}
-
-/* utils */
-void    Context::printBinding(void) const {
-
-    std::cout << "Listen pairs:" << std::endl;
-    for (size_t i = 0; i < _bindingsInfo.listenPairs.size(); ++i) {
-        std::cout << "  " << _bindingsInfo.listenPairs[i].first << ":" << _bindingsInfo.listenPairs[i].second << std::endl;
-    }
-
-    std::cout << "Server names:" << std::endl;
-    if (_bindingsInfo.serverNames.empty()) {
-        std::cout << "  (none yet)" << std::endl;
-    } else {
-        for (size_t i = 0; i < _bindingsInfo.serverNames.size(); ++i) {
-            std::cout << "  \"" << _bindingsInfo.serverNames[i] << "\"" << std::endl;
-        }
-    }
 }

@@ -16,10 +16,10 @@ void Request::checkRequestSem(std::string request) {
         return ;
     }
 
-    std::string method, uri, http;
+    std::string methodTemp, uriTemp, http;
 
-    if (!extractRequestInfo() || !extractRequestLineInfo(method, uri, http)
-            || !checkRequestLine(method, uri, http) || !checkHeaders())
+    if (!extractRequestInfo() || !extractRequestLineInfo(methodTemp, uriTemp, http)
+            || !checkRequestLine(methodTemp, uriTemp, http) || !checkHeaders())
         return ;
 
     status = 200;
@@ -58,7 +58,7 @@ bool Request::extractRequestInfo() {
 }
 
 
- bool Request::extractRequestLineInfo(std::string& method, std::string& uri, std::string& http) {
+ bool Request::extractRequestLineInfo(std::string& methodTemo, std::string& uriTemp, std::string& http) {
 
     // method
 
@@ -69,7 +69,7 @@ bool Request::extractRequestInfo() {
         return false;
     }
 
-    method = _requestLine.substr(0, index);
+    methodTemo = _requestLine.substr(0, index);
     std::string remain = _requestLine.substr(index + 1, _requestLine.length());
 
     // uri
@@ -81,7 +81,7 @@ bool Request::extractRequestInfo() {
         return false;
     }
 
-    uri = remain.substr(0, index);
+    uriTemp = remain.substr(0, index);
     remain = remain.substr(index + 1, remain.length());
 
     //http
@@ -136,12 +136,12 @@ bool Request::checkHeaders() {
         if (name != "user-agent" && name != "content-type")
             std::transform(content.begin(), content.end(), content.begin(), ::tolower);
 
-        if ((name == "host" && _headers.find("host") != _headers.end())
-                || (name == "user-agent" && _headers.find("user-agent") != _headers.end())
-                || (name == "content-length" && _headers.find("content-length") != _headers.end())
-                || (name == "transfer-encoding" && _headers.find("transfer-encoding") != _headers.end())
-                || (name == "content-type" && _headers.find("content-type") != _headers.end())
-                || (name == "connection" && _headers.find("connection") != _headers.end())) {
+        if ((name == "host" && headers.find("host") != headers.end())
+                || (name == "user-agent" && headers.find("user-agent") != headers.end())
+                || (name == "content-length" && headers.find("content-length") != headers.end())
+                || (name == "transfer-encoding" && headers.find("transfer-encoding") != headers.end())
+                || (name == "content-type" && headers.find("content-type") != headers.end())
+                || (name == "connection" && headers.find("connection") != headers.end())) {
             findErrorPage(400, "/", _globalDir.errPage);
             Logger::warn("Headers " + name + " is duplicated");
             return false;
@@ -165,12 +165,12 @@ bool Request::checkHeaders() {
             Logger::warn("Headers: Content Length is not well formatted");
             return false;
         }
-        _headers[name] = content;
+        headers[name] = content;
     }
 
     Logger::debug("Headers");
-    std::map<std::string, std::string>::iterator it = _headers.begin();
-    for (; it != _headers.end(); it++) {
+    std::map<std::string, std::string>::iterator it = headers.begin();
+    for (; it != headers.end(); it++) {
         std::cout << "[" << it->first << ", " << it->second << "]" << std::endl;
     }
 
@@ -185,16 +185,16 @@ static bool isValidHTTPVersion(const std::string& version) {
     return (std::isdigit(version[0]) && version[1] == '.' && std::isdigit(version[2]));
 }
 
-bool Request::checkRequestLine(const std::string& method, const std::string& uri, const std::string& http) {
-    if (method != "GET" && method != "POST" && method != "DELETE"
-            && method != "HEAD" && method != "OPTIONS"
-            && method != "TRACE" && method != "PUT"
-            && method != "PATCH" && method != "CONNECT") {
+bool Request::checkRequestLine(const std::string& methodTemp, const std::string& uriTemp, const std::string& http) {
+    if (methodTemp != "GET" && methodTemp != "POST" && methodTemp != "DELETE"
+            && methodTemp != "HEAD" && methodTemp != "OPTIONS"
+            && methodTemp != "TRACE" && methodTemp != "PUT"
+            && methodTemp != "PATCH" && methodTemp != "CONNECT") {
         findErrorPage(400, "/", _globalDir.errPage);
         Logger::warn("Request Line: Method is wrong");
         return false;
     }
-    if (uri[0] != '/') {
+    if (uriTemp[0] != '/') {
         findErrorPage(400, "/", _globalDir.errPage);
         Logger::warn("Request Line: Uri is wrong");
         return false;
@@ -206,19 +206,19 @@ bool Request::checkRequestLine(const std::string& method, const std::string& uri
         return false;
     }
 
-    std::string version = http.substr(5);
-    if (!isValidHTTPVersion(version)) {
+    std::string versionTemp = http.substr(5);
+    if (!isValidHTTPVersion(versionTemp)) {
         findErrorPage(400, "/", _globalDir.errPage);
         Logger::warn("Request Line: HTTP has wring syntaxe");
         return false;
     }
-    if (version != "1.1" && version != "1.0") {
+    if (versionTemp != "1.1" && versionTemp != "1.0") {
         findErrorPage(505, "/", _globalDir.errPage);
         Logger::warn("Request Line: wring HTTP version");
         return false;
     }
-    _method = method;
-    _uri = uri;
-    _version = version;
+    method = methodTemp;
+    uri = uriTemp;
+    version = versionTemp;
     return true;
 }
