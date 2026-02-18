@@ -1,13 +1,3 @@
-# TODO (ordered ?)
-
-- [ ] github action implementing siege
-- [ ] detailler choix pour chaque directive
-
-
-
-
-
-
 # Configuration file directives
 
 ### error_page:

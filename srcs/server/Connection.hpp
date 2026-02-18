@@ -11,7 +11,7 @@ enum ConnectionState {
 	READING_BODY,
 	CGI_WRITING_BODY,
 	CGI_RUNNING,
-	SENDING_RESPONSE,
+	SENDING_RESPONSE
 };
 
 struct CGIContext {
