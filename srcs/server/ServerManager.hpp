@@ -26,17 +26,16 @@ class ServerManager
 		std::map<int, size_t>		_socketToEndpoint;
 
 		void	closeSockets(void);
-
-	public:
-		ServerManager(std::vector<server>& servers, globalDir globalDir);
-		~ServerManager();
-
-		// reminder: move to private what can be
-		void	setupListenSockets(void);
 		void	groupServersByEndPoint(void);
 
 		int		createListenSocket(const std::string& address, int port);
 		bool	configureSocket(int socketFd);
+	public:
+		ServerManager(std::vector<server>& servers, globalDir globalDir);
+		~ServerManager();
+
+		void	setupListenSockets(void);
+
 		bool	isListenSocket(int fd) const;
 
 		/* debug */
