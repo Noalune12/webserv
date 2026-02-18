@@ -49,9 +49,6 @@ bool	EventLoop::init(void) {
 		}
 	}
 	_running = true;
-	std::ostringstream oss;
-	oss << "eventLoop initialized with " << listenFds.size() << " listen socket(s)";
-	Logger::debug(oss.str());
 	return (true);
 }
 
@@ -240,7 +237,10 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev) {
 
 	if (ev & EPOLLIN) {
-		Logger::debug("READING_BODY state");
+		if (client.debug == 0) {
+			Logger::debug("READING_BODY state");
+			client.debug++;
+		}
 		size_t	bytesRead = readFromClient(clientFd, client);
 		if (bytesRead == 0) {
 			closeConnection(clientFd);

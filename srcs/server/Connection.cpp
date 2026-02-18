@@ -3,13 +3,13 @@
 
 #include "Connection.hpp"
 
-Connection::Connection() : _ip(), _state(IDLE), _buffer(), _serverIP(), _serverPort(0), request(), cgi(), sendBuffer(), sendOffset(0)  {
+Connection::Connection() : _ip(), _state(IDLE), _buffer(), _serverIP(), _serverPort(0), request(), cgi(), sendBuffer(), sendOffset(0), debug(0)  {
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _state(IDLE), _buffer(), _chunkBuffer(), _servers(servers), request(servers, globalDir), cgi(), sendBuffer(), sendOffset(0) {
+Connection::Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _state(IDLE), _buffer(), _chunkBuffer(), _servers(servers), request(servers, globalDir), cgi(), sendBuffer(), sendOffset(0), debug(0) {
 
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
@@ -119,6 +119,7 @@ void	Connection::clearBuffer() {
 void	Connection::clearSendBuffer() {
     sendBuffer.clear();
     sendOffset = 0;
+	debug = 0;
 }
 
 
