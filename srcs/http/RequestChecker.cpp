@@ -35,7 +35,7 @@ void Request::findServer() {
             break;
     }
 
-    if (reqServer == NULL && possibleServerIndices.size() > 0) { 
+    if (reqServer == NULL && possibleServerIndices.size() > 0) {
         size_t serverIndex = possibleServerIndices[0];
         reqServer = &_servers[serverIndex];
     }
@@ -69,8 +69,6 @@ void Request::findLocation() {
         uri = uri.substr(0, index + 1);
     }
 }
-
-#include <limits.h>
 
 bool Request::hostChecker() {
     // Host check
@@ -200,5 +198,3 @@ void Request::checkRequestContent() {
     }
 
 }
-
-

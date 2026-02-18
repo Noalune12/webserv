@@ -23,7 +23,6 @@ class ServerManager
 		globalDir 					_globalDir;
 		std::vector<ListenEndPoint>	_endpoints;
 
-		// might want to use that for quick search of socketFd to endpoints indexes
 		std::map<int, size_t>		_socketToEndpoint;
 
 		void	closeSockets(void);
@@ -43,10 +42,9 @@ class ServerManager
 		/* debug */
 		void	printEndpoints(void);
 
-		/* getters (to be completed if needed) */
 		std::vector<int>	getListenSocketFds(void);
 		std::vector<server>	getServers(void);
-		globalDir getGlobalDir(void);
+		globalDir 			getGlobalDir(void);
 };
 
 #endif

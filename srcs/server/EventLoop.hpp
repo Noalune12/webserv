@@ -20,7 +20,7 @@ class EventLoop {
 		std::map<int, Connection>   _connections;	// client socket fd, Connection object
 		std::map<int, int>          _pipeToClient;	// pipeFd, clientFd
 
-		CGIExecutor     _cgiExecutor;
+		CGIExecutor     cgiExecutor;
 
 		void	acceptConnection(int listenFd);
 		void	closeConnection(int clientFd);
@@ -61,8 +61,6 @@ class EventLoop {
 		bool	addToEpoll(int fd, uint32_t events);
 		bool	modifyEpoll(int fd, uint32_t events);
 		bool	removeFromEpoll(int fd);
-
-
 
 		bool				isRunning(void) const;
 		std::vector<int>	getAllClientFds(void) const;

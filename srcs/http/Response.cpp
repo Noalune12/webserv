@@ -223,7 +223,7 @@ void	Response::parseCGIBody(const std::string& cgiOutput) {
 	if (headerEnd == std::string::npos) {
 		bodySection = cgiOutput;
 	} else {
-		size_t bodyStart = (cgiOutput[headerEnd] == '\r') ? 4 : 2; // 4 = CRLF ("\r\n\r\n") and 2 = LF ("\n\n")
+		size_t bodyStart = (cgiOutput[headerEnd] == '\r') ? 4 : 2;
 		bodySection = cgiOutput.substr(headerEnd + bodyStart);
 	}
 

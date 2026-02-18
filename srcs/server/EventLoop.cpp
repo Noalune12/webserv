@@ -1,25 +1,25 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <iostream>
 #include <netinet/in.h>
 #include <sstream>
 #include <sys/epoll.h>
 #include <sys/wait.h>
-# include <iostream>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
 
-EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), _cgiExecutor() {}
+EventLoop::EventLoop(ServerManager& serverManager) : _epollFd(-1), _running(false), _serverManager(serverManager), _connections(), _pipeToClient(), cgiExecutor() {}
 
 EventLoop::~EventLoop() {
 
 	std::map<int, Connection>::iterator it;
 	for (it = _connections.begin(); it != _connections.end(); ++it) {
 		Connection& client = it->second;
-		if (client._cgi.isActive()) {
-			_cgiExecutor.cleanup(client._cgi, *this);
+		if (client.cgi.isActive()) {
+			cgiExecutor.cleanup(client.cgi, *this);
 		}
 		close(it->first);
 	}
@@ -117,7 +117,7 @@ void	EventLoop::acceptConnection(int listenFd) {
 	newClient.setState(IDLE);
 	newClient.startTimer(IDLE, CLIENT_TIMEOUT);
 
-	if (!addToEpoll(clientFd, EPOLLIN)) { // no EPOLLOUT here to avoid triggering epoll_wait once for each socket after creation
+	if (!addToEpoll(clientFd, EPOLLIN)) { // /!\ no EPOLLOUT here to avoid triggering epoll_wait once for each socket after creation
 		close(clientFd);
 		return ;
 	}
@@ -183,9 +183,9 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 
 	Connection& client = clientIt->second;
 	if (client.getState() == CGI_WRITING_BODY) {
-		_cgiExecutor.handleCGIWriteEvent(client, clientFd, pipeFd, ev, *this);
+		cgiExecutor.handleCGIWriteEvent(client, clientFd, pipeFd, ev, *this);
 	} else {
-		_cgiExecutor.handlePipeEvent(client, clientFd, pipeFd, ev, *this);
+		cgiExecutor.handlePipeEvent(client, clientFd, pipeFd, ev, *this);
 	}
 }
 
@@ -212,26 +212,26 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 		return ;
 	}
 
-	if (!client._request.isCRLF(client.getBuffer()))
+	if (!client.request.isCRLF(client.getBuffer()))
 		return;
 
 	client.parseRequest();
 
 	// check if need to read body (chunked request)
-	if ((client._request.chunkRemaining || client._request.multipartRemaining || client._request.remainingBody) && !client._request.err) {
+	if ((client.request.chunkRemaining || client.request.multipartRemaining || client.request.remainingBody) && !client.request.err) {
 		transitionToReadingBody(client, clientFd);
 		return ;
 	}
 
 	// check if CGI
-	if (client._request.isCgi && !client._request.err) {
+	if (client.request.isCgi && !client.request.err) {
 		transitionToCGI(client, clientFd);
 		return ;
 	}
 
 	// Normal request
-	if (!client._request.err && !client._request.isCgi && !client._request.returnDirective) {
-		client._request.methodHandler();
+	if (!client.request.err && !client.request.isCgi && !client.request.returnDirective) {
+		client.request.methodHandler();
 	}
 
 	transitionToSendingResponse(client, clientFd);
@@ -246,27 +246,27 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 			closeConnection(clientFd);
 			return ;
 		}
-		client._request.chunk += client.getChunkBuffer();
-		client._request.fullBody += client.getChunkBuffer();
+		client.request.chunk += client.getChunkBuffer();
+		client.request.fullBody += client.getChunkBuffer();
 		client.clearChunkBuffer();
-		client.startTimer(2, CLIENT_TIMEOUT - 2);
+		client.startTimer(2, DATA_MANAGEMENT_TIMEOUT);
 	}
-	if (client._request.isChunked)
-		client._request.parseChunk();
-	else if (client._request.isMultipart)
-		client._request.parseMultipart();
-	else if (client._request.remainingBody)
-		client._request.checkBodySize(client._request.fullBody);
+	if (client.request.isChunked)
+		client.request.parseChunk();
+	else if (client.request.isMultipart)
+		client.request.parseMultipart();
+	else if (client.request.remainingBody)
+		client.request.checkBodySize(client.request.fullBody);
 
-	if (!client._request.chunkRemaining && !client._request.err && !client._request.isCgi && !client._request.returnDirective \
-		&& !client._request.multipartRemaining && !client._request.remainingBody) {
-		client._request.methodHandler();
+	if (!client.request.chunkRemaining && !client.request.err && !client.request.isCgi && !client.request.returnDirective \
+		&& !client.request.multipartRemaining && !client.request.remainingBody) {
+		client.request.methodHandler();
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
-	} else if (client._request.isCgi && !client._request.err) {
+	} else if (client.request.isCgi && !client.request.err) {
 		transitionToCGI(client, clientFd);
 	}
-	else if ((!client._request.chunkRemaining && !client._request.multipartRemaining && !client._request.remainingBody) || client._request.err) {
+	else if ((!client.request.chunkRemaining && !client.request.multipartRemaining && !client.request.remainingBody) || client.request.err) {
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
 	}
@@ -274,24 +274,24 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 
 void	EventLoop::handleCGIClientEvent(Connection& client, int clientFd, uint32_t ev) {
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-		if (client._cgi.pid > 0) {
-			kill(client._cgi.pid, SIGKILL);
+		if (client.cgi.pid > 0) {
+			kill(client.cgi.pid, SIGKILL);
 		}
 		Logger::debug("Client disconnection while CGI running");
-		_cgiExecutor.cleanup(client._cgi, *this);
+		cgiExecutor.cleanup(client.cgi, *this);
 		closeConnection(clientFd);
 		return ;
 	}
 
 	if (ev & EPOLLIN) {
 		char	buf[1];
-		ssize_t	n = recv(clientFd, buf, 1, MSG_PEEK | MSG_DONTWAIT); //
+		ssize_t	n = recv(clientFd, buf, 1, MSG_PEEK | MSG_DONTWAIT); // check deeper
 		if (n == 0) {
 			// EOF — client closed the connection
 			Logger::debug("Client closed connection while CGI running");
-			if (client._cgi.pid > 0)
-				kill(client._cgi.pid, SIGKILL);
-			_cgiExecutor.cleanup(client._cgi, *this);
+			if (client.cgi.pid > 0)
+				kill(client.cgi.pid, SIGKILL);
+			cgiExecutor.cleanup(client.cgi, *this);
 			closeConnection(clientFd);
 			return ;
 		}
@@ -305,32 +305,32 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		return ;
 	}
 
-	if (client._sendBuffer.empty()) {
+	if (client.sendBuffer.empty()) {
 
 		Response response;
 
-		response.debugPrintRequestData(client._request);
+		response.debugPrintRequestData(client.request);
 
-		if (!client._cgi.outputBuff.empty()) {
+		if (!client.cgi.outputBuff.empty()) {
 			Logger::debug("Building CGI response");
-			response.buildFromCGI(client._cgi.outputBuff, client._request);
-			client._cgi.outputBuff.clear();
+			response.buildFromCGI(client.cgi.outputBuff, client.request);
+			client.cgi.outputBuff.clear();
 		} else {
-			if (client._request.err && client._request.reqLocation) {
-				std::string	root = client._request.reqLocation->root.empty() ? client._request.reqLocation->alias : client._request.reqLocation->root;
-				client._request.findErrorPage(client._request.status, root, client._request.reqLocation->errPage);
+			if (client.request.err && client.request.reqLocation) {
+				std::string	root = client.request.reqLocation->root.empty() ? client.request.reqLocation->alias : client.request.reqLocation->root;
+				client.request.findErrorPage(client.request.status, root, client.request.reqLocation->errPage);
 			}
-			response.buildFromRequest(client._request);
+			response.buildFromRequest(client.request);
 		}
 
-		client._sendBuffer = response.prepareRawData();
-		client._sendOffset = 0;
+		client.sendBuffer = response.prepareRawData();
+		client.sendOffset = 0;
 
-		Logger::accessLog(client.getIP(), client._request.method, client._request.uri, client._request.version, response.getStatusCode(), response.getBodySize());
+		Logger::accessLog(client.getIP(), client.request.method, client.request.uri, client.request.version, response.getStatusCode(), response.getBodySize());
 	}
 
-	size_t	remaining = client._sendBuffer.size() - client._sendOffset;
-	ssize_t	bytesSent = ::send(clientFd, &client._sendBuffer[client._sendOffset], remaining, MSG_NOSIGNAL);
+	size_t	remaining = client.sendBuffer.size() - client.sendOffset;
+	ssize_t	bytesSent = ::send(clientFd, &client.sendBuffer[client.sendOffset], remaining, MSG_NOSIGNAL);
 
 	if (bytesSent < 0) {
 		Logger::error("Failed to send response");
@@ -339,9 +339,9 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		return ;
 	}
 
-	client._sendOffset += bytesSent;
+	client.sendOffset += bytesSent;
 
-	if (client._sendOffset < client._sendBuffer.size()) {
+	if (client.sendOffset < client.sendBuffer.size()) {
 		client.startTimer(4, 5);
 		return ;
 
@@ -349,7 +349,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	client.clearSendBuffer();
 
-	if (!client._request.keepAlive) {
+	if (!client.request.keepAlive) {
 		closeConnection(clientFd);
 	} else {
 		transitionToIDLE(client, clientFd);
@@ -358,7 +358,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 }
 
 void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
-	client._request.clearPreviousRequest();
+	client.request.clearPreviousRequest();
 	client.setBuffer("");
 	client.setState(IDLE);
 	client.startTimer(0, CLIENT_TIMEOUT);
@@ -368,14 +368,14 @@ void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
 
 void	EventLoop::transitionToReadingBody(Connection& client, int clientFd) {
 	client.setState(READING_BODY);
-	client.startTimer(2, DATA_MANAGEMENT_TIMEOUT); // need explaination on the -4
+	client.startTimer(2, DATA_MANAGEMENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN);
 	Logger::debug("-> READING_BODY (chunked)");
 }
 
 void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
-	if (_cgiExecutor.start(client, clientFd, *this)) {
-		if (client._cgi.pipeIn[1] != -1) {
+	if (cgiExecutor.start(client, clientFd, *this)) {
+		if (client.cgi.pipeIn[1] != -1) {
 			client.setState(CGI_WRITING_BODY);
 			client.startTimer(3, CGI_TIMEOUT);
 		} else {
@@ -384,8 +384,8 @@ void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
 			Logger::debug("-> CGI_RUNNING");
 		}
 	} else {
-		client._request.err = true;
-		client._request.status = 500;
+		client.request.err = true;
+		client.request.status = 500;
 		transitionToSendingResponse(client, clientFd);
 	}
 }

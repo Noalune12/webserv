@@ -30,28 +30,28 @@ void	EventLoop::checkTimeouts(void) {
 
 		if (client.getState() == READING_BODY) {
 			Logger::warn("Body read timeout, sending 408");
-			client._request.err = true;
-			client._request.status = 408;
+			client.request.err = true;
+			client.request.status = 408;
 			transitionToSendingResponse(client, clientFd);
 			continue ;
 		}
 
 		if (client.getState() == CGI_WRITING_BODY || client.getState() == CGI_RUNNING) {
 			Logger::warn("CGI timeout, killing process");
-			if (client._cgi.pid > 0) {
-				kill(client._cgi.pid, SIGKILL);
+			if (client.cgi.pid > 0) {
+				kill(client.cgi.pid, SIGKILL);
 			}
-			_cgiExecutor.cleanup(client._cgi, *this);
-			client._request.err = true;
-			client._request.status = 504;
+			cgiExecutor.cleanup(client.cgi, *this);
+			client.request.err = true;
+			client.request.status = 504;
 			transitionToSendingResponse(client, clientFd);
 			continue ;
 		}
 
 		if (client.getState() == READING_HEADERS) {
 			Logger::warn("Header read timeout, sending 408");
-			client._request.err = true;
-			client._request.status = 408;
+			client.request.err = true;
+			client.request.status = 408;
 			transitionToSendingResponse(client, clientFd);
 			continue ;
 		}

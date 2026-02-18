@@ -1,10 +1,10 @@
+#include <algorithm>
+#include <iostream>
+#include <sstream>
+
 #include "Request.hpp"
 #include "MimeTypes.hpp"
 #include "Logger.hpp"
-
-#include <iostream>
-#include <algorithm>
-#include <sstream>
 
 void Request::checkMultipart(const std::string& content) {
 
@@ -74,17 +74,6 @@ bool Request::isMultipartCarac(const std::string &boundary) {
     return true;
 }
 
-// void printRNPositions(const std::string& str) {
-//     std::cout << "\nENTERING RN POSITIONS" << std::endl;
-//     for (size_t i = 0; i < str.size(); ++i) {
-//         if (str[i] == '\r') {
-//             std::cout << "\\r found at index " << i << std::endl;
-//         } else if (str[i] == '\n') {
-//             std::cout << "\\n found at index " << i << std::endl;
-//         }
-//     }
-// }
-
 bool Request::parseMultipart() {
 
     if (_multipartState == GETTING_FIRST_BOUNDARY) {
@@ -119,7 +108,7 @@ bool Request::parseMultipart() {
                 findErrorPage(413, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Body size higher than client max body size");
-            return false ;   
+            return false ;
         }
 
 
@@ -148,14 +137,14 @@ bool Request::parseMultipart() {
             std::string finalBoundary = "\r\n--" + _multipartBoundary + "--";
             size_t endIndex = chunk.find(finalBoundary);
             if (endIndex != std::string::npos) {
-                
+
                 if (!checkLastBoundary(endIndex, finalBoundary))
                     return false;
 
 
                 continue ;
             }
-            
+
             multipartRemaining = true;
             return true;
         }
@@ -165,7 +154,7 @@ bool Request::parseMultipart() {
 
 
 bool Request::handleMultipartHeader() {
-    
+
     size_t index = chunk.find("\r\n");
 
     if (index == std::string::npos) {
@@ -213,9 +202,9 @@ bool Request::handleMultipartHeader() {
             Logger::warn("Multipart: Header Name is invalid");
             return false;
         }
-        
+
         std::string content = header.substr(index + 1);
-        
+
         if (!content.empty() && (content[0] != ' ' && content[0] != '\t')) {
 
             if (!reqLocation->root.empty()) {
@@ -228,7 +217,7 @@ bool Request::handleMultipartHeader() {
         }
         content = trimOws(content);
 
-        if ((name == "Content-Disposition" && _multiTemp.headers.find("Content-Disposition") != _multiTemp.headers.end()) 
+        if ((name == "Content-Disposition" && _multiTemp.headers.find("Content-Disposition") != _multiTemp.headers.end())
                 || (name == "Content-Type" && _multiTemp.headers.find("Content-Type") != _multiTemp.headers.end())) {
             if (!reqLocation->root.empty()) {
                 findErrorPage(400, reqLocation->root, reqLocation->errPage);
@@ -236,7 +225,7 @@ bool Request::handleMultipartHeader() {
                 findErrorPage(400, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Multipart: Header " + name + " is duplicated");
-            return false;  
+            return false;
         }
         if (((name == "Content-Disposition") && content.empty())
                 || ((name == "Content-Type") && content.empty())) {
@@ -420,7 +409,7 @@ bool Request::checkContentType(const std::string& content) {
             Logger::warn("Multipart: Content Type and filename extension does not match");
             return false;
         }
-    } 
+    }
     return true;
 }
 

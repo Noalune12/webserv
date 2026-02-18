@@ -38,7 +38,7 @@ class Server {
         ConfigParser    _parser;    // parsing subsystem
         SocketManager   _sockets;   // network subsystem
         RequestHandler  _rhandler;  // HTTP subsystem
-        CGIExecutor     _cgi;       // CGI subsystem
+        CGIExecutor     cgi;       // CGI subsystem
     public:
         void    start();            // Easy to use interface
 };

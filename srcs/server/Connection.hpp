@@ -91,10 +91,10 @@ class Connection {
 		void				clearSendBuffer();
 		void 				parseRequest();
 
-		Request				_request;
-		CGIContext			_cgi;
-		std::vector<char>   _sendBuffer;
-		size_t              _sendOffset;
+		Request				request;
+		CGIContext			cgi;
+		std::vector<char>   sendBuffer;
+		size_t              sendOffset;
 };
 
 #endif
