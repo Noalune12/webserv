@@ -11,8 +11,11 @@
 
 static EventLoop*	g_eventLoop = NULL;
 
+static bool			g_running = true;
+
 void	signalHandler(int signum) {
 
+	g_running = false;
 	if (g_eventLoop) {
 		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
 	}
@@ -25,14 +28,11 @@ void	signalHandler(int signum) {
 	Logger::notice("shutting down...");
 }
 
-void	setupSignalHandlers(void) {
-	signal(SIGINT, signalHandler);
-	signal(SIGPIPE, SIG_IGN);
-}
-
 int	main(int ac, char **av) {
+	std::signal(SIGINT, signalHandler);
+  std::signal(SIGPIPE, SIG_IGN);
 
-	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
+	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE;
 
 	if (ac > 2) {
 		std::cerr << "error message for too many arguments, cerr or logging it like nginx ?" << std::endl;
@@ -43,21 +43,25 @@ int	main(int ac, char **av) {
 	{
 		Logger::notice("loading configuration file from " + configFile);
 		Config	config(configFile);
-		Logger::notice("configuration loaded successfully");
-		Logger::notice("server startup");
 
-		ServerManager serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
-		serverManager.setupListenSockets();
+		if (g_running == true) {
+			Logger::notice("configuration loaded successfully");
+			Logger::notice("Server startup");
+		}
 
-		EventLoop eventLoop(serverManager);
-		if (!eventLoop.init()) {
+		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
+		if (g_running == true)
+			serverManager.setupListenSockets();
+
+
+		EventLoop	eventLoop(serverManager);
+		if (g_running == true && !eventLoop.init()) {
 			return (EXIT_FAILURE);
 		}
 
 		g_eventLoop = &eventLoop;
-		setupSignalHandlers();
-
-		eventLoop.run();
+		if (g_running == true)
+			eventLoop.run();
 	}
 	catch(const std::exception& e)
 	{
