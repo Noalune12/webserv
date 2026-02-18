@@ -4,16 +4,7 @@
 # include <map>
 
 # include "Config.hpp"
-/*
- * Validation de la configuration
- *
- * Responsabilités:
- * - Vérifie que les directives sont valides dans leur contexte (ex: 'listen' uniquement dans server)
- * - Valide les valeurs des directives (ex: port entre 1-65535, taille avec unités correctes)
- * - Vérifie la cohérence globale (pas de ports en conflit, chemins valides, etc.)
- * - S'assure que les directives obligatoires sont présentes
- * - Renvoie des exceptions détaillées en cas d'erreur de validation et log ces erreurs dans ./var/log/error.log
- */
+
 class Validator {
 
 	private:
@@ -43,7 +34,6 @@ class Validator {
 		void	validateLocation(const std::vector<std::string>& group, const Context& context) const;
 
 
-		/* cannot be const method as they are modifying _currentContext */
 		void	validateListen(const std::vector<std::string>& values);
 		void	validateServerName(const std::vector<std::string>& values);
 
@@ -75,8 +65,6 @@ class Validator {
 		void	rejectAliasRootInSameLocation(const Context& context) const;
 		void	rejectDuplicateLocation(const Context& serverContext) const;
 
-		// validateLocationContexts()
-		void	validateContextDirectives(const Context& context, int contextType) const;
 		/* member functions table pointer */
 		typedef void (Validator::*DirectiveValidator)(const std::vector<std::string>&) const;
 		std::map<std::string, DirectiveValidator> _directiveValidators;
@@ -94,10 +82,7 @@ class Validator {
 		bool	isValidAddress(std::string& address) const;
 
 		void	subdivideListen(const std::string& listenValue) const;
-
 		void	validateVirtualHostConflicts(void) const;
-
-
 		void	rejectSoleBrackets(const PairVector& directives) const;
 
 	public:
@@ -109,7 +94,7 @@ class Validator {
 		void	printGroups(const std::vector<std::vector<std::string> >& groups) const;
 		void	printVector(const std::vector<std::string>& v) const;
 
-		/* maybe move this one to Utils namespace ? */
+		/* helper */
 		std::vector<std::string>	createVectorFromString(const std::string& str) const;
 
 		// main method, calls every subverification

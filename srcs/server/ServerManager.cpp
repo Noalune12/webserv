@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <sstream>
 #include <unistd.h>
+# include <iostream>
 
 #include "colors.hpp"
 #include "Logger.hpp"
@@ -14,7 +15,7 @@ static uint32_t	ipv4_str_to_int(const std::string &address);
 ServerManager::ServerManager(std::vector<server>& servers, globalDir globalDir) : _servers(servers), _globalDir(globalDir), _endpoints(), _socketToEndpoint() {}
 
 ServerManager::~ServerManager() {
-	closeSockets(); // exit properly, might want to put that somewhere else tho
+	closeSockets();
 }
 
 void	ServerManager::closeSockets(void) {
@@ -27,12 +28,10 @@ void	ServerManager::closeSockets(void) {
 	_socketToEndpoint.clear();
 }
 
-// void pour l'instant, return -1 si on veut eviter de rentrer dans la boucle evenementielle depuis le main
 void	ServerManager::setupListenSockets(void) {
 
-	// need to group all servers by listen ip:port -> needed for virtual hosting
+	// grouping all servers by listen ip:port -> needed for virtual hosting
 	groupServersByEndPoint();
-
 
 	// reason for this is if the user wants to bind sockets on ip/port that are not allowed, we have to try them all and them tell then its not possible to open the server
 	bool	oneSuccess = false;
@@ -64,8 +63,8 @@ void	ServerManager::setupListenSockets(void) {
 		std::cerr << RED << "Not a single socket has been created." << RESET << std::endl;
 		return ;
 	}
-	// debug
-	printEndpoints(); // call to Logger in the loop above is enough. do not delete in case we need more info later
+	// prettier debug
+	// printEndpoints(); // call to Logger in the loop above is enough
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
@@ -107,9 +106,6 @@ int	ServerManager::createListenSocket(const std::string& address, int port) {
 }
 
 void	ServerManager::groupServersByEndPoint(void) {
-
-	// uncomment if server reload is necessary
-	// _endpoints.clear();
 
 	// Key: ["address:port", index] in _endpoints
 	std::map<std::string, size_t> endpointMap;

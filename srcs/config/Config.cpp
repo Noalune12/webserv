@@ -1,16 +1,7 @@
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-#include <string>
-
-#include "colors.hpp"
 #include "FileReader.hpp"
 #include "Validator.hpp"
 
-
-// Config::Config() {}
-
-Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chose dans mes fichiers de test */) : _filePath(configFile), _fileContent() {
+Config::Config(const std::string& configFile) : _filePath(configFile), _fileContent() {
 
 	try {
 
@@ -23,10 +14,7 @@ Config::Config(const std::string& configFile /* nom a revoir j'ai mis autre chos
 		Validator validator(*this);
 		validator.validate();
 
-    	// _tokens.printContent();
-
 		_conf.inherit(_tokens);
-		// _conf.printContent();
 
 	} catch(const std::exception& e) {
 		throw ;

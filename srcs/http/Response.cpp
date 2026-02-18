@@ -16,9 +16,9 @@ void	Response::buildFromRequest(const Request& req) {
 
 	initializeResponse(req);
 
-	if (req._return) {
+	if (req.returnDirective) {
 		setStatus(req.status);
-		_headers["Location"] = req._returnPath;
+		_headers["Location"] = req.returnPath;
 		_headers["Content-Type"] = "text/html";
 		return ;
 	}
@@ -27,7 +27,7 @@ void	Response::buildFromRequest(const Request& req) {
 		setAllow(req);
 	}
 
-	if (req.status == 201 || (req._method == "POST" && req.status == 200)) {
+	if (req.status == 201 || (req.method == "POST" && req.status == 200)) {
 		setLocation(req);
 		setStatus(req.status);
 		return ;
@@ -106,9 +106,9 @@ void	Response::debugPrintRequestData(const Request& req) {
 	std::cout << "  status = " << req.status << std::endl;
 
 	std::cout << YELLOW "Request line:" RESET << std::endl;
-	std::cout << "  method = \"" << req._method << "\"" << std::endl;
-	std::cout << "  uri    = \"" << req._uri << "\"" << std::endl;
-	std::cout << "  trailing    = \"" << req._trailing << "\"" << std::endl;
+	std::cout << "  method = \"" << req.method << "\"" << std::endl;
+	std::cout << "  uri    = \"" << req.uri << "\"" << std::endl;
+	std::cout << "  trailing    = \"" << req.trailing << "\"" << std::endl;
 
 	std::cout << YELLOW "htmlPage:" RESET << std::endl;
 	if (req.htmlPage.empty()) {
@@ -118,16 +118,16 @@ void	Response::debugPrintRequestData(const Request& req) {
 	}
 
 	std::cout << YELLOW "Location:" RESET << std::endl;
-	if (req._reqLocation != NULL) {
-		std::cout << "  path  = \"" << req._reqLocation->path << "\"" << std::endl;
-		std::cout << "  root  = \"" << req._reqLocation->root << "\"" << std::endl;
-		std::cout << "  alias = \"" << req._reqLocation->alias << "\"" << std::endl;
+	if (req.reqLocation != NULL) {
+		std::cout << "  path  = \"" << req.reqLocation->path << "\"" << std::endl;
+		std::cout << "  root  = \"" << req.reqLocation->root << "\"" << std::endl;
+		std::cout << "  alias = \"" << req.reqLocation->alias << "\"" << std::endl;
 	} else {
 		std::cout << "  (no matching location)" << std::endl;
 	}
 
 	std::cout << YELLOW "Query:" RESET << std::endl;
-	std::cout << "   query = \"" << req._queryString << "\"" << std::endl;
+	std::cout << "   query = \"" << req.queryString << "\"" << std::endl;
 
 	std::cout << CYAN "====================================\n" RESET << std::endl;
 }
@@ -149,7 +149,7 @@ void	Response::setStatus(int code) {
 
 void	Response::setBodyFromFile(const Request& req) {
 	_body.assign(req.htmlPage.begin(), req.htmlPage.end());
-	setContentType(req._trailing);
+	setContentType(req.trailing);
 }
 
 void	Response::setBodyFromError(int statusCode, const Request& req) {
@@ -247,7 +247,7 @@ size_t	Response::findHeaderEnd(const std::string& cgiOutput) {
 
 void	Response::setCommonHeaders(const Request& req) {
 	_headers["Server"] = "webserv/1.0";
-	if (req._keepAlive && !req.err) {
+	if (req.keepAlive && !req.err) {
 		_headers["Connection"] = "keep-alive";
 	} else {
 		_headers["Connection"] = "close";
@@ -267,28 +267,28 @@ void	Response::setContentTypeFromCGI(void) {
 
 void	Response::setLocation(const Request& req) {
 
-	if (req._uplaodFiles.empty())
+	if (req.uplaodFiles.empty())
 		return ;
-	_headers["Location"] = req._uplaodFiles[0].location + req._uplaodFiles[0].filename;
+	_headers["Location"] = req.uplaodFiles[0].location + req.uplaodFiles[0].filename;
 }
 
 void	Response::setAllow(const Request& req) {
 
-	if (req._reqLocation == NULL)
+	if (req.reqLocation == NULL)
 		return ;
 
 	std::string	allowedMethods = "";
 
-	if (req._reqLocation->methods.get)
+	if (req.reqLocation->methods.get)
 		allowedMethods += "GET";
 
-	if (req._reqLocation->methods.post) {
+	if (req.reqLocation->methods.post) {
 		if (!allowedMethods.empty())
 			allowedMethods += ", ";
 		allowedMethods += "POST";
 	}
 
-	if (req._reqLocation->methods.del) {
+	if (req.reqLocation->methods.del) {
 		if (!allowedMethods.empty())
 			allowedMethods += ", ";
 		allowedMethods += "DELETE";
@@ -299,14 +299,14 @@ void	Response::setAllow(const Request& req) {
 
 std::string	Response::getCustomErrorPage(int statusCode, const Request& req) {
 
-	if (req._reqLocation == NULL) {
+	if (req.reqLocation == NULL) {
 		return ("");
 	}
 
 	std::map<int, std::string>::const_iterator	it;
-	it = req._reqLocation->errPage.find(statusCode);
+	it = req.reqLocation->errPage.find(statusCode);
 
-	if (it != req._reqLocation->errPage.end()) {
+	if (it != req.reqLocation->errPage.end()) {
 		return (it->second);
 	}
 
@@ -315,16 +315,16 @@ std::string	Response::getCustomErrorPage(int statusCode, const Request& req) {
 
 std::string	Response::loadErrorPageFile(const std::string& uriPath, const Request& req) {
 
-	if (req._reqLocation == NULL) {
+	if (req.reqLocation == NULL) {
 		return ("");
 	}
 
 	std::string	fullPath;
 
-	if (!req._reqLocation->alias.empty()) {
-		fullPath = req._reqLocation->alias + uriPath;
+	if (!req.reqLocation->alias.empty()) {
+		fullPath = req.reqLocation->alias + uriPath;
 	} else {
-		fullPath = req._reqLocation->root + uriPath;
+		fullPath = req.reqLocation->root + uriPath;
 	}
 
 	Logger::debug("Trying to load error page: " + fullPath);

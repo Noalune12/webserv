@@ -11,21 +11,21 @@ void Request::methodDeleteHandler() {
 
     Logger::debug("Entering Delete Handler");
 
-    if (_trailing.empty()) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+    if (trailing.empty()) {
+        if (!reqLocation->root.empty()) {
+            findErrorPage(400, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);		
+            findErrorPage(400, reqLocation->alias, reqLocation->errPage);		
         }
         Logger::warn("Delete: no file or folder");
         return ;
     } else {
         std::string  path;
-        if (!_reqLocation->root.empty())
-            path = getPath(_reqLocation->root + _uri, _trailing);
+        if (!reqLocation->root.empty())
+            path = getPath(reqLocation->root + uri, trailing);
         else
-            path = getPath(_reqLocation->alias, _trailing);
+            path = getPath(reqLocation->alias, trailing);
         std::string  rootDir = getDirectory();
         if (path[0] == '/')
             path = path.substr(1, path.size());
@@ -36,11 +36,11 @@ void Request::methodDeleteHandler() {
 
         Logger::debug("Delete: Checking existence and rights for root directory : " + rootDir);
         if (stat(rootDir.c_str(), &buf) != 0) {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(404, reqLocation->root, reqLocation->errPage);
             }
             else {
-                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+                findErrorPage(404, reqLocation->alias, reqLocation->errPage);		
             }
             Logger::warn("Delete: root directory does not exist");
             return ;
@@ -49,11 +49,11 @@ void Request::methodDeleteHandler() {
 
         // delete permission based on directory not file
         if (access(rootDir.c_str(), W_OK | X_OK) != 0) {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(403, reqLocation->root, reqLocation->errPage);
             }
             else {
-                findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                findErrorPage(403, reqLocation->alias, reqLocation->errPage);		
             }
             Logger::warn("Delete: no rights on root directory");
             return ;
@@ -74,11 +74,11 @@ void Request::methodDeleteHandler() {
 
                 DIR* dir = opendir(path.c_str());
                 if (dir == NULL) {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty()) {
+                        findErrorPage(500, reqLocation->root, reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(500, reqLocation->alias, reqLocation->errPage);
                     }
                     Logger::warn("Delete: Open Dir Failed");
                     return ;
@@ -102,11 +102,11 @@ void Request::methodDeleteHandler() {
                             Logger::debug("Delete: " + fullPath + " is a Folder");
 
                             if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
-                                if (!_reqLocation->root.empty()) {
-                                    findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                                if (!reqLocation->root.empty()) {
+                                    findErrorPage(403, reqLocation->root, reqLocation->errPage);
                                 }
                                 else {
-                                    findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                                    findErrorPage(403, reqLocation->alias, reqLocation->errPage);		
                                 }
                                 closedir(dir);
 
@@ -127,11 +127,11 @@ void Request::methodDeleteHandler() {
 
                     } else {
                         closedir(dir);
-                        if (!_reqLocation->root.empty()) {
-                            findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+                        if (!reqLocation->root.empty()) {
+                            findErrorPage(500, reqLocation->root, reqLocation->errPage);
                         }
                         else {
-                            findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                            findErrorPage(500, reqLocation->alias, reqLocation->errPage);
                         }
                         Logger::warn("Delete: stat failed");
                         return ;
@@ -144,11 +144,11 @@ void Request::methodDeleteHandler() {
                 status = 204;
             }
         } else {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(404, reqLocation->root, reqLocation->errPage);
             }
             else {
-                findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);		
+                findErrorPage(404, reqLocation->alias, reqLocation->errPage);		
             }
             Logger::warn("Delete: file or folder not found");
             return ;
@@ -164,11 +164,11 @@ bool Request::deleteFolder(const std::string& path) {
 
     DIR* dir = opendir(path.c_str());
     if (dir == NULL) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(500, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(500, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Delete: Open Dir Failed");
         return false;
@@ -196,11 +196,11 @@ bool Request::deleteFolder(const std::string& path) {
                 Logger::debug("Delete: " + fullPath + " is a Folder");
 
                 if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty()) {
+                        findErrorPage(403, reqLocation->root, reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);		
+                        findErrorPage(403, reqLocation->alias, reqLocation->errPage);		
                     }
                     Logger::warn("Delete: No rights on directory");
                     closedir(dir);
@@ -220,11 +220,11 @@ bool Request::deleteFolder(const std::string& path) {
             }
         } else {
             closedir(dir);
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(500, reqLocation->root, reqLocation->errPage);
             }
             else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(500, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Delete: stat failed");
             return false;
@@ -242,12 +242,12 @@ std::string Request::getDirectory() {
 
     std::string ret;
 
-    if (!_reqLocation->root.empty()) 
-        ret = _reqLocation->root + _uri;
+    if (!reqLocation->root.empty()) 
+        ret = reqLocation->root + uri;
     else
-        ret = _reqLocation->alias;
+        ret = reqLocation->alias;
 
-    std::string trail = _trailing;
+    std::string trail = trailing;
     size_t index = trail.find('/');
 
     while (index != std::string::npos) {
