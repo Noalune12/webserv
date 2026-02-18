@@ -209,12 +209,12 @@ bool Request::checkRequestLine(const std::string& methodTemp, const std::string&
     std::string versionTemp = http.substr(5);
     if (!isValidHTTPVersion(versionTemp)) {
         findErrorPage(400, "/", _globalDir.errPage);
-        Logger::warn("Request Line: HTTP has wring syntaxe");
+        Logger::warn("Request Line: HTTP has wrong syntaxe");
         return false;
     }
     if (versionTemp != "1.1" && versionTemp != "1.0") {
         findErrorPage(505, "/", _globalDir.errPage);
-        Logger::warn("Request Line: wring HTTP version");
+        Logger::warn("Request Line: wrong HTTP version");
         return false;
     }
     method = methodTemp;

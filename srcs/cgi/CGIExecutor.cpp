@@ -52,13 +52,13 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 
 	if (cgi.pipeIn[1] != -1) {
 		if (fcntl(cgi.pipeIn[1], F_SETFL, O_NONBLOCK) < 0) {
-			Logger::error("fnctl failed on CGI pipe write end: " + std::string(std::strerror(errno)));
+			Logger::error("fcntl failed on CGI pipe write end: " + std::string(std::strerror(errno)));
 			return (false);
 		}
 	}
 
 	if (fcntl(cgi.pipeOut[0], F_SETFL, O_NONBLOCK) < 0) {
-		Logger::error("fnctl failed on CGI pipe read end: " + std::string(std::strerror(errno)));
+		Logger::error("fcntl failed on CGI pipe read end: " + std::string(std::strerror(errno)));
 		return (false);
 	}
 

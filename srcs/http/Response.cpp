@@ -267,9 +267,9 @@ void	Response::setContentTypeFromCGI(void) {
 
 void	Response::setLocation(const Request& req) {
 
-	if (req.uplaodFiles.empty())
+	if (req.uploadFiles.empty())
 		return ;
-	_headers["Location"] = req.uplaodFiles[0].location + req.uplaodFiles[0].filename;
+	_headers["Location"] = req.uploadFiles[0].location + req.uploadFiles[0].filename;
 }
 
 void	Response::setAllow(const Request& req) {

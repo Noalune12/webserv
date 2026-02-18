@@ -285,7 +285,7 @@ bool Request::checkMultipartHeader() {
                     } else {
                         findErrorPage(400, reqLocation->alias, reqLocation->errPage);
                     }
-                    Logger::warn("Multipart: No Content Type and Filename has wring extension");
+                    Logger::warn("Multipart: No Content Type and Filename has wrong extension");
                     return false;
                 }
         }
@@ -378,7 +378,7 @@ bool Request::checkContentDisposition(const std::string& content) {
             } else {
                 findErrorPage(400, reqLocation->alias, reqLocation->errPage);
             }
-            Logger::warn("Multipart: Content Disposition has wring token");
+            Logger::warn("Multipart: Content Disposition has wrong token");
             return false;
         }
     }
