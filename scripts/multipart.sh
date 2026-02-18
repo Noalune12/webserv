@@ -2,7 +2,7 @@
 
 BOUNDARY="----BOUNDARY123"
 HOST="localhost:8080"
-FILE="usr/share/documentation/404.png"
+FILE="var/www/html/404.png"
 FILENAME="404.png"
 
 BODY=$(mktemp)
