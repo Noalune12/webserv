@@ -191,7 +191,6 @@ void	EventLoop::handleIdle(Connection& client, int clientFd, uint32_t ev) {
 	client.setState(READING_HEADERS);
 	client.startTimer(1, DATA_MANAGEMENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN);
-	Logger::debug("IDLE -> READING_HEADERS");
 }
 
 void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t ev) {
@@ -237,10 +236,6 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev) {
 
 	if (ev & EPOLLIN) {
-		if (client.debug == 0) {
-			Logger::debug("READING_BODY state");
-			client.debug++;
-		}
 		size_t	bytesRead = readFromClient(clientFd, client);
 		if (bytesRead == 0) {
 			closeConnection(clientFd);
@@ -277,7 +272,6 @@ void	EventLoop::handleCGIClientEvent(Connection& client, int clientFd, uint32_t 
 		if (client.cgi.pid > 0) {
 			kill(client.cgi.pid, SIGKILL);
 		}
-		Logger::debug("Client disconnection while CGI running");
 		cgiExecutor.cleanup(client.cgi, *this);
 		closeConnection(clientFd);
 		return ;
@@ -288,7 +282,6 @@ void	EventLoop::handleCGIClientEvent(Connection& client, int clientFd, uint32_t 
 		ssize_t	n = recv(clientFd, buf, 1, MSG_PEEK | MSG_DONTWAIT); // check deeper
 		if (n == 0) {
 			// EOF — client closed the connection
-			Logger::debug("Client closed connection while CGI running");
 			if (client.cgi.pid > 0)
 				kill(client.cgi.pid, SIGKILL);
 			cgiExecutor.cleanup(client.cgi, *this);
@@ -296,7 +289,6 @@ void	EventLoop::handleCGIClientEvent(Connection& client, int clientFd, uint32_t 
 			return ;
 		}
 	}
-	Logger::debug("CGI_RUNNING: waiting for CGI to complete");
 }
 
 void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t ev) {
@@ -309,10 +301,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 		Response response;
 
-		response.debugPrintRequestData(client.request);
-
 		if (!client.cgi.outputBuff.empty()) {
-			Logger::debug("Building CGI response");
 			response.buildFromCGI(client.cgi.outputBuff, client.request);
 			client.cgi.outputBuff.clear();
 		} else {
@@ -363,14 +352,12 @@ void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
 	client.setState(IDLE);
 	client.startTimer(0, CLIENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN);
-	Logger::debug("-> IDLE (keep-alive)");
 }
 
 void	EventLoop::transitionToReadingBody(Connection& client, int clientFd) {
 	client.setState(READING_BODY);
 	client.startTimer(2, DATA_MANAGEMENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN);
-	Logger::debug("-> READING_BODY (chunked)");
 }
 
 void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
@@ -381,7 +368,6 @@ void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
 		} else {
 			client.setState(CGI_RUNNING);
 			client.startTimer(3, CGI_TIMEOUT);
-			Logger::debug("-> CGI_RUNNING");
 		}
 	} else {
 		client.request.err = true;
@@ -394,7 +380,6 @@ void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 	client.setState(SENDING_RESPONSE);
 	client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN | EPOLLOUT); // both EPOLLIN and EPOLLOUT here to make sure no new incoming data will not wake the event loop because EPOLLIN is no longer set on the socket.
-	Logger::debug("-> SENDING_RESPONSE");
 }
 
 size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
@@ -422,14 +407,6 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 bool	EventLoop::checkEpollErrors(uint32_t ev, int clientFd) {
 
 	if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-		if (ev & EPOLLERR) {
-			std::cerr << RED "EPOLLERR - fd[" << clientFd << "]" RESET << std::endl;
-		} else if (ev & EPOLLHUP) {
-			std::cerr << RED "EPOLLHUP - fd[" << clientFd << "]" RESET << std::endl;
-		} else if (ev & EPOLLRDHUP) {
-			std::cerr << RED "EPOLLRDHUP - fd[" << clientFd << "]" RESET << std::endl;
-		}
-		Logger::debug("Epoll error");
 		closeConnection(clientFd);
 		return (true);
 	}
@@ -441,11 +418,7 @@ bool	EventLoop::checkTimeout(Connection& client, int clientFd) {
 
 	int	timerIdx = getActiveTimer(client.getState());
 	if (timerIdx >= 0 && client.isTimedOut(timerIdx)) {
-		Logger::warn("Timeout");
 		// if client is in IDLE mode, do not send anything just close,
-		// (Note: Some servers will shut down a connection without sending this message.
-		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/408)
-		// otherwise we will send a 408 Request Timeout
 		closeConnection(clientFd);
 		return (true);
 	}
