@@ -35,8 +35,6 @@ int	main(int ac, char **av) {
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE;
 
-	Logger::setColor(false); // remove for color
-
 	if (ac > 2) {
 		Logger::error("too many arguments");
 		return (EXIT_FAILURE);
