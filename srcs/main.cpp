@@ -29,13 +29,16 @@ void	signalHandler(int signum) {
 }
 
 int	main(int ac, char **av) {
+
 	std::signal(SIGINT, signalHandler);
-  std::signal(SIGPIPE, SIG_IGN);
+	std::signal(SIGPIPE, SIG_IGN);
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE;
 
+	Logger::setColor(false); // remove for color
+
 	if (ac > 2) {
-		std::cerr << "error message for too many arguments, cerr or logging it like nginx ?" << std::endl;
+		Logger::error("too many arguments");
 		return (EXIT_FAILURE);
 	}
 
@@ -49,7 +52,7 @@ int	main(int ac, char **av) {
 			Logger::notice("Server startup");
 		}
 
-		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
+		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // will setup the informations needed for each servers in their own subclasses
 		if (g_running == true)
 			serverManager.setupListenSockets();
 
