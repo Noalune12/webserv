@@ -16,19 +16,19 @@ void Request::methodPostHandler() {
     Logger::debug("Entering POST Handler");
 
     if (fullBody.empty() && isMultipart == false) {
-        if (!_reqLocation->root.empty())
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty())
+            findErrorPage(400, reqLocation->root, reqLocation->errPage);
         else
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(400, reqLocation->alias, reqLocation->errPage);
         Logger::warn("Post: Body is missing");
         return ;
     }
 
-    if (!_trailing.empty()) {
-        if (!_reqLocation->root.empty())
-            findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+    if (!trailing.empty()) {
+        if (!reqLocation->root.empty())
+            findErrorPage(404, reqLocation->root, reqLocation->errPage);
         else
-            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(404, reqLocation->alias, reqLocation->errPage);
         Logger::warn("Post: Trailing after location");
         return ;
     }
@@ -45,10 +45,10 @@ void Request::methodPostHandler() {
         handleMultipart();
 
         if (_totalUpload != 0 && _failedUpload == _totalUpload) {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(500, reqLocation->root, reqLocation->errPage);
             } else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(500, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Post: All uploads failed");
             return ;
@@ -62,22 +62,22 @@ void Request::methodPostHandler() {
 
     } else {
 
-        std::map<std::string, std::string>::iterator it = _headers.find("content-type");
-        if (it == _headers.end()) {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        std::map<std::string, std::string>::iterator it = headers.find("content-type");
+        if (it == headers.end()) {
+            if (!reqLocation->root.empty()) {
+                findErrorPage(400, reqLocation->root, reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(400, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Post: Content Type required");
             return ;
         } else {
 
             if (isMultipart == false &&  !MimeTypes::isSupportedType(it->second)) {
-                if (!_reqLocation->root.empty()) {
-                    findErrorPage(415, _reqLocation->root, _reqLocation->errPage);
+                if (!reqLocation->root.empty()) {
+                    findErrorPage(415, reqLocation->root, reqLocation->errPage);
                 } else {
-                    findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(415, reqLocation->alias, reqLocation->errPage);
                 }
                 Logger::warn("Post: Content Type is not supportefd");
                 return ;
@@ -85,10 +85,10 @@ void Request::methodPostHandler() {
 
             _postExt = MimeTypes::getExtensionFromType(it->second);
             if (_postExt.empty()) {
-                if (!_reqLocation->root.empty()) {
-                    findErrorPage(415, _reqLocation->root, _reqLocation->errPage);
+                if (!reqLocation->root.empty()) {
+                    findErrorPage(415, reqLocation->root, reqLocation->errPage);
                 } else {
-                    findErrorPage(415, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(415, reqLocation->alias, reqLocation->errPage);
                 }
                 Logger::warn("Post: Content Type is not supportefd");
                 return ;
@@ -103,10 +103,10 @@ void Request::methodPostHandler() {
         
         std::string filename = "upload_";
         if (!createFileName(filename)) {
-            if (!_reqLocation->root.empty()) { 
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) { 
+                findErrorPage(500, reqLocation->root, reqLocation->errPage);
             } else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(500, reqLocation->alias, reqLocation->errPage);
             }
             return;
         }
@@ -115,10 +115,10 @@ void Request::methodPostHandler() {
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
         if(!outfile) {
-            if (!_reqLocation->root.empty()) { 
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) { 
+                findErrorPage(500, reqLocation->root, reqLocation->errPage);
             } else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(500, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Post: outfile can not be created");
             return;
@@ -133,50 +133,50 @@ void Request::methodPostHandler() {
         FilesPost temp;
         temp.filename = _postFilename;
         temp.location = _postUploadDir;
-        _uplaodFiles.push_back(temp);
+        uplaodFiles.push_back(temp);
 
     }
 }
 
 bool Request::findUploadDir() {
 
-    if (_reqLocation->uploadTo.empty()) {
-        if (!_reqLocation->root.empty())
-            _postUploadDir = _reqLocation->root + _uri;
+    if (reqLocation->uploadTo.empty()) {
+        if (!reqLocation->root.empty())
+            _postUploadDir = reqLocation->root + uri;
         else
-            _postUploadDir = _reqLocation->alias;
+            _postUploadDir = reqLocation->alias;
     } else {
-        _postUploadDir = _reqLocation->uploadTo;
+        _postUploadDir = reqLocation->uploadTo;
     }
     if (_postUploadDir[0] == '/')
         _postUploadDir = _postUploadDir.substr(1, _postUploadDir.size());
 
     struct stat buf;
     if (stat(_postUploadDir.c_str(), &buf) != 0) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(404, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(404, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Post: upload dir does not exist");
         return false;
     }
 
     if (!S_ISDIR(buf.st_mode)) {
-        if (!_reqLocation->root.empty())
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty())
+            findErrorPage(400, reqLocation->root, reqLocation->errPage);
         else
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(400, reqLocation->alias, reqLocation->errPage);
         Logger::warn("Post: upload dir is not a folder");
         return false;
     }
 
     if (access(_postUploadDir.c_str(), W_OK | X_OK) != 0) {
-        if (!_reqLocation->root.empty())
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty())
+            findErrorPage(403, reqLocation->root, reqLocation->errPage);
         else
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(403, reqLocation->alias, reqLocation->errPage);
         Logger::warn("Post: no rights on upload dir");
         return false;
     }
@@ -304,8 +304,8 @@ bool Request::createFileName(const std::string &filename) {
 
 
 void Request::printFilename() const {
-    std::vector<FilesPost>::const_iterator it = _uplaodFiles.begin();
-    for (; it != _uplaodFiles.end(); it++) {
+    std::vector<FilesPost>::const_iterator it = uplaodFiles.begin();
+    for (; it != uplaodFiles.end(); it++) {
         Logger::debug("File was created with name : " + it->filename + " at location : " + it->location);
     }
 }
@@ -333,7 +333,7 @@ void Request::handleMultipart() {
                 FilesPost temp;
                 temp.filename = it->filename;
                 temp.location = _postUploadDir;
-                _uplaodFiles.push_back(temp);
+                uplaodFiles.push_back(temp);
                 _totalUpload++;
 
             } else {
@@ -386,7 +386,7 @@ void Request::handleMultipart() {
                 FilesPost temp;
                 temp.filename = _postFilename;
                 temp.location = _postUploadDir;
-                _uplaodFiles.push_back(temp);
+                uplaodFiles.push_back(temp);
                 _totalUpload++;
             }
 

@@ -52,6 +52,7 @@ class Request {
         std::string _headersStr;
         std::string _requestLine;
         std::string _serverName;
+        std::string _body;
 
         // BODY
         double  _chunkSize;
@@ -75,8 +76,8 @@ class Request {
 
         // PARSING
         bool extractRequestInfo();
-        bool extractRequestLineInfo(std::string& method, std::string& uri, std::string& http);
-        bool checkRequestLine(const std::string& method, const std::string& uri, const std::string& http);
+        bool extractRequestLineInfo(std::string& methodTemp, std::string& uriTemp, std::string& http);
+        bool checkRequestLine(const std::string& methodTemp, const std::string& uriTemp, const std::string& http);
         bool checkHeaders();
         bool hostChecker();
         void findServer();
@@ -129,20 +130,19 @@ class Request {
         std::string			htmlPage;
 
         // RL AND HEADERS
-        std::string _method;
-        std::string _uri;
-        std::string _body;
-        std::map<std::string, std::string> _headers;
-        std::string _trailing;
-        bool _keepAlive;
-        server *_reqServer;
-	    location *_reqLocation;
-        std::string _version;
-        bool _cgi;
-        bool _return;
-        std::string _scriptPath;
-        std::string _queryString;
-        std::string _returnPath;
+        std::string method;
+        std::string uri;
+        std::map<std::string, std::string> headers;
+        std::string trailing;
+        bool keepAlive;
+        server *reqServer;
+	    location *reqLocation;
+        std::string version;
+        bool isCgi;
+        bool returnDirective;
+        std::string scriptPath;
+        std::string queryString;
+        std::string returnPath;
 
         // BODY
         bool chunkRemaining;
@@ -154,7 +154,7 @@ class Request {
         bool remainingBody;
         
         // POST
-        std::vector<FilesPost> _uplaodFiles;
+        std::vector<FilesPost> uplaodFiles;
 
         // PARSING
         bool isCRLF(const std::string& request);

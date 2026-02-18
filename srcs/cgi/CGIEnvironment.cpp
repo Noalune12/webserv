@@ -6,13 +6,13 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 
 	std::vector<std::string>	envStrings;
 
-	std::string	full_path = client._request._uri;
+	std::string	full_path = client._request.uri;
 	size_t		queryPos = full_path.find('?');
 	if (queryPos != std::string::npos) {
 		full_path = full_path.substr(0, queryPos);
 	}
 
-	std::string	script_name = client._request._scriptPath;
+	std::string	script_name = client._request.scriptPath;
 	size_t		script_query = script_name.find('?');
 	if (script_query != std::string::npos) {
 		script_name = script_name.substr(0, script_query);
@@ -24,45 +24,45 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 		path_info = full_path.substr(script_pos + script_name.length());
 	}
 
-	std::string qstring = client._request._queryString;
-	size_t	qstring_pos = client._request._queryString.find('?');
+	std::string qstring = client._request.queryString;
+	size_t	qstring_pos = client._request.queryString.find('?');
 	if (qstring_pos != std::string::npos) {
 		qstring = qstring.substr(qstring_pos + 1);
 	}
 
-	envStrings.push_back(buildEnvVar("REQUEST_METHOD", client._request._method));
+	envStrings.push_back(buildEnvVar("REQUEST_METHOD", client._request.method));
 	envStrings.push_back(buildEnvVar("QUERY_STRING", qstring));
-	envStrings.push_back(buildEnvVar("SCRIPT_FILENAME", client._request._scriptPath));
+	envStrings.push_back(buildEnvVar("SCRIPT_FILENAME", client._request.scriptPath));
 	envStrings.push_back(buildEnvVar("SCRIPT_NAME", script_name));
 	envStrings.push_back(buildEnvVar("PATH_INFO", path_info));
-	envStrings.push_back(buildEnvVar("SERVER_PROTOCOL", std::string("HTTP/") + client._request._version));
+	envStrings.push_back(buildEnvVar("SERVER_PROTOCOL", std::string("HTTP/") + client._request.version));
 	envStrings.push_back(buildEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));
 	envStrings.push_back(buildEnvVar("REDIRECT_STATUS", "200"));
 	envStrings.push_back(buildEnvVar("SERVER_SOFTWARE", "webserv/1.0"));
 
-	if (client._request._reqLocation && client._request._reqServer &&
-		!client._request._reqServer->lis.empty() && !client._request._reqServer->serverName.empty()) {
+	if (client._request.reqLocation && client._request.reqServer &&
+		!client._request.reqServer->lis.empty() && !client._request.reqServer->serverName.empty()) {
 		std::stringstream	ss;
-		ss << client._request._reqServer->lis[0].port;
-		envStrings.push_back(buildEnvVar("SERVER_NAME", client._request._reqServer->serverName[0]));
+		ss << client._request.reqServer->lis[0].port;
+		envStrings.push_back(buildEnvVar("SERVER_NAME", client._request.reqServer->serverName[0]));
 		envStrings.push_back(buildEnvVar("SERVER_PORT", ss.str()));
 	}
 
 	envStrings.push_back(buildEnvVar("REMOTE_ADDR", client.getIP()));
 
 	std::map<std::string, std::string>::const_iterator	it;
-	it = client._request._headers.find("content-length");
-	if (it != client._request._headers.end()) {
+	it = client._request.headers.find("content-length");
+	if (it != client._request.headers.end()) {
 		envStrings.push_back(buildEnvVar("CONTENT_LENGTH", it->second));
 	} else {
 		envStrings.push_back(buildEnvVar("CONTENT_LENGTH", "0"));
 	}
-	it = client._request._headers.find("content-type");
-	if (it != client._request._headers.end()) {
+	it = client._request.headers.find("content-type");
+	if (it != client._request.headers.end()) {
 		envStrings.push_back(buildEnvVar("CONTENT_TYPE", it->second));
 	}
 
-	for (it = client._request._headers.begin(); it != client._request._headers.end(); ++it) {
+	for (it = client._request.headers.begin(); it != client._request.headers.end(); ++it) {
 		std::string	headerName = it->first;
 		std::string	headerValue = it->second;
 		std::string	envName = "HTTP_";
