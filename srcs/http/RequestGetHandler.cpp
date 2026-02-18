@@ -10,8 +10,6 @@
 
 void Request::methodGetHandler() {
 
-    Logger::debug("Entering Get Handler");
-
     if (!reqLocation->root.empty() && !trailing.empty()) {
         _getPath = getPath(reqLocation->root + uri, trailing);
     } else if (!reqLocation->root.empty() && trailing.empty()) {
@@ -22,8 +20,6 @@ void Request::methodGetHandler() {
         _getPath = getPath(reqLocation->alias);
     }
 
-    Logger::debug("Get: Path is " + _getPath);
-
     std::vector<std::string>::iterator itIndex = reqLocation->index.begin();
 
     struct stat buf;
@@ -33,8 +29,6 @@ void Request::methodGetHandler() {
             // Case 1: no trailing and path is a folder -> need to get the index
 
             if (S_ISDIR(buf.st_mode)) {
-
-                Logger::debug("Get: No trailing and is a directory");
 
                 if (access(_getPath.c_str(), R_OK | X_OK) != 0) {
                     if (!reqLocation->root.empty()) {
@@ -93,8 +87,6 @@ void Request::methodGetHandler() {
 
             if (S_ISDIR(buf.st_mode)) {
 
-                Logger::debug("Get: Trailing and is a directory");
-
                 if (access(_getPath.c_str(), R_OK | X_OK) != 0) {
                     if (!reqLocation->root.empty()) {
                         findErrorPage(403, reqLocation->root, reqLocation->errPage);
@@ -139,8 +131,6 @@ void Request::methodGetHandler() {
             // Case 3: trailing and path is a file -> need to get the file
 
             } else if (S_ISREG(buf.st_mode)) {
-
-                Logger::debug("Get: Trailing and is a file");
 
                 readFile(_getPath, buf);
                 return ;
@@ -240,7 +230,6 @@ bool Request::readFile(const std::string& path, struct stat buf) {
             Logger::warn("Could not open file: " + path);
             return false;
 	    }
-        Logger::debug("Get: File found at " + path);
         std::stringstream buffer;
         buffer << file.rdbuf();
         htmlPage = buffer.str();
@@ -261,8 +250,6 @@ bool Request::readFile(const std::string& path, struct stat buf) {
 }
 
 bool Request::handleAutoindex(const std::string& dirPath) {
-
-    Logger::debug("Handling Autodindex");
 
     if (access(dirPath.c_str(), R_OK | X_OK) != 0) {
         if (!reqLocation->root.empty()) {
@@ -349,12 +336,10 @@ bool Request::handleAutoindex(const std::string& dirPath) {
 
             if (S_ISDIR(st.st_mode) && access(fullPath.c_str(), R_OK | X_OK) == 0) {
 
-                Logger::debug("Get (autoindex): Folder " + fullPath);
                 htmlPage += "<span class=\"icon\">📁</span> <a href=\"" + path + "/" + name + "/\" class=\"file-link\">" + name + "</a><br>\n";
 
             } else if (S_ISREG(st.st_mode) && access(fullPath.c_str(), R_OK) == 0) {
 
-                Logger::debug("Get (autoindex): File " + fullPath);
                 htmlPage += "<span class=\"icon\">📄</span> <a href=\"" + path + "/" + name + "\" class=\"file-link\"> " + name + "</a><br>\n";
 
             }

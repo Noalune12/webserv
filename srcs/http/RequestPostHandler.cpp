@@ -13,7 +13,6 @@
 
 void Request::methodPostHandler() {
 
-    Logger::debug("Entering POST Handler");
 
     if (fullBody.empty() && isMultipart == false) {
         if (!reqLocation->root.empty())
@@ -35,12 +34,8 @@ void Request::methodPostHandler() {
 
     if (isMultipart == true) {
 
-        Logger::debug("Post: is multipart");
-
         if (!findUploadDir())
             return ;
-
-        Logger::debug("Post: upload directory is " + _postUploadDir);
 
         handleMultipart();
 
@@ -98,8 +93,6 @@ void Request::methodPostHandler() {
 
         if (!findUploadDir())
             return ;
-
-        Logger::debug("Post: upload directory is " + _postUploadDir);
         
         std::string filename = "upload_";
         if (!createFileName(filename)) {
@@ -110,8 +103,6 @@ void Request::methodPostHandler() {
             }
             return;
         }
-
-        Logger::debug("Post: creating " + _postFilename + " in directory " + _postUploadDir);
 
         std::ofstream outfile ((_postUploadDir + _postFilename).c_str());
         if(!outfile) {
@@ -209,7 +200,6 @@ bool Request::checkFilename(const std::string &filename) {
             if (!S_ISREG(st.st_mode))
                 continue;
             if (n == filename) {
-                Logger::debug("Post: File with same name exists");
                 closedir(dir);
                 return false;
             }
@@ -302,14 +292,6 @@ bool Request::createFileName(const std::string &filename) {
     return true;
 }
 
-
-void Request::printFilename() const {
-    std::vector<FilesPost>::const_iterator it = uploadFiles.begin();
-    for (; it != uploadFiles.end(); it++) {
-        Logger::debug("File was created with name : " + it->filename + " at location : " + it->location);
-    }
-}
-
 void Request::handleMultipart() {
 
     std::vector<Multipart>::iterator it = _multipartContent.begin();
@@ -324,7 +306,6 @@ void Request::handleMultipart() {
                     _failedUpload++, _totalUpload++;
                     continue;
                 }
-                Logger::debug("Post: creating " + it->filename + " in directory " + _postUploadDir);
 
                 outfile << it->body;
 
@@ -378,7 +359,6 @@ void Request::handleMultipart() {
                     _failedUpload++, _totalUpload++;
                     continue;
                 }
-                Logger::debug("Post: creating " + _postFilename + " in directory " + _postUploadDir);
 
                 outfile << it->body;
 

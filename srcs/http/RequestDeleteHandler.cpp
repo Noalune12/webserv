@@ -9,8 +9,6 @@
 
 void Request::methodDeleteHandler() {
 
-    Logger::debug("Entering Delete Handler");
-
     if (trailing.empty()) {
         if (!reqLocation->root.empty()) {
             findErrorPage(400, reqLocation->root, reqLocation->errPage);
@@ -34,7 +32,6 @@ void Request::methodDeleteHandler() {
 
         struct stat buf;
 
-        Logger::debug("Delete: Checking existence and rights for root directory : " + rootDir);
         if (stat(rootDir.c_str(), &buf) != 0) {
             if (!reqLocation->root.empty()) {
                 findErrorPage(404, reqLocation->root, reqLocation->errPage);
@@ -62,15 +59,12 @@ void Request::methodDeleteHandler() {
         if (stat(path.c_str(), &buf) == 0) {
 
             if (S_ISREG(buf.st_mode)) {
-                Logger::debug("Delete: File " + path + " deleted");
                 std::remove(path.c_str());
                 err = false;
                 status = 204;
             }
 
             else if (S_ISDIR(buf.st_mode)) {
-
-                Logger::debug("Delete: " + path + " is a Folder");
 
                 DIR* dir = opendir(path.c_str());
                 if (dir == NULL) {
@@ -99,8 +93,6 @@ void Request::methodDeleteHandler() {
 
                         if (S_ISDIR(st.st_mode)) {
 
-                            Logger::debug("Delete: " + fullPath + " is a Folder");
-
                             if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
                                 if (!reqLocation->root.empty()) {
                                     findErrorPage(403, reqLocation->root, reqLocation->errPage);
@@ -119,7 +111,6 @@ void Request::methodDeleteHandler() {
                             }
                             std::remove(fullPath.c_str());
                         } else if (S_ISREG(st.st_mode)) {
-                            Logger::debug("Delete: File " + fullPath + " deleted");
                             std::remove(fullPath.c_str());
                         } else {
                             std::remove(fullPath.c_str());
@@ -160,8 +151,6 @@ void Request::methodDeleteHandler() {
 
 bool Request::deleteFolder(const std::string& path) {
 
-    Logger::debug("Delete: " + path + " is a Folder");
-
     DIR* dir = opendir(path.c_str());
     if (dir == NULL) {
         if (!reqLocation->root.empty()) {
@@ -193,8 +182,6 @@ bool Request::deleteFolder(const std::string& path) {
         if (stat(fullPath.c_str(), &st) == 0) {
             if (S_ISDIR(st.st_mode)) {
 
-                Logger::debug("Delete: " + fullPath + " is a Folder");
-
                 if (access(fullPath.c_str(), W_OK | X_OK) != 0) {
                     if (!reqLocation->root.empty()) {
                         findErrorPage(403, reqLocation->root, reqLocation->errPage);
@@ -212,7 +199,6 @@ bool Request::deleteFolder(const std::string& path) {
                 }
                 std::remove(fullPath.c_str());
             } else if (S_ISREG(st.st_mode)) {
-                Logger::debug("Delete: File " + fullPath + " deleted");
                 std::remove(fullPath.c_str());
     
             } else {

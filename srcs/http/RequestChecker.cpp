@@ -186,7 +186,6 @@ void Request::checkRequestContent() {
         struct stat buf;
 
         if (stat(scriptPath.c_str(), &buf) == 0) {
-            Logger::debug("CGI: File Found");
             isCgi = true;
         }
         else {
