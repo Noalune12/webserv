@@ -167,9 +167,6 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 	}
 
 	if (events & (EPOLLHUP | EPOLLRDHUP)) {
-		std::ostringstream oss;
-		oss << cgi.outputBuff.size();
-		Logger::warn("CGI pipe closed (EPOLLHUP), total output: " + oss.str());
 
 		if (cgi.outputBuff.empty()) {
 			client.request.err = true;
