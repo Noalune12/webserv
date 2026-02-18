@@ -1,13 +1,3 @@
-# TODO (ordered ?)
-
-- [ ] github action implementing siege
-- [ ] detailler choix pour chaque directive
-
-
-
-
-
-
 # Configuration file directives
 
 ### error_page:
@@ -151,7 +141,7 @@ location /i/ {
 ```
 On request of “`/i/top.gif`”, the file `/data/w3/images/top.gif` will be sent.
 
-### cgi_path (everything here is not definitive, needs more research on methods requirements or not)
+### cgi_path
 ```
 Syntax:	cgi_path path;
 Default: —

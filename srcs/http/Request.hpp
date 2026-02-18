@@ -153,7 +153,7 @@ class Request {
         bool remainingBody;
 
         // POST
-        std::vector<FilesPost> uplaodFiles;
+        std::vector<FilesPost> uploadFiles;
 
         // PARSING
         bool isCRLF(const std::string& request);

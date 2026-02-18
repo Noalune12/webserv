@@ -163,7 +163,7 @@ bool	MimeTypes::isTextType(const std::string& mimeType) {
 
 bool	MimeTypes::isSupportedType(const std::string& contentType) {
 	if (!_initialized) {
-		if (!load("srcs/http/mime.types")) {
+		if (!load(_defaultPath)) {
 			return false;
 		}
 	}
@@ -177,7 +177,7 @@ bool	MimeTypes::isSupportedType(const std::string& contentType) {
 
 std::string  MimeTypes::getExtensionFromType(const std::string& contentType) {
 	if (!_initialized) {
-		if (!load("srcs/http/mime.types")) {
+		if (!load(_defaultPath)) {
 			return "";
 		}
 	}

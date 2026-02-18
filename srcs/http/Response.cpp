@@ -223,7 +223,7 @@ void	Response::parseCGIBody(const std::string& cgiOutput) {
 	if (headerEnd == std::string::npos) {
 		bodySection = cgiOutput;
 	} else {
-		size_t bodyStart = (cgiOutput[headerEnd] == '\r') ? 4 : 2; // 4 = CRLF ("\r\n\r\n") and 2 = LF ("\n\n")
+		size_t bodyStart = (cgiOutput[headerEnd] == '\r') ? 4 : 2;
 		bodySection = cgiOutput.substr(headerEnd + bodyStart);
 	}
 
@@ -267,9 +267,9 @@ void	Response::setContentTypeFromCGI(void) {
 
 void	Response::setLocation(const Request& req) {
 
-	if (req.uplaodFiles.empty())
+	if (req.uploadFiles.empty())
 		return ;
-	_headers["Location"] = req.uplaodFiles[0].location + req.uplaodFiles[0].filename;
+	_headers["Location"] = req.uploadFiles[0].location + req.uploadFiles[0].filename;
 }
 
 void	Response::setAllow(const Request& req) {

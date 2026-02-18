@@ -68,4 +68,4 @@ Every socket (both the listening socket and client sockets) must be set to non-b
 
 #### POST of file through CGI: a form to upload images onto a php script
 
-With the non-blocking architecture, the server receives data by chunks each time `poll()` has a `POLLIN` event on the client socket, stores data in a buffer or a temporary file, and when the upload is complete, calls `fork()` to execute the CGI, monitors the CGI status as well via `poll()`, which means the pipe fds have been added to `poll()` (because it cannot `wait()` the child the same way we did for minishell). Otherwise the server would be blocked if a script has an infinite loop.
+With the non-blocking architecture, the server receives data by chunks each time `epoll()` has a `EPOLLIN` event on the client socket, stores data in a buffer or a temporary file, and when the upload is complete, calls `fork()` to execute the CGI, monitors the CGI status as well via `epoll()`, which means the pipe fds have been added to `epoll()` (because it cannot `wait()` the child the same way we did for minishell). Otherwise the server would be blocked if a script has an infinite loop.

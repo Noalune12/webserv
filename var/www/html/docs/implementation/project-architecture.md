@@ -110,7 +110,7 @@ Since the project targets Linux environments and scalability matters for an HTTP
 
 ### EventLoop Class
 
-The `EventLoop` is the heart of our server, implementing the Reactor pattern. It owns the epoll instance and manages all client connections.
+The `EventLoop` is the heart of our server. It owns the epoll instance and manages all client connections.
 ```cpp
 class EventLoop {
     private:
@@ -118,6 +118,7 @@ class EventLoop {
         bool                        _running;       // main loop control
         ServerManager&              _serverManager; // listen sockets + vhosts
         std::map<int, Connection>   _connections;   // fd -> Connection mapping
+		std::map<int, int>          _pipeToClient;	// pipeFd, clientFd
 
     public:
         void run(void);  // main event loop
@@ -136,9 +137,9 @@ enum ConnectionState {
     IDLE,               // waiting for new request (keep-alive)
     READING_HEADERS,    // receiving HTTP headers
     READING_BODY,       // receiving request body
+    CGI_WRITING_BODY,   // writing response to client
     CGI_RUNNING,        // waiting for CGI process
-    SENDING_RESPONSE,   // writing response to client
-    CLOSED
+    SENDING_RESPONSE   // writing response to client
 };
 ```
 

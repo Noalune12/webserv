@@ -72,8 +72,8 @@ int	ServerManager::createListenSocket(const std::string& address, int port) {
 	int	socketFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketFd < 0) {
 		// throw error instead ?
-		std::cerr << "socket() failed: " << strerror(errno) << std::endl;
-		return (-1); // return -1 for now for error reporting
+		Logger::error("socket() failed: " + std::string(std::strerror(errno)));
+		return (-1);
 	}
 
 	if (!configureSocket(socketFd))
@@ -152,7 +152,6 @@ bool	ServerManager::configureSocket(int socketFd) {
 		return (false);
 	}
 
-	// adding O_NONBLOCK to list of existing flags
 	if (fcntl(socketFd, F_SETFL, O_NONBLOCK) < 0) {
 		std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed: " << strerror(errno) << std::endl;
 		return (false);
@@ -212,7 +211,7 @@ std::vector<int>	ServerManager::getListenSocketFds(void) {
 	std::vector<int>	fds;
 
 	for (size_t i = 0; i < _endpoints.size(); ++i) {
-		if (_endpoints[i].socketFd >= 0) {// not sure if I have to exclude 0 here
+		if (_endpoints[i].socketFd >= 0) {
 			fds.push_back(_endpoints[i].socketFd);
 		}
 	}

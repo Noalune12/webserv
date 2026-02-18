@@ -36,7 +36,6 @@ bool Request::convertHexa(std::string& hex) {
 
 bool Request::getChunkSize() {
     Logger::debug("Chunked Body: Getting Size");
-    // char* end = NULL;
     std::string hex;
     size_t index = chunk.find("\r\n");
     if (index == 0) {
@@ -89,7 +88,7 @@ void Request::parseChunk() {
                 findErrorPage(413, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Chunked Body: Body size higher than client max body size");
-            return ;   
+            return ;
         }
         if (_chunkState == READING_BYTES) {
 
@@ -134,7 +133,7 @@ void Request::parseChunk() {
 
                 _chunkSize = -1;
                 _chunkState = GETTING_SIZE;
-                // std::cout << "Body is : ", printStr(body), std::cout << " \nchunk i : ", printStr(_chunk), std::cout << std::endl; 
+                // std::cout << "Body is : ", printStr(body), std::cout << " \nchunk i : ", printStr(_chunk), std::cout << std::endl;
             } else {
                 return ;
             }
@@ -147,6 +146,6 @@ void Request::parseChunk() {
             } else {
                 return ;
             }
-        } 
+        }
     }
 }

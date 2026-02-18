@@ -15,7 +15,7 @@ namespace StatusCodes {
 	static const int TEMP_REDIRECT				= 307;
 	static const int PERM_REDIRECT				= 308;
 
-	static const int BAD_REQUEST				= 400;
+	static const int BAD_request				= 400;
 	static const int FORBIDDEN					= 403;
 	static const int NOT_FOUND					= 404;
 	static const int METHOD_NOT_ALLOWED			= 405; // pour HEAD specifiquement

@@ -133,7 +133,7 @@ void Request::methodPostHandler() {
         FilesPost temp;
         temp.filename = _postFilename;
         temp.location = _postUploadDir;
-        uplaodFiles.push_back(temp);
+        uploadFiles.push_back(temp);
 
     }
 }
@@ -304,8 +304,8 @@ bool Request::createFileName(const std::string &filename) {
 
 
 void Request::printFilename() const {
-    std::vector<FilesPost>::const_iterator it = uplaodFiles.begin();
-    for (; it != uplaodFiles.end(); it++) {
+    std::vector<FilesPost>::const_iterator it = uploadFiles.begin();
+    for (; it != uploadFiles.end(); it++) {
         Logger::debug("File was created with name : " + it->filename + " at location : " + it->location);
     }
 }
@@ -333,7 +333,7 @@ void Request::handleMultipart() {
                 FilesPost temp;
                 temp.filename = it->filename;
                 temp.location = _postUploadDir;
-                uplaodFiles.push_back(temp);
+                uploadFiles.push_back(temp);
                 _totalUpload++;
 
             } else {
@@ -386,7 +386,7 @@ void Request::handleMultipart() {
                 FilesPost temp;
                 temp.filename = _postFilename;
                 temp.location = _postUploadDir;
-                uplaodFiles.push_back(temp);
+                uploadFiles.push_back(temp);
                 _totalUpload++;
             }
 

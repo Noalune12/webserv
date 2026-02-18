@@ -40,7 +40,7 @@ void Request::clearPreviousRequest() {
     htmlPage.clear(), _headersStr.clear(), _requestLine.clear(), _body.clear(), headers.clear(), \
     chunk.clear(), trailing.clear(), scriptPath.clear(), queryString.clear(), _postExt.clear(), \
     _postFilename.clear(), _getPath.clear(), _multipartBoundary.clear(), _multipartContent.clear(), \
-    fullBody.clear(), method.clear(), uri.clear(), version.clear(), uplaodFiles.clear(), \
+    fullBody.clear(), method.clear(), uri.clear(), version.clear(), uploadFiles.clear(), \
     _multiTemp.headers.clear(), _multiTemp.body.clear(), _multiTemp.filename.clear(), _multiTemp.name.clear();
 }
 

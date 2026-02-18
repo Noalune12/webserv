@@ -44,13 +44,13 @@ make
 
 [Resources from this webserv's readme](https://github.com/cclaude42/webserv?tab=readme-ov-file)
 
+[HTTP Error descriptions](https://http.cat/)
+
 [CodeQuoi: Sockets and Network Programming in C](https://www.codequoi.com/en/sockets-and-network-programming-in-c/)
 
 [epoll madness](https://copyconstruct.medium.com/the-method-to-epolls-madness-d9d2d6378642)
 
 ### Dump
-
-[std::freopen](https://en.cppreference.com/w/cpp/io/c/freopen.html): ***std::freopen*** *is the only way to change the narrow/wide orientation of a stream once it has been established by an I/O operation or by std::fwide.*
 
 [Linux kernel coding style (formatting code ? maybe not really interesting for this project tho)](https://docs.kernel.org/process/coding-style.html)
 
@@ -61,8 +61,6 @@ make
 [HTTP Cookies Explained With a Simple Diagram](https://bytebytego.com/guides/http-cookies-explained-with-a-simple-diagram/)
 
 [Session Management notion introduction (read before next link)](https://mojoauth.com/blog/session-management-a-beginners-guide-for-web-developers#conclusion)
-
-[Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 
 ## AI Usage
 

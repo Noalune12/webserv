@@ -5,13 +5,14 @@
 # include "ServerManager.hpp"
 
 # define PROXY_AUTH_REQ 407
+# define CLIENT_TIMEOUT 5
+# define CGI_TIMEOUT 7
+# define DATA_MANAGEMENT_TIMEOUT 3
 
 class EventLoop {
 
 	private:
-		static const int    MAX_EVENTS = 1024;	// to be defined
-		static const time_t CLIENT_TIMEOUT = 5; // to be defined
-		static const time_t CGI_TIMEOUT = 5;	// to be defined
+		static const int    MAX_EVENTS = 1024;
 
 		int                         _epollFd;		// epoll instance
 		bool                        _running;		// Main loop control
@@ -19,7 +20,7 @@ class EventLoop {
 		std::map<int, Connection>   _connections;	// client socket fd, Connection object
 		std::map<int, int>          _pipeToClient;	// pipeFd, clientFd
 
-		CGIExecutor     _cgiExecutor;
+		CGIExecutor     cgiExecutor;
 
 		void	acceptConnection(int listenFd);
 		void	closeConnection(int clientFd);
@@ -60,8 +61,6 @@ class EventLoop {
 		bool	addToEpoll(int fd, uint32_t events);
 		bool	modifyEpoll(int fd, uint32_t events);
 		bool	removeFromEpoll(int fd);
-
-
 
 		bool				isRunning(void) const;
 		std::vector<int>	getAllClientFds(void) const;
