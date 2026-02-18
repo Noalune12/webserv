@@ -13,8 +13,11 @@
 
 static EventLoop*	g_eventLoop = NULL;
 
+static bool			g_running = true;
+
 void	signalHandler(int signum) {
 
+	g_running = false;
 	if (g_eventLoop) {
 		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
 	}
@@ -33,6 +36,7 @@ void	setupSignalHandlers(void) {
 }
 
 int	main(int ac, char **av) {
+	std::signal(SIGINT, signalHandler);
 
 	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
 
@@ -45,23 +49,29 @@ int	main(int ac, char **av) {
 	{
 		Logger::notice("loading configuration file from " + configFile);
 		Config	config(configFile);
-		Logger::notice("configuration loaded successfully");
-		Logger::notice("Server startup");
+
+		if (g_running == true) {
+			Logger::notice("configuration loaded successfully");
+			Logger::notice("Server startup");
+		}
 
 		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
-		serverManager.setupListenSockets();
+		if (g_running == true)
+			serverManager.setupListenSockets();
+
 
 		EventLoop	eventLoop(serverManager);
-		if (!eventLoop.init()) {
+		if (g_running == true && !eventLoop.init()) {
 			return (EXIT_FAILURE);
 		}
 
 		// ctrl+c only for now
 		g_eventLoop = &eventLoop;
-		setupSignalHandlers();
+		if (g_running == true)
+			eventLoop.run();
+		
 
-		eventLoop.run();
-
+		
 		/*
 			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
 			Faire en sorte que cette loop gere les events de facon asynchrone
