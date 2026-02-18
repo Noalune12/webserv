@@ -98,7 +98,7 @@ void	CGIExecutor::handleCGIWriteEvent(Connection& client, int clientFd, int pipe
 		client._request.err = true;
 		client._request.status = 502;
 		client.setState(SENDING_RESPONSE);
-		client.startTimer(4, 5);
+		client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 		loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
 		return ;
 	}
@@ -111,7 +111,7 @@ void	CGIExecutor::handleCGIWriteEvent(Connection& client, int clientFd, int pipe
 
 		if (written > 0) {
 			cgi.inputOffset += static_cast<size_t>(written);
-			client.startTimer(3, 5); // reset CGI timeout
+			client.startTimer(3, CGI_TIMEOUT); // reset CGI timeout
 
 			if (cgi.inputOffset >= cgi.inputBody.size()) {
 				transitionToReadingCGI(cgi, client, clientFd, loop);
@@ -122,7 +122,7 @@ void	CGIExecutor::handleCGIWriteEvent(Connection& client, int clientFd, int pipe
 			client._request.err = true;
 			client._request.status = 502;
 			client.setState(SENDING_RESPONSE);
-			client.startTimer(4, 5);
+			client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 			loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
 		}
 	}
@@ -140,7 +140,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		client._request.err = true;
 		client._request.status = 502;
 		client.setState(SENDING_RESPONSE);
-		client.startTimer(4, 5);
+		client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 		loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
 		return ;
 	}
@@ -149,7 +149,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 		ssize_t	bytesRead = readFromPipe(pipeFd, cgi.outputBuff);
 
 		if (bytesRead > 0) {
-			client.startTimer(3, 3); // CGI_TIMEOUT -> same here, define ?
+			client.startTimer(3, CGI_TIMEOUT); // CGI_TIMEOUT -> same here, define ?
 			// std::ostringstream	oss;
 			// oss << bytesRead;
 			// Logger::debug("CGI: read " + oss.str() + " bytes");
@@ -161,7 +161,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 
 			cleanup(cgi, loop);
 			client.setState(SENDING_RESPONSE);
-			client.startTimer(4, 5); // CLIENT_TIMEOUT
+			client.startTimer(4, DATA_MANAGEMENT_TIMEOUT); // CLIENT_TIMEOUT
 			loop.modifyEpoll(clientFd,  EPOLLIN | EPOLLOUT);
 			return ;
 		}
@@ -171,7 +171,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 			client._request.err = true;
 			client._request.status = 502;
 			client.setState(SENDING_RESPONSE);
-			client.startTimer(4, 5); // CLIENT_TIMEOUT
+			client.startTimer(4, DATA_MANAGEMENT_TIMEOUT); // CLIENT_TIMEOUT
 			loop.modifyEpoll(clientFd,  EPOLLIN | EPOLLOUT);
 			return ;
 		}
@@ -189,7 +189,7 @@ void	CGIExecutor::handlePipeEvent(Connection& client, int clientFd, int pipeFd, 
 
 		cleanup(cgi, loop);
 		client.setState(SENDING_RESPONSE);
-		client.startTimer(4, 5);
+		client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 		loop.modifyEpoll(clientFd,  EPOLLIN | EPOLLOUT);
 		return;
 	}
@@ -256,7 +256,7 @@ void	CGIExecutor::transitionToReadingCGI(CGIContext& cgi, Connection& client, in
 		client._request.err = true;
 		client._request.status = 500;
 		client.setState(SENDING_RESPONSE);
-		client.startTimer(4, 5);
+		client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 		loop.modifyEpoll(clientFd, EPOLLIN | EPOLLOUT);
 		return ;
 	}
@@ -264,7 +264,7 @@ void	CGIExecutor::transitionToReadingCGI(CGIContext& cgi, Connection& client, in
 	loop.registerPipe(cgi.pipeOut[0], clientFd);
 
 	client.setState(CGI_RUNNING);
-	client.startTimer(3, 5); // CGI_TIMEOUT
+	client.startTimer(3, CGI_TIMEOUT); // CGI_TIMEOUT
 }
 
 ssize_t	CGIExecutor::readFromPipe(int pipeFd, std::string& buffer) {

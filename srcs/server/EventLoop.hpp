@@ -5,13 +5,14 @@
 # include "ServerManager.hpp"
 
 # define PROXY_AUTH_REQ 407
+# define CLIENT_TIMEOUT 5
+# define CGI_TIMEOUT 7
+# define DATA_MANAGEMENT_TIMEOUT 3
 
 class EventLoop {
 
 	private:
-		static const int    MAX_EVENTS = 1024;	// to be defined
-		static const time_t CLIENT_TIMEOUT = 5; // to be defined
-		static const time_t CGI_TIMEOUT = 5;	// to be defined
+		static const int    MAX_EVENTS = 1024;
 
 		int                         _epollFd;		// epoll instance
 		bool                        _running;		// Main loop control

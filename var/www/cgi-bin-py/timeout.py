@@ -3,7 +3,7 @@ import sys
 import os
 import time
 
-time.sleep(8)
+time.sleep(10)
 body = sys.stdin.read()
 
 print("Content-Type: text/html")

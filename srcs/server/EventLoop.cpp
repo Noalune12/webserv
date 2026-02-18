@@ -192,7 +192,7 @@ void	EventLoop::handleCGIPipeEvent(int pipeFd, uint32_t ev) {
 void	EventLoop::handleIdle(Connection& client, int clientFd, uint32_t ev) {
 	(void) ev;
 	client.setState(READING_HEADERS);
-	client.startTimer(1, CLIENT_TIMEOUT);
+	client.startTimer(1, DATA_MANAGEMENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN);
 	Logger::debug("IDLE -> READING_HEADERS");
 }
@@ -368,7 +368,7 @@ void	EventLoop::transitionToIDLE(Connection& client, int clientFd) {
 
 void	EventLoop::transitionToReadingBody(Connection& client, int clientFd) {
 	client.setState(READING_BODY);
-	client.startTimer(2, CLIENT_TIMEOUT - 4); // need explaination on the -4
+	client.startTimer(2, DATA_MANAGEMENT_TIMEOUT); // need explaination on the -4
 	modifyEpoll(clientFd, EPOLLIN);
 	Logger::debug("-> READING_BODY (chunked)");
 }
@@ -392,7 +392,7 @@ void	EventLoop::transitionToCGI(Connection& client, int clientFd) {
 
 void	EventLoop::transitionToSendingResponse(Connection& client, int clientFd) {
 	client.setState(SENDING_RESPONSE);
-	client.startTimer(4, CLIENT_TIMEOUT);
+	client.startTimer(4, DATA_MANAGEMENT_TIMEOUT);
 	modifyEpoll(clientFd, EPOLLIN | EPOLLOUT); // both EPOLLIN and EPOLLOUT here to make sure no new incoming data will not wake the event loop because EPOLLIN is no longer set on the socket.
 	Logger::debug("-> SENDING_RESPONSE");
 }
