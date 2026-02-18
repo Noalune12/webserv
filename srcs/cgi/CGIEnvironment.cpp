@@ -21,7 +21,7 @@ std::vector<std::string>	CGIExecutor::buildEnvironmentStrings(const Connection& 
 	envStrings.push_back(buildEnvVar("REQUEST_METHOD", client._request._method));
 	envStrings.push_back(buildEnvVar("QUERY_STRING", qstring));
 	envStrings.push_back(buildEnvVar("SCRIPT_FILENAME", client._request._scriptPath));
-	envStrings.push_back(buildEnvVar("SCRIPT_NAME", script_name));
+	envStrings.push_back(buildEnvVar("SCRIPT_NAME", client._request._uri + script_name));
 	envStrings.push_back(buildEnvVar("SERVER_PROTOCOL", std::string("HTTP/") + client._request._version));
 	envStrings.push_back(buildEnvVar("GATEWAY_INTERFACE", "CGI/1.1"));
 	envStrings.push_back(buildEnvVar("REDIRECT_STATUS", "200"));
