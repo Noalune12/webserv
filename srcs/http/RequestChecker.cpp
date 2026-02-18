@@ -133,10 +133,13 @@ bool Request::hostChecker() {
 void Request::checkRequestContent() {
 
     std::map<std::string, std::string>::iterator it = headers.find("connection");
-    if (it == headers.end() || it->second == "close")
+    if (it == headers.end()) {
+        keepAlive = (version == "1.1");
+    } else if (it->second == "close") {
         keepAlive = false;
-    else if (it->second == "keep-alive")
+    } else if (it->second == "keep-alive") {
         keepAlive = true;
+    }
     else {
         findErrorPage(400, "/", _globalDir.errPage);
         Logger::warn("Headers: Connection not well defined");
