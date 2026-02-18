@@ -63,15 +63,13 @@ void	ServerManager::setupListenSockets(void) {
 		std::cerr << RED << "Not a single socket has been created." << RESET << std::endl;
 		return ;
 	}
-	// prettier debug
-	// printEndpoints(); // call to Logger in the loop above is enough
+	printEndpoints();
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
 
 	int	socketFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketFd < 0) {
-		// throw error instead ?
 		Logger::error("socket() failed: " + std::string(std::strerror(errno)));
 		return (-1);
 	}
