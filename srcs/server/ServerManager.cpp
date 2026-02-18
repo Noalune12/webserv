@@ -65,7 +65,6 @@ void	ServerManager::setupListenSockets(void) {
 		Logger::error("not a single socket has been created.");
 		return ;
 	}
-	printEndpoints();
 }
 
 int	ServerManager::createListenSocket(const std::string& address, int port) {
