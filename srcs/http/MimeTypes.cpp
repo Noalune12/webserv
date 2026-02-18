@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 
+#include "Logger.hpp"
 #include "MimeTypes.hpp"
 
 std::map<std::string, std::string>	MimeTypes::_types;
@@ -125,7 +126,8 @@ bool	MimeTypes::load(const std::string& filepath) {
 	// not decided yet on how to log that
 	std::ifstream file(filepath.c_str(), std::ios::binary);
 	if (!file.is_open()) {
-		std::cerr << "MimeTypes: failed to open " << filepath << std::endl;
+		Logger::error("MimeTypes: failed to open: " + filepath);
+
 		return (false);
 	}
 
