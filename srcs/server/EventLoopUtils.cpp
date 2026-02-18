@@ -3,15 +3,6 @@
 
 #include "EventLoop.hpp"
 
-void printWithoutR(std::string what, std::string line) {
-    std::string l;
-    for (size_t i = 0; i < line.size(); i++) {
-        if (line[i] != '\r')
-            l.push_back(line[i]);
-    }
-    std::cout << what <<" = \'" << l << "\' -" << std::endl;
-}
-
 void	EventLoop::getClientInfo(struct sockaddr_in& addr, std::string& ip, int& port) {
 
 	uint32_t ip_host = ntohl(addr.sin_addr.s_addr);
@@ -31,10 +22,6 @@ void	EventLoop::stop(void) {
 
 bool	EventLoop::isRunning(void) const {
 	return (_running);
-}
-
-size_t	EventLoop::getConnectionCount(void) const {
-	return (_connections.size());
 }
 
 std::vector<int>	EventLoop::getListenSocketFds(void) const {

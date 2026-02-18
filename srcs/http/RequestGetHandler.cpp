@@ -12,23 +12,23 @@ void Request::methodGetHandler() {
 
     Logger::debug("Entering Get Handler");
 
-    if (!_reqLocation->root.empty() && !_trailing.empty()) {
-        _getPath = getPath(_reqLocation->root + _uri, _trailing);
-    } else if (!_reqLocation->root.empty() && _trailing.empty()) {
-        _getPath = getPath(_reqLocation->root + _uri);
-    } else if (!_reqLocation->alias.empty() && !_trailing.empty()) {
-        _getPath = getPath(_reqLocation->alias, _trailing);
-    } else if (!_reqLocation->alias.empty() && _trailing.empty()) {
-        _getPath = getPath(_reqLocation->alias);
+    if (!reqLocation->root.empty() && !trailing.empty()) {
+        _getPath = getPath(reqLocation->root + uri, trailing);
+    } else if (!reqLocation->root.empty() && trailing.empty()) {
+        _getPath = getPath(reqLocation->root + uri);
+    } else if (!reqLocation->alias.empty() && !trailing.empty()) {
+        _getPath = getPath(reqLocation->alias, trailing);
+    } else if (!reqLocation->alias.empty() && trailing.empty()) {
+        _getPath = getPath(reqLocation->alias);
     }
 
     Logger::debug("Get: Path is " + _getPath);
 
-    std::vector<std::string>::iterator itIndex = _reqLocation->index.begin();
+    std::vector<std::string>::iterator itIndex = reqLocation->index.begin();
 
     struct stat buf;
     if (stat(_getPath.c_str(), &buf) == 0) {
-        if (_trailing.empty()) {
+        if (trailing.empty()) {
 
             // Case 1: no trailing and path is a folder -> need to get the index
 
@@ -37,17 +37,17 @@ void Request::methodGetHandler() {
                 Logger::debug("Get: No trailing and is a directory");
 
                 if (access(_getPath.c_str(), R_OK | X_OK) != 0) {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty()) {
+                        findErrorPage(403, reqLocation->root, reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(403, reqLocation->alias, reqLocation->errPage);
                     }
                     Logger::warn("Get: no right on folder");
                     return ;
                 }
 
-                for (; itIndex != _reqLocation->index.end() ; itIndex++) {
+                for (; itIndex != reqLocation->index.end() ; itIndex++) {
                     std::string path = getPath(_getPath, *itIndex);
 
                     struct stat st;
@@ -60,29 +60,29 @@ void Request::methodGetHandler() {
 
                 if (err == true && _indexFound == true)
                     return;
-                else if (_reqLocation->autoIndex == true) {
+                else if (reqLocation->autoIndex == true) {
                     if (!handleAutoindex(_getPath))
                         return ;
                     err = false;
                     status = 200;
                     return;
                 } else {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty()) {
+                        findErrorPage(403, reqLocation->root, reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(403, reqLocation->alias, reqLocation->errPage);
                     }
                     Logger::warn("Get: no file found");
                     return ;
                 }
 
             } else {
-                if (!_reqLocation->root.empty()) {
-                    findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                if (!reqLocation->root.empty()) {
+                    findErrorPage(403, reqLocation->root, reqLocation->errPage);
                 }
                 else {
-                    findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(403, reqLocation->alias, reqLocation->errPage);
                 }
                 Logger::warn("Get: Path is not a folder (with trailing)");
                 return ;
@@ -96,17 +96,17 @@ void Request::methodGetHandler() {
                 Logger::debug("Get: Trailing and is a directory");
 
                 if (access(_getPath.c_str(), R_OK | X_OK) != 0) {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty()) {
+                        findErrorPage(403, reqLocation->root, reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(403, reqLocation->alias, reqLocation->errPage);
                     }
                     Logger::warn("Get: no right on folder");
                     return ;
                 }
 
-                for (; itIndex != _reqLocation->index.end() ; itIndex++) {
+                for (; itIndex != reqLocation->index.end() ; itIndex++) {
                     std::string path = getPath(_getPath, *itIndex);
 
                     struct stat st;
@@ -119,18 +119,18 @@ void Request::methodGetHandler() {
 
                 if (err == true && _indexFound == true)
                     return;
-                else if (_reqLocation->autoIndex == true) {
+                else if (reqLocation->autoIndex == true) {
                     if (!handleAutoindex(_getPath))
                         return ;
                     err = false;
                     status = 200;
                     return;
                 } else {
-                    if (!_reqLocation->root.empty()) {
-                        findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+                    if (!reqLocation->root.empty()) {
+                        findErrorPage(403, reqLocation->root, reqLocation->errPage);
                     }
                     else {
-                        findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+                        findErrorPage(403, reqLocation->alias, reqLocation->errPage);
                     }
                     Logger::warn("Get: no file found");
                     return ;
@@ -148,22 +148,22 @@ void Request::methodGetHandler() {
             }
         }
 
-    } else if (_trailing.empty()) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+    } else if (trailing.empty()) {
+        if (!reqLocation->root.empty()) {
+            findErrorPage(403, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(403, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get: path non existing (no trailing)");
         return ;
 
-    } else if (!_trailing.empty()) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(404, _reqLocation->root, _reqLocation->errPage);
+    } else if (!trailing.empty()) {
+        if (!reqLocation->root.empty()) {
+            findErrorPage(404, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(404, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(404, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get: path non existing (trailing)");
         return ;
@@ -175,10 +175,10 @@ std::string Request::getPath(const std::string& folder) {
 
     std::string path;
 
-    if (folder[folder.size() - 1] != '/' && !_trailing.empty())
-        path = folder + "/" + _trailing;
+    if (folder[folder.size() - 1] != '/' && !trailing.empty())
+        path = folder + "/" + trailing;
     else
-        path = folder + _trailing;
+        path = folder + trailing;
 
     if (path[0] == '/')
         path = path.substr(1, path.size());
@@ -207,35 +207,35 @@ bool Request::readFile(const std::string& path, struct stat buf) {
 
 
     if (!S_ISREG(buf.st_mode)) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(403, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(403, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get: File " + path + "is not regular");
         return false;
     }
 
     if (access(path.c_str(), R_OK) != 0) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(403, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(403, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get: no rights on file " + path);
         return false;
     }
 
     if (buf.st_mode & S_IRUSR) {
-        std::ifstream file(path.c_str());
+        std::ifstream file(path.c_str(), std::ios::binary);
         if (!file.is_open()) {
-            if (!_reqLocation->root.empty()) {
-                findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) {
+                findErrorPage(500, reqLocation->root, reqLocation->errPage);
             }
             else {
-                findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(500, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Could not open file: " + path);
             return false;
@@ -248,11 +248,11 @@ bool Request::readFile(const std::string& path, struct stat buf) {
         status = 200;
         return true;
     } else {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(403, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(403, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get: no rights on file " + path);
         _indexFound = true;
@@ -265,18 +265,18 @@ bool Request::handleAutoindex(const std::string& dirPath) {
     Logger::debug("Handling Autodindex");
 
     if (access(dirPath.c_str(), R_OK | X_OK) != 0) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(403, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(403, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(403, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(403, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get(autoindex): no rights on directory " + dirPath);
         return false;
     }
 
 
-    std::string path = _reqLocation->path + _trailing;
+    std::string path = reqLocation->path + trailing;
     if (path[path.size() - 1] == '/')
         path = path.substr(0, path.size() - 1);
     htmlPage =
@@ -304,7 +304,7 @@ bool Request::handleAutoindex(const std::string& dirPath) {
 		"}\n"
         ".file-link {\n"
         "   font-size: 1rem;\n"
-		"	line-height: 2;\n" 
+		"	line-height: 2;\n"
         "   color: #000000;\n"
         "   transition: transform 0.2s ease;"
         "}\n"
@@ -317,11 +317,11 @@ bool Request::handleAutoindex(const std::string& dirPath) {
 
     DIR* dir = opendir(dirPath.c_str());
     if (dir == NULL) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(500, _reqLocation->root, _reqLocation->errPage);
+        if (!reqLocation->root.empty()) {
+            findErrorPage(500, reqLocation->root, reqLocation->errPage);
         }
         else {
-            findErrorPage(500, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(500, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Get(autoindex): opendir failed");
         return false;
@@ -342,21 +342,21 @@ bool Request::handleAutoindex(const std::string& dirPath) {
             fullPath = dirPath + "/" + name;
         else
             fullPath = dirPath + name;
-        
+
         struct stat st;
 
         if (stat(fullPath.c_str(), &st) == 0 ) {
 
             if (S_ISDIR(st.st_mode) && access(fullPath.c_str(), R_OK | X_OK) == 0) {
-    
+
                 Logger::debug("Get (autoindex): Folder " + fullPath);
                 htmlPage += "<span class=\"icon\">📁</span> <a href=\"" + path + "/" + name + "/\" class=\"file-link\">" + name + "</a><br>\n";
-    
+
             } else if (S_ISREG(st.st_mode) && access(fullPath.c_str(), R_OK) == 0) {
-                
+
                 Logger::debug("Get (autoindex): File " + fullPath);
                 htmlPage += "<span class=\"icon\">📄</span> <a href=\"" + path + "/" + name + "\" class=\"file-link\"> " + name + "</a><br>\n";
-    
+
             }
 
         }

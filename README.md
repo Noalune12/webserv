@@ -38,11 +38,15 @@ make
 
 [RFC 9112 (Updated version from 2022 of RFC 2616)](https://www.rfc-editor.org/rfc/rfc9112.html)
 
+[Beej's Guide to Network Programming](https://beej.us/guide/bgnet/html/)
+
 [Important Things About HTTP Headers](https://bytebytego.com/guides/important-things-about-http-headers-you-may-not-know/)
 
-[good resources in this webserv's readme](https://github.com/cclaude42/webserv?tab=readme-ov-file)
+[Resources from this webserv's readme](https://github.com/cclaude42/webserv?tab=readme-ov-file)
 
 [CodeQuoi: Sockets and Network Programming in C](https://www.codequoi.com/en/sockets-and-network-programming-in-c/)
+
+[epoll madness](https://copyconstruct.medium.com/the-method-to-epolls-madness-d9d2d6378642)
 
 ### Dump
 

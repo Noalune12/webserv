@@ -1,20 +1,21 @@
+#include <csignal>
 #include <cstdlib>
 #include <iostream>
-#include <csignal>
 #include <sstream>
 
-#include "colors.hpp"
 #include "Config.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
-#include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
 
 static EventLoop*	g_eventLoop = NULL;
 
+static bool			g_running = true;
+
 void	signalHandler(int signum) {
 
+	g_running = false;
 	if (g_eventLoop) {
 		g_eventLoop->stop(); // nothing else, our destructors will manage the ressources release
 	}
@@ -27,14 +28,11 @@ void	signalHandler(int signum) {
 	Logger::notice("shutting down...");
 }
 
-// add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
-void	setupSignalHandlers(void) {
-	signal(SIGINT, signalHandler);
-}
-
 int	main(int ac, char **av) {
+	std::signal(SIGINT, signalHandler);
+  std::signal(SIGPIPE, SIG_IGN);
 
-	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE; // not sure this would work in every case, leaving comments below as backup
+	const static std::string	configFile = (ac > 1) ? av[1] : DEFAULT_CONFIGURATION_FILE;
 
 	if (ac > 2) {
 		std::cerr << "error message for too many arguments, cerr or logging it like nginx ?" << std::endl;
@@ -45,33 +43,25 @@ int	main(int ac, char **av) {
 	{
 		Logger::notice("loading configuration file from " + configFile);
 		Config	config(configFile);
-		Logger::notice("configuration loaded successfully");
-		Logger::notice("Server startup");
+
+		if (g_running == true) {
+			Logger::notice("configuration loaded successfully");
+			Logger::notice("Server startup");
+		}
 
 		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
-		serverManager.setupListenSockets();
+		if (g_running == true)
+			serverManager.setupListenSockets();
+
 
 		EventLoop	eventLoop(serverManager);
-		if (!eventLoop.init()) {
+		if (g_running == true && !eventLoop.init()) {
 			return (EXIT_FAILURE);
 		}
 
-		// ctrl+c only for now
 		g_eventLoop = &eventLoop;
-		setupSignalHandlers();
-
-		eventLoop.run();
-
-		/*
-			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
-			Faire en sorte que cette loop gere les events de facon asynchrone
-
-			Ecoute en continue -> execution asynchrone des methodes,
-			De maniere a faire en sorte que les requetes soient non bloquantes
-
-			methode qui se termine -> retour a l'event loop (je sais plus pourquoi j'ai écris ca je comprend plus lol)
-
-		*/
+		if (g_running == true)
+			eventLoop.run();
 	}
 	catch(const std::exception& e)
 	{

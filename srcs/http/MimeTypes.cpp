@@ -123,7 +123,7 @@ void	MimeTypes::parseLine(const std::string& line) {
 bool	MimeTypes::load(const std::string& filepath) {
 
 	// not decided yet on how to log that
-	std::ifstream file(filepath.c_str());
+	std::ifstream file(filepath.c_str(), std::ios::binary);
 	if (!file.is_open()) {
 		std::cerr << "MimeTypes: failed to open " << filepath << std::endl;
 		return (false);
