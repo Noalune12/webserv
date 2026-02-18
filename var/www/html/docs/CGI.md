@@ -1,262 +1,94 @@
 # CGI (Common Gateway Interface)
 
 ### Qu'est-ce qu'un CGI ?
+### What is a CGI ?
 
-- **CGI (Common Gateway Interface)**: Interface standard permettant à un serveur web d'exécuter des programmes externes pour générer du contenu dynamique
-  - Définit comment le serveur communique avec des scripts/programmes externes
-  - Permet d'exécuter du code dans n'importe quel langage (PHP, Python, etc.)
-  - Le programme CGI génère une réponse HTTP que le serveur renvoie au client
+- **CGI (Common Gateway Interface)**: An standardized interface allowing a webserver to execute programs to generate dynamic content.
+  - Defines how the server communicates with external scripts/programs.
+  - Allows execution of code in any languages (PHP, Python, etc...)
+  - The CGI program generate an HTTP response that the server sends to the client
 
-- **Fonctionnement général**:
+- **Global behavior**:
 ```
-  1. Client envoie requête → Serveur Web
-  2. Serveur identifie que c'est un CGI (extension .php, .py, etc.)
-  3. Serveur lance le programme CGI dans un nouveau processus (fork + execve)
-  4. Serveur passe les données de la requête via variables d'environnement et stdin
-  5. Programme CGI traite la requête
-  6. Programme CGI écrit la réponse sur stdout
-  7. Serveur lit stdout du CGI
-  8. Serveur renvoie la réponse au client
+  1. Clients sends a request → Webserver
+  2. Server identified it as a CGI (with the file extension)
+  3. Server launches the CGI program in a new processus (fork + execve)
+  4. Server gives the data of the request via environment variables via stdin
+  5. CGI handles the request
+  6. CGI program output is written to the stdout
+  7. Server reads the stdout of the CGI
+  8. Sends the read output of the CGI to the client as a response
 ```
 
 ### cgi_path
 
-- `cgi_path`: Définit le chemin vers l'interpréteur CGI à utiliser pour exécuter les scripts
-  - Syntaxe: `cgi_path /path/to/interpreter;`
+- `cgi_path`: Defines the path to the CGI interpretor to use for the script execution
+- Syntax: `cgi_path /path/to/interpretor;`
   - Exemples:
-    - `cgi_path /usr/bin/php-cgi;` - Pour PHP
-    - `cgi_path /usr/bin/python3;` - Pour Python
-    - `cgi_path /usr/bin/perl;` - Pour Perl
+    - `cgi_path /usr/bin/php-cgi;` - PHP
+    - `cgi_path /usr/bin/python3;` - Python
 
-- **Important pour le sujet**: "Your server should support at least one CGI (php-CGI, Python, and so forth)"
-
-- Cette directive indique au serveur:
-  - Quel programme lancer pour exécuter le script
-  - Le chemin doit être absolu et pointer vers un exécutable valide
+- This directive tells the server:
+  - Which program use to execute the script
+  - The path that has to be absolute and point to a valid executable
 
 ### cgi_ext (extension matching)
 
-- `cgi_ext`: Définit l'extension de fichier qui déclenche l'exécution via CGI
+- `cgi_ext`: Defines the CGI extension type
   - Syntaxe: `cgi_ext .extension;`
   - Exemples:
-    - `cgi_ext .php;` - Tous les fichiers .php seront traités comme CGI
-    - `cgi_ext .py;` - Tous les fichiers .py seront traités comme CGI
-    - `cgi_ext .cgi;` - Extension générique pour scripts CGI
+    - `cgi_ext .php;`
+    - `cgi_ext .py;`
 
-- **Fonctionnement**:
+- **Functioning**:
 ```nginxconf
   location /scripts {
       cgi_path /usr/bin/python3;
       cgi_ext .py;
       root /var/www;
   }
-  # Requête: GET /scripts/hello.py
-  # → Exécute: /usr/bin/python3 /var/www/scripts/hello.py
-
-  # Requête: GET /scripts/style.css
-  # → Sert normalement (pas d'extension .py)
+  # Request: GET /scripts/hello.py
+  # → Executes: /usr/bin/python3 /var/www/scripts/hello.py
 ```
 
-- Le serveur compare l'extension du fichier demandé avec `cgi_ext`
-- Si match: traitement CGI
-- Sinon: traitement comme fichier statique normal
+- The server compares the file extension type to the `cgi_ext`
+- If it matches, the CGI gets executed
 
-### Variables d'environnement CGI (environnement variables)
+### Environment variables
 
-- **Variables d'environnement**: Le serveur doit passer les informations de la requête au CGI via des variables d'environnement
+- The server has to give informations of the request to the CGI via environment variables
 
-- **Variables CGI standard (obligatoires selon RFC 3875)**:
+- **Standard variables for CGI (RFC 3875)**:
 
   | Variable | Description | Exemple |
   |----------|-------------|---------|
-  | `REQUEST_METHOD` | Méthode HTTP | `GET`, `POST`, `DELETE` |
-  | `QUERY_STRING` | Paramètres après ? dans l'URL | `id=123&name=test` |
-  | `CONTENT_TYPE` | Type MIME du body | `application/x-www-form-urlencoded` |
-  | `CONTENT_LENGTH` | Taille du body en octets | `1234` |
-  | `SCRIPT_NAME` | Chemin URI du script | `/cgi-bin/script.py` |
-  | `SCRIPT_FILENAME` | Chemin absolu du script | `/var/www/cgi-bin/script.py` |
-  | `PATH_INFO` | Info de chemin supplémentaire | `/extra/path` |
-  | `PATH_TRANSLATED` | PATH_INFO traduit en chemin filesystem | `/var/www/extra/path` |
-  | `SERVER_NAME` | Nom du serveur | `example.com` |
-  | `SERVER_PORT` | Port du serveur | `8080` |
-  | `SERVER_PROTOCOL` | Protocole HTTP | `HTTP/1.1` |
-  | `SERVER_SOFTWARE` | Nom du serveur | `webserv/1.0` |
-  | `GATEWAY_INTERFACE` | Version CGI | `CGI/1.1` |
-  | `REMOTE_ADDR` | IP du client | `192.168.1.10` |
-  | `REMOTE_HOST` | Hostname du client (si résolu) | `client.example.com` |
-  | `AUTH_TYPE` | Type d'authentification | `Basic` |
-  | `REMOTE_USER` | Utilisateur authentifié | `john` |
+  | `REQUEST_METHOD` | HTTP Method | `GET`, `POST`, `DELETE` |
+  | `QUERY_STRING` | Parameters after the first ? in a URL | `id=123&name=test` |
+  | `CONTENT_TYPE` | MIME type of the body | `application/x-www-form-urlencoded` |
+  | `CONTENT_LENGTH` | Body size in bytes | `1234` |
+  | `SCRIPT_NAME` | URI Path to the script | `/cgi-bin/script.py` |
+  | `SCRIPT_FILENAME` | Absolute path to the script | `/var/www/cgi-bin/script.py` |
+  | `PATH_INFO` | Extra information about the path | `/extra/path` |
+  | `PATH_TRANSLATED` | PATH_INFO translated in filesystem path | `/var/www/extra/path` |
+  | `SERVER_NAME` | Server name | `example.com` |
+  | `SERVER_PORT` | Server port | `8080` |
+  | `SERVER_PROTOCOL` | HTTP Protocol | `HTTP/1.1` |
+  | `SERVER_SOFTWARE` | Server given name | `webserv/1.0` |
+  | `GATEWAY_INTERFACE` | CGI version | `CGI/1.1` |
+  | `REMOTE_ADDR` | Client IP | `192.168.1.10` |
+  | `REMOTE_HOST` | Client Hostname (if resolved) | `client.example.com` |
 
-***Il y en a plusieurs qui ne sont pas réellement obligatoire pour webserv, j'enlèverai plus tard celles qu'on décide de ne pas exporter***
+***Some of them are not required for webserv***
 
-- **Variables HTTP headers**: Tous les headers HTTP doivent être passés avec le préfixe `HTTP_`
-  - Header `User-Agent: Mozilla/5.0` → Variable `HTTP_USER_AGENT=Mozilla/5.0`
-  - Header `Accept: text/html` → Variable `HTTP_ACCEPT=text/html`
-  - Header `Cookie: session=abc123` → Variable `HTTP_COOKIE=session=abc123`
-  - Les tirets `-` sont remplacés par underscores `_`
-  - Tout est en majuscules
-
-- **Exemple complet de variables d'environnement, avec celles que nous ne gérerons pas**:
-```
-  Requête:
-  POST /cgi-bin/form.php?debug=1 HTTP/1.1
-  Host: example.com
-  Content-Type: application/x-www-form-urlencoded
-  Content-Length: 27
-  User-Agent: Mozilla/5.0
-
-  name=John&email=john@example.com
-
-  Variables d'environnement passées au CGI:
-  REQUEST_METHOD=POST
-  QUERY_STRING=debug=1
-  CONTENT_TYPE=application/x-www-form-urlencoded
-  CONTENT_LENGTH=27
-  SCRIPT_NAME=/cgi-bin/form.php
-  SCRIPT_FILENAME=/var/www/cgi-bin/form.php
-  SERVER_NAME=example.com
-  SERVER_PORT=80
-  SERVER_PROTOCOL=HTTP/1.1
-  GATEWAY_INTERFACE=CGI/1.1
-  HTTP_HOST=example.com
-  HTTP_USER_AGENT=Mozilla/5.0
-```
-
-- ⚠️*TODO* **Exemple complet de variables d'environnement pour webserv**:
-
-### Passage des données au CGI
-
-- **Note du sujet**: "The full request and arguments provided by the client must be available to the CGI"
-
-- **Méthode GET**:
-  - Arguments dans `QUERY_STRING`
-  - Pas de body
-  - Exemple: `/script.py?name=John&age=30` → `QUERY_STRING=name=John&age=30`
-
-- **Méthode POST**:
-  - Arguments dans le body de la requête
-  - Passer le body via **stdin** du processus CGI
-  - Le CGI lit depuis stdin jusqu'à `CONTENT_LENGTH` octets
-
-- **Gestion du chunked transfer encoding (besoin de faire plus de recherches la dessus)**:
-  - **Note du sujet**: "For chunked requests, your server needs to un-chunk them, the CGI will expect EOF as the end of the body"
-  - Si la requête arrive en chunks (`Transfer-Encoding: chunked`):
-    1. Le serveur doit d'abord décoder tous les chunks
-    2. Reconstituer le body complet
-    3. Passer le body complet au CGI via stdin
-    4. Fermer stdin (envoyer EOF) pour signaler la fin
-  - Le CGI ne doit jamais voir les chunks, seulement les données décodées
-
-### Lecture de la réponse CGI
-
-- **Format de la réponse CGI**: Le CGI écrit sur stdout une réponse qui peut être:
-  1. **Document avec headers** (le plus courant):
-```
-     Content-Type: text/html
-
-     <html>
-     <body>Hello World</body>
-     </html>
-```
-
-  2. **Redirection**:
-```
-     Status: 302 Found
-     Location: http://example.com/new-page
-```
-
-  3. **Headers personnalisés**:
-```
-     Content-Type: application/json
-     Cache-Control: no-cache
-     X-Custom-Header: value
-
-     {"result": "success"}
-```
-
-- **Traitement par le serveur**:
-  1. Lire stdout du processus CGI
-  2. Parser les headers (jusqu'à ligne vide `\r\n\r\n` ou `\n\n`)
-  3. Si header `Status:` présent: utiliser ce code de statut
-  4. Sinon: utiliser 200 OK par défaut
-  5. Transmettre les headers du CGI au client
-  6. Transmettre le body du CGI au client
-
-- **Note du sujet**: "If no content_length is returned from the CGI, EOF will mark the end of the returned data"
-  - Le serveur doit lire stdout jusqu'à EOF (fermeture du pipe)
-  - Deux cas:
-    1. CGI envoie `Content-Length:` → Le serveur sait combien d'octets lire
-    2. CGI n'envoie pas `Content-Length:` → Lire jusqu'à EOF
-  - Dans le cas 2, le serveur peut:
-    - Utiliser `Transfer-Encoding: chunked` pour envoyer au client
-    - Ou lire tout en mémoire puis envoyer avec Content-Length calculé
-
-### Exemple de configuration CGI complète
-```nginxconf
-server {
-    listen 8080;
-    server_name localhost;
-    root /var/www;
-
-    # Scripts Python
-    location /python {
-        cgi_path /usr/bin/python3;
-        cgi_ext .py;
-        allow_methods GET POST;
-    }
-
-    # Scripts PHP
-    location /php {
-        cgi_path /usr/bin/php-cgi;
-        cgi_ext .php;
-        allow_methods GET POST;
-    }
-
-    # CGI génériques
-    location /cgi-bin {
-        cgi_path /usr/bin/python3;
-        cgi_ext .cgi;
-        allow_methods GET POST DELETE;
-    }
-}
-```
-
-### Points de vigilance pour le projet
-
-1. **Sécurité**:
-   - Valider le chemin du script (éviter directory traversal: `../../../etc/passwd`)
-   - Ne jamais passer des données utilisateur non validées aux variables d'environnement
-   - Limiter les CGI à des répertoires spécifiques
-
-2. **Performance**:
-   - Chaque requête CGI crée un nouveau processus (coûteux)
-   - Pour le projet, c'est acceptable (pas de FastCGI requis)
-   - Mais important de bien nettoyer les processus (waitpid, close pipes)
-
-3. **Robustesse**:
-   - Gérer les cas où le CGI ne se termine jamais (timeout)
-   - Gérer les cas où le CGI produit trop de données (limiter la lecture)
-   - Gérer les signaux (SIGPIPE si le client se déconnecte)
-
-4. **Conformité au sujet**:
-   - ✅ Supporter au moins un CGI (PHP ou Python)
-   - ✅ Passer la requête complète et les arguments
-   - ✅ Gérer les requêtes chunked (un-chunk avant de passer au CGI)
-   - ✅ Gérer l'absence de Content-Length (lire jusqu'à EOF)
-   - ✅ Exécuter dans le bon répertoire
-   - ✅ Utiliser fork() uniquement pour CGI (interdit ailleurs)
+- **HTTP headers variables**: Every HTTP headers have to be given to the CGI with the prefix `HTTP_`
 
 ### Ressources et RFC
 
+- [RFC](https://www.ietf.org/rfc/rfc3875.txt)
+- [Unsing environment variables](https://www.oreilly.com/openbook/cgi/ch02_02.html)
+- [IBM environment variables details](https://www.ibm.com/docs/fr/netcoolomnibus/8.1.0?topic=scripts-environment-variables-in-cgi-script)
+
 - **RFC 3875**: The Common Gateway Interface (CGI) Version 1.1
-  - Définit le standard CGI complet
-  - Liste toutes les variables d'environnement obligatoires
-  - Spécifie le format des réponses CGI
-
-- **Différences CGI vs FastCGI**:
-  - CGI: Nouveau processus à chaque requête (lent mais simple)
-  - Pour webserv: CGI suffit
-
-
-
-⚠️ **J'ai des notes sur le coté sur l'implémentation que je rajouterai plus tard.** Besoin de faire plus de recherches.
+  - Defines the complete CGI standard
+  - List all the mandatory environment variables
+  - Speficy the CGI response format
