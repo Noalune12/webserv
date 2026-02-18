@@ -96,7 +96,9 @@ void	EventLoop::acceptConnection(int listenFd) {
 	int clientFd = accept(listenFd, (struct sockaddr*)&clientAddr, &addrLen);
 	if (clientFd < 0) {
 		if (errno != EAGAIN && errno != EWOULDBLOCK) { // if one of those appear then we do not consider it an error, not printing anything
-			std::cerr << "accept() failed on fd[" << listenFd << "]: " << strerror(errno) << std::endl;
+			std::ostringstream oss;
+			oss << "accept() failed on fd[" << listenFd << "]: " << strerror(errno);
+			Logger::error(oss.str());
 		}
 		return ;
 	}
@@ -418,6 +420,7 @@ bool	EventLoop::checkTimeout(Connection& client, int clientFd) {
 
 	int	timerIdx = getActiveTimer(client.getState());
 	if (timerIdx >= 0 && client.isTimedOut(timerIdx)) {
+		Logger::warn("Timeout");
 		// if client is in IDLE mode, do not send anything just close,
 		closeConnection(clientFd);
 		return (true);
