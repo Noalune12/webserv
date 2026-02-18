@@ -135,11 +135,6 @@ Duplicate occurrences result in a `400 Bad Request`.
 * Identifies the client making the request.
 * Not required, but useful for logging and debugging.
 
-##### Accept ?????
-
-* Indicates which response formats the client can handle.
-* Helps the server decide the response content type.
-
 ---
 
 #### Server Processing Logic
@@ -399,8 +394,7 @@ Trailing slashes are preserved and affect directory handling.
 
   * Check if `filename` is present
   * If filename already exists:
-
-    * ???
+    * Create a specific filename
   * Create the file in the target location
 
 ---
