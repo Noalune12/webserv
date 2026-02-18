@@ -317,7 +317,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 			client._cgi.outputBuff.clear();
 		} else {
 			if (client._request.err && client._request._reqLocation)
-				client._request.findErrorPage(client._request.status, client._request._reqLocation->root, client._request._reqLocation->errPage);
+				client._request.findErrorPage(client._request.status, client._request._reqLocation->root.empty() ? client._request._reqLocation->alias : client._request._reqLocation->root, client._request._reqLocation->errPage);
 			response.buildFromRequest(client._request);
 		}
 
@@ -340,7 +340,6 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 	client._sendOffset += bytesSent;
 
 	if (client._sendOffset < client._sendBuffer.size()) {
-		// client.setState(SENDING_RESPONSE);
 		client.startTimer(4, 5);
 		return ;
 
