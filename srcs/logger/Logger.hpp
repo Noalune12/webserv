@@ -2,7 +2,6 @@
 # define LOGGER_HPP
 
 # include <cstddef>
-# include <iostream>
 
 # define ENABLE true
 # define DISABLE false

@@ -1,13 +1,11 @@
+#include <csignal>
 #include <cstdlib>
 #include <iostream>
-#include <csignal>
 #include <sstream>
 
-#include "colors.hpp"
 #include "Config.hpp"
 #include "EventLoop.hpp"
 #include "Logger.hpp"
-#include "ServerManager.hpp"
 
 #define DEFAULT_CONFIGURATION_FILE "config-files/default.conf"
 
@@ -27,9 +25,9 @@ void	signalHandler(int signum) {
 	Logger::notice("shutting down...");
 }
 
-// add SIGPIPE ? SIGTERM (i don't know if CGIs can cause them) ?
 void	setupSignalHandlers(void) {
 	signal(SIGINT, signalHandler);
+	signal(SIGPIPE, SIG_IGN);
 }
 
 int	main(int ac, char **av) {
@@ -46,32 +44,20 @@ int	main(int ac, char **av) {
 		Logger::notice("loading configuration file from " + configFile);
 		Config	config(configFile);
 		Logger::notice("configuration loaded successfully");
-		Logger::notice("Server startup");
+		Logger::notice("server startup");
 
-		ServerManager	serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
+		ServerManager serverManager(config.getServers(), config.getGlobalDir()); // -> will setup the informations needed for each servers in their own subclasses
 		serverManager.setupListenSockets();
 
-		EventLoop	eventLoop(serverManager);
+		EventLoop eventLoop(serverManager);
 		if (!eventLoop.init()) {
 			return (EXIT_FAILURE);
 		}
 
-		// ctrl+c only for now
 		g_eventLoop = &eventLoop;
 		setupSignalHandlers();
 
 		eventLoop.run();
-
-		/*
-			event loop (fil de controle): correcpond a la file d'evements qui peuvent declencher des execution
-			Faire en sorte que cette loop gere les events de facon asynchrone
-
-			Ecoute en continue -> execution asynchrone des methodes,
-			De maniere a faire en sorte que les requetes soient non bloquantes
-
-			methode qui se termine -> retour a l'event loop (je sais plus pourquoi j'ai écris ca je comprend plus lol)
-
-		*/
 	}
 	catch(const std::exception& e)
 	{

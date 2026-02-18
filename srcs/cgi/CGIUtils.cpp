@@ -1,7 +1,6 @@
 #include <sys/wait.h>
 
 #include "EventLoop.hpp"
-#include "CGIExecutor.hpp"
 #include "Logger.hpp"
 
 

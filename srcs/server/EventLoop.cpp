@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/epoll.h>
 #include <sys/wait.h>
+# include <iostream>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
@@ -315,6 +316,10 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 			response.buildFromCGI(client._cgi.outputBuff, client._request);
 			client._cgi.outputBuff.clear();
 		} else {
+			if (client._request.err && client._request.reqLocation) {
+				std::string	root = client._request.reqLocation->root.empty() ? client._request.reqLocation->alias : client._request.reqLocation->root;
+				client._request.findErrorPage(client._request.status, root, client._request.reqLocation->errPage);
+			}
 			response.buildFromRequest(client._request);
 		}
 
@@ -336,8 +341,11 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	client._sendOffset += bytesSent;
 
-	if (client._sendOffset < client._sendBuffer.size())
+	if (client._sendOffset < client._sendBuffer.size()) {
+		client.startTimer(4, 5);
 		return ;
+
+	}
 
 	client.clearSendBuffer();
 
@@ -395,7 +403,7 @@ size_t	EventLoop::readFromClient(int clientFd, Connection& client) {
 	ssize_t	bytesRead = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytesRead == -1) {
-		std::cerr << "recv failed: " << strerror(errno) << std::endl; // not checking errno, only logging it for now (this check might be deleted)
+		Logger::error("recv failed");
 	}
 
 	if (bytesRead > 0) {

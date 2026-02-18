@@ -1,14 +1,8 @@
 #ifndef CONNECTION_HPP
 # define CONNECTION_HPP
 
-# include <ctime>
-# include <iostream>
-# include <sys/types.h>
 # include <unistd.h>
-# include <vector>
 
-# include "ConfigInheritor.hpp"
-# include "Request.hpp"
 # include "Response.hpp"
 
 enum ConnectionState {

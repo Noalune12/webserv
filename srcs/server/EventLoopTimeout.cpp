@@ -48,6 +48,13 @@ void	EventLoop::checkTimeouts(void) {
 			continue ;
 		}
 
+		if (client.getState() == READING_HEADERS) {
+			Logger::warn("Header read timeout, sending 408");
+			client._request.err = true;
+			client._request.status = 408;
+			transitionToSendingResponse(client, clientFd);
+			continue ;
+		}
 		Logger::warn("Client timeout, closing connection");
 		closeConnection(clientFd);
 	}

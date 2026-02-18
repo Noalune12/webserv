@@ -1,5 +1,6 @@
 # include <ctime>
 # include <sstream>
+# include <iostream>
 
 #include "colors.hpp"
 #include "Logger.hpp"

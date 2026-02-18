@@ -1,218 +1,105 @@
 <?php declare(strict_types=1);
 
-function squaredNorm($c)
-{
-	return ($c['real'] * $c['real'] + $c['imag'] * $c['imag']);
-}
-
-function absComplex($c)
-{
-	$result;
-
-	$result['real'] = $c['real'];
-	$result['imag'] = $c['imag'];
-	if ($c['real'] < 0)
-		$result['real'] = -$c['real'];
-	if ($c['imag'] < 0)
-		$result['imag'] = -$c['imag'];
-	return ($result);
-}
-
-function addComplex($a, $b)
-{
-	$result;
-
-	$result['real'] = $a['real'] + $b['real'];
-	$result['imag'] = $a['imag'] + $b['imag'];
-	return ($result);
-}
-
-function squareComplex($c)
-{
-	$result;
-
-	$result['real'] = $c['real'] * $c['real'] - $c['imag'] * $c['imag'];
-	$result['imag'] = 2.0 * $c['real'] * $c['imag'];
-	return ($result);
-}
-
-function addComplexSquared($a, $b) {
-	return (addComplex(squareComplex($a), $b));
-}
-
-function mandelbrotComputeIteration($z, $c, $max_iter) : int {
-	$iter = 0;
-
-	while ($iter < $max_iter && squaredNorm($z) <= 4) {
-		$z = addComplexSquared($z, $c);
-		$iter++;
-	}
-	return ($iter);
-}
-
-function juliaComputeIteration($z, $c, $max_iter) : int {
-	$iter = 0;
-
-	while ($iter < $max_iter && squaredNorm($c) <= 4) {
-		$c = addComplexSquared($c, $z);
-		$iter++;
-	}
-	return ($iter);
-}
-
-function burningShipComputeIteration($z, $c, $max_iter) : int {
-	$iter = 0;
-
-	while ($iter < $max_iter && squaredNorm($z) <= 4) {
-		$z = addComplexSquared(absComplex($z), $c);
-		$iter++;
-	}
-	return ($iter);
-}
-
-// $fractalSelector = [
-// 	'mandelbrot' => 'mandelbrotComputeIteration',
-// 	'julia' => 'juliaComputeIteration',
-// 	'julia' => 'juliaComputeIteration',
-// ];
-
-function iterToRed($iter, $max_iter) {
+function iterToRed(int $iter, int $max_iter): int {
 	$t = $iter / $max_iter;
-	return (9.0 * (1.0 - $t) * $t * $t * $t * 255);
+	return (int)(9.0 * (1.0 - $t) * $t * $t * $t * 255);
 }
 
-function iterToGreen($iter, $max_iter) {
+function iterToGreen(int $iter, int $max_iter): int {
 	$t = $iter / $max_iter;
-	return (15.0 * (1.0 - $t) * (1.0 - $t) * $t * $t * 255);
+	return (int)(15.0 * (1.0 - $t) * (1.0 - $t) * $t * $t * 255);
 }
 
-function iterToBlue($iter, $max_iter) {
+function iterToBlue(int $iter, int $max_iter): int {
 	$t = $iter / $max_iter;
-	return (8.5 * (1.0 - $t) * (1.0 - $t) * (1.0 - $t) * $t * 255);
+	return (int)(8.5 * (1.0 - $t) * (1.0 - $t) * (1.0 - $t) * $t * 255);
 }
 
-function displayCell($red, $green, $blue) {
-	echo "<td style=\"background-color: rgb({$red}, {$green}, {$blue});\"></td>";
+function getParam(string $key, float $default): float {
+	if (!empty($_POST[$key])) return (float)$_POST[$key];
+	if (!empty($_GET[$key]))  return (float)$_GET[$key];
+	return $default;
 }
 
-// echo "Hello World!";
-
-if ($_POST['height']) {
-	$height = $_POST['height'];
-} else if ($_GET['height']) {
-	$height = $_GET['height'];
-} else {
-	$height = 100.0;
+function getStrParam(string $key, string $default): string {
+	if (!empty($_POST[$key])) return (string)$_POST[$key];
+	if (!empty($_GET[$key]))  return (string)$_GET[$key];
+	return $default;
 }
 
-if ($_POST['width']) {
-	$width = $_POST['width'];
-} else if ($_GET['width']) {
-	$width = $_GET['width'];
-} else {
-	$width = 200.0;
+$width       = (int)getParam('width',     200.0);
+$height      = (int)getParam('height',    100.0);
+$max_iter    = (int)getParam('iteration',  50.0);
+$camera_x    =      getParam('cam_x',      -0.5);
+$camera_y    =      getParam('cam_y',       0.0);
+$camera_zoom =      getParam('zoom',        0.75);
+
+$fractal = getStrParam('fractal', 'mandelbrot');
+
+$width    = max(1, min($width,  3840));
+$height   = max(1, min($height, 2160));
+$max_iter = max(1, min($max_iter, 500));
+
+
+header('Content-Type: image/png');
+
+$img = imagecreatetruecolor($width, $height);
+if ($img === false) {
+	http_response_code(500);
+	exit;
 }
 
-if ($_POST['iteration']) {
-	$max_iter = $_POST['iteration'];
-} else if ($_GET['iteration']) {
-	$max_iter = $_GET['iteration'];
-} else {
-	$max_iter = 50.0;
+$scale = 1.0 / max($width, $height) / $camera_zoom;
+
+for ($y = 0; $y < $height; $y++) {
+	$ci_base = ($y - $height / 2.0) * $scale + $camera_y;
+
+	for ($x = 0; $x < $width; $x++) {
+		$cr = ($x - $width / 2.0) * $scale + $camera_x;
+		$ci = $ci_base;
+
+		$iter = 0;
+
+		if ($fractal === 'julia') {
+			$zr = $cr;
+			$zi = $ci;
+			$cr = 0.285;
+			$ci = 0.01;
+			while ($iter < $max_iter && ($zr * $zr + $zi * $zi) <= 4.0) {
+				$tmp = $zr * $zr - $zi * $zi + $cr;
+				$zi  = 2.0 * $zr * $zi + $ci;
+				$zr  = $tmp;
+				$iter++;
+			}
+		} elseif ($fractal === 'burningship') {
+			$zr = 0.0;
+			$zi = 0.0;
+			while ($iter < $max_iter && ($zr * $zr + $zi * $zi) <= 4.0) {
+				$absr = $zr < 0.0 ? -$zr : $zr;
+				$absi = $zi < 0.0 ? -$zi : $zi;
+				$tmp  = $absr * $absr - $absi * $absi + $cr;
+				$zi   = 2.0 * $absr * $absi + $ci;
+				$zr   = $tmp;
+				$iter++;
+			}
+		} else {
+			$zr = 0.0;
+			$zi = 0.0;
+			while ($iter < $max_iter && ($zr * $zr + $zi * $zi) <= 4.0) {
+				$tmp = $zr * $zr - $zi * $zi + $cr;
+				$zi  = 2.0 * $zr * $zi + $ci;
+				$zr  = $tmp;
+				$iter++;
+			}
+		}
+
+		$r = iterToRed($iter, $max_iter);
+		$g = iterToGreen($iter, $max_iter);
+		$b = iterToBlue($iter, $max_iter);
+
+		imagesetpixel($img, $x, $y, ($r << 16) | ($g << 8) | $b);
+	}
 }
 
-
-$fractalCompute = 'mandelbrotComputeIteration';
-
-if ($_POST['fractal']) {
-	$fractalCompute = $_POST['fractal'];
-} else if ($_GET['fractal']) {
-	$fractalCompute = $_GET['fractal'];
-}
-
-// $max_iter = 50;
-
-$camera_pos = array(
-	'x' => -0.5,
-	'y' => 0.0,
-);
-
-if ($_POST['cam_x']) {
-	$camera_pos['x'] = $_POST['cam_x'];
-} else if ($_GET['cam_x']) {
-	$camera_pos['x'] = $_GET['cam_x'];
-}
-
-if ($_POST['cam_y']) {
-	$camera_pos['y'] = $_POST['cam_y'];
-} else if ($_GET['cam_y']) {
-	$camera_pos['y'] = $_GET['cam_y'];
-}
-
-if ($_POST['zoom']) {
-	$camera_zoom = $_POST['zoom'];
-} else if ($_GET['zoom']) {
-	$camera_zoom = $_GET['zoom'];
-} else {
-	$camera_zoom = 0.75;
-}
-
-echo "<!DOCTYPE html>
-<html>
-<head>
-        <title>Test PHP</title>
-        <style>
-                html, body {
-                        height: 100%;
-                        margin: 0;
-                }
-
-                body {
-                        font-family: \"Noto Sans Mono\", sans-serif;
-                        padding: 20px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                }
-
-                table {
-                        border-collapse: collapse;
-                }
-
-                td {
-                        border: none;
-                }
-        </style>
-</head>
-<body>
-        <table>\n";
-
-for ($y=0; $y < $height; $y++) {
-        echo "<tr>";
-        $scale = 1 / max($width, $height) / $camera_zoom;
-        for ($x=0; $x < $width; $x++) {
-                $z = array(
-                        'real' => 0.285,
-                        'imag' => 0.01,
-                );
-                $c = array(
-                        'real' => ($x - $width/2.0) * $scale + $camera_pos['x'],
-                        'imag' => ($y - $height/2.0) * $scale + $camera_pos['y'],
-                );
-                // print_r ($z);
-                // print_r ($c);
-                $iter = $fractalCompute($z, $c, $max_iter);
-                // echo $iter;
-                $red = iterToRed($iter, $max_iter);
-                $green = iterToGreen($iter, $max_iter);
-                $blue = iterToBlue($iter, $max_iter);
-                displayCell($red, $green, $blue);
-        }
-        echo "</tr>\n";
-}
-
-echo "</table>
-</body>
-</html>";
-
-?>
+imagepng($img);
+imagedestroy($img);

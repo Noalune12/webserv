@@ -1,7 +1,7 @@
-#include "Connection.hpp"
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sstream>
+
+#include "Connection.hpp"
 
 Connection::Connection() : _ip(), _state(IDLE), _buffer(), _serverIP(), _serverPort(0), _request(), _cgi(), _sendBuffer(), _sendOffset(0)  {
 	for (size_t i = 0; i < 5; ++i) {
@@ -9,11 +9,13 @@ Connection::Connection() : _ip(), _state(IDLE), _buffer(), _serverIP(), _serverP
 	}
 }
 
-Connection::Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _state(IDLE), _buffer(), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
+Connection::Connection(int& clientFd, std::string& ip, std::vector<server>	servers, globalDir globalDir) : _ip(ip), _state(IDLE), _buffer(), _chunkBuffer(), _servers(servers), _request(servers, globalDir), _cgi(), _sendBuffer(), _sendOffset(0) {
+
 	for (size_t i = 0; i < 5; ++i) {
 		_timers[i] = time(NULL);
 	}
-	// Get the local address (server's IP:port that received this connection)
+
+	// Get the local address (server's ip:port that received this connection)
 	struct sockaddr_storage local_addr;
 	socklen_t addr_len = sizeof(local_addr);
 	getsockname(clientFd, (struct sockaddr*)&local_addr, &addr_len);
@@ -69,8 +71,6 @@ long	Connection::secondsToClosestTimeout() const {
 			active_idx = 2;
 			break ;
 		case CGI_WRITING_BODY:
-			active_idx = 3;
-			break ;
 		case CGI_RUNNING:
 			active_idx = 3;
 			break ;
@@ -101,14 +101,12 @@ void Connection::setChunkBuffer(std::string request) {
 }
 
 std::string Connection::getBuffer(void) const {
-	return _buffer;
+	return (_buffer);
 }
 
 std::string Connection::getChunkBuffer(void) const {
-	return _chunkBuffer;
+	return (_chunkBuffer);
 }
-
-
 
 void	Connection::clearChunkBuffer() {
 	_chunkBuffer.clear();
@@ -125,12 +123,14 @@ void	Connection::clearSendBuffer() {
 
 
 void Connection::parseRequest() {
+
 	_request.clearPreviousRequest();
 	_request.setServerInfo(_serverPort, _serverIP);
 	_request.checkRequestSem(_buffer);
+
 	if (_request.err == true)
 		return ;
-	_request.checkRequestContent();
 
+	_request.checkRequestContent();
 	_buffer.clear();
 }

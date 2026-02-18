@@ -1,15 +1,7 @@
-#include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
-#include <fcntl.h>
-#include <iostream>
-#include <netinet/in.h>
 #include <sstream>
-#include <cstdlib>
 #include <sys/epoll.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 #include "colors.hpp"
 #include "EventLoop.hpp"
@@ -22,8 +14,10 @@ bool	EventLoop::addToEpoll(int fd, uint32_t events) {
 	ev.data.fd = fd;
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &ev) < 0) {
-		if (errno != EEXIST) { // I think we want to skip this case as it doesn't cause any trouble (does it ?)
-			std::cerr << "epoll_ctl(ADD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+		if (errno != EEXIST) { // not considered an error
+			std::ostringstream ss;
+			ss << "epoll_ctl(ADD) failed for fd " << fd << ": " << std::strerror(errno);
+
 			return (false);
 		}
 	}
@@ -31,7 +25,7 @@ bool	EventLoop::addToEpoll(int fd, uint32_t events) {
 	return (true);
 }
 
-// works for EPOLLIN | EPOLLOUT, can also set them both at the same time (see if this we have the use -> discussed with lthan)
+// sets events (EPOLLIN | EPOLLOUT)
 bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 
 	if (_connections.find(fd) == _connections.end())
@@ -42,7 +36,9 @@ bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 	ev.data.fd = fd;
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &ev) < 0) {
-		std::cerr << "epoll_ctl(MOD) failed for fd " << fd << ": " << strerror(errno) << std::endl;
+		std::ostringstream ss;
+		ss << "epoll_ctl(MOD) failed for fd " << fd << ": " << std::strerror(errno);
+		Logger::error(ss.str());
 		return (false);
 	}
 
@@ -51,10 +47,12 @@ bool	EventLoop::modifyEpoll(int fd, uint32_t events) {
 
 bool	EventLoop::removeFromEpoll(int fd) {
 
-	// can pass NULL as event parameter here, school computer kernel are on a version > 2.6.9 so we will not face a bug doing it that way (might want to defend it with other words lol)
+	// can pass NULL as event parameter here, school computer kernel are on a version > 2.6.9 so we will not face a bug doing it that way
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0) {
-		if (errno != ENOENT) { // ENOENT means the fd is not registered to the epoll instance, I don't think we should care if it happens
-			std::cerr << RED "epoll_ctl(DEL) failed for fd " << fd << ": " << strerror(errno) << RESET << std::endl;
+		if (errno != ENOENT) { // following the EEXIST check on addToEpoll(), not considering that as an error either
+			std::ostringstream ss;
+			ss << "epoll_ctl(DEL) failed for fd " << fd << ": " << std::strerror(errno);
+			Logger::error(ss.str());
 			return (false);
 		}
 	}
@@ -77,8 +75,8 @@ void	EventLoop::closeConnection(int clientFd) {
 	std::ostringstream	oss;
 	oss << "client #" << clientFd << " disconnected";
 
-	removeFromEpoll(clientFd); // need to check the return value of this function depending on the cases
-	Logger::notice(oss.str());
+	if (removeFromEpoll(clientFd))
+		Logger::notice(oss.str());
 
 	close(clientFd);
 	_connections.erase(it);

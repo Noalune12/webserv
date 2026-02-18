@@ -229,7 +229,7 @@ bool Request::readFile(const std::string& path, struct stat buf) {
     }
 
     if (buf.st_mode & S_IRUSR) {
-        std::ifstream file(path.c_str());
+        std::ifstream file(path.c_str(), std::ios::binary);
         if (!file.is_open()) {
             if (!reqLocation->root.empty()) {
                 findErrorPage(500, reqLocation->root, reqLocation->errPage);
@@ -304,7 +304,7 @@ bool Request::handleAutoindex(const std::string& dirPath) {
 		"}\n"
         ".file-link {\n"
         "   font-size: 1rem;\n"
-		"	line-height: 2;\n" 
+		"	line-height: 2;\n"
         "   color: #000000;\n"
         "   transition: transform 0.2s ease;"
         "}\n"
@@ -342,21 +342,21 @@ bool Request::handleAutoindex(const std::string& dirPath) {
             fullPath = dirPath + "/" + name;
         else
             fullPath = dirPath + name;
-        
+
         struct stat st;
 
         if (stat(fullPath.c_str(), &st) == 0 ) {
 
             if (S_ISDIR(st.st_mode) && access(fullPath.c_str(), R_OK | X_OK) == 0) {
-    
+
                 Logger::debug("Get (autoindex): Folder " + fullPath);
                 htmlPage += "<span class=\"icon\">📁</span> <a href=\"" + path + "/" + name + "/\" class=\"file-link\">" + name + "</a><br>\n";
-    
+
             } else if (S_ISREG(st.st_mode) && access(fullPath.c_str(), R_OK) == 0) {
-                
+
                 Logger::debug("Get (autoindex): File " + fullPath);
                 htmlPage += "<span class=\"icon\">📄</span> <a href=\"" + path + "/" + name + "\" class=\"file-link\"> " + name + "</a><br>\n";
-    
+
             }
 
         }

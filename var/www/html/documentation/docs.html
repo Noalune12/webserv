@@ -4,19 +4,15 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Webserv Documentation</title>
-
-	<!-- Markdown parser (CDN, volontairement simple) -->
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 	<style>
-		/* ===== Reset ===== */
 		* {
 			margin: 0;
 			padding: 0;
 			box-sizing: border-box;
 		}
 
-		/* ===== Layout ===== */
 		body {
 			font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
 			display: flex;
@@ -25,7 +21,6 @@
 			background: #fff;
 		}
 
-		/* ===== Sidebar ===== */
 		aside {
 			width: 260px;
 			border-right: 1px solid #e5e5e5;
@@ -63,14 +58,12 @@
 			text-decoration: underline;
 		}
 
-		/* Sub-section */
 		.nav.sub {
 			margin-left: 1rem;
 			border-left: 2px solid #eee;
 			padding-left: 0.75rem;
 		}
 
-		/* ===== Content ===== */
 		main {
 			flex: 1;
 			padding: 2rem;
@@ -86,7 +79,6 @@
 			width: 100%;
 		}
 
-		/* ===== Markdown Styling ===== */
 		#content h1 {
 			font-size: 2.2rem;
 			margin-bottom: 1rem;
@@ -190,14 +182,12 @@
 
 <body>
 
-	<!-- ===== Sidebar ===== -->
 	<aside>
 		<h2>Documentation</h2>
 		<ul class="nav">
 			<li><button onclick="loadDoc('/docs/architecture-async.md')">Architecture async</button></li>
 			<li><button onclick="loadDoc('/docs/configuration-file.md')">Configuration file</button></li>
 			<li><button onclick="loadDoc('/docs/requests.md')">Requests</button></li>
-			<li><button onclick="loadDoc('/docs/server-note.md')">Server notes</button></li>
 			<li><button onclick="loadDoc('/docs/CGI.md')">CGI</button></li>
 		</ul>
 
@@ -207,7 +197,6 @@
 			<li><button onclick="loadDoc('/docs/implementation/parsing-complexity.md')">Parsing complexity</button></li>
 			<li><button onclick="loadDoc('/docs/implementation/config-file.md')">Config file</button></li>
 			<li><button onclick="loadDoc('/docs/implementation/postman-api-tests.md')">Postman Github Action</button></li>
-			<li><button onclick="loadDoc('/docs/implementation/notes.md')">Notes</button></li>
 		</ul>
 		<a href="/" class="cta">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 16">
@@ -218,19 +207,13 @@
 
 	</aside>
 
-	<!-- ===== Content ===== -->
 	<main>
-		<div id="content">
-			<!-- Markdown injected here -->
-		</div>
+		<div id="content"></div>
 	</main>
 
 	<script>
 	const content = document.getElementById("content");
 
-	/**
-	 * Load a markdown file and render it
-	 */
 	async function loadDoc(path) {
 		try {
 			const res = await fetch(path);
@@ -244,7 +227,7 @@
 		}
 	}
 
-	/* Load default doc on startup */
+	/* default doc on startup */
 	loadDoc("/docs/architecture-async.md");
 	</script>
 

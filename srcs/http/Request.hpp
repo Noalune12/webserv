@@ -2,8 +2,7 @@
 # define REQUEST_HPP
 
 # include <map>
-# include <vector>
-# include <string>
+
 # include "ConfigInheritor.hpp"
 
 enum ChunckState {
@@ -82,7 +81,7 @@ class Request {
         bool hostChecker();
         void findServer();
         void findLocation();
-        
+
         // BODY PARSING
         bool bodyChecker();
         bool checkChunked();
@@ -152,7 +151,7 @@ class Request {
         std::string fullBody;
         bool multipartRemaining;
         bool remainingBody;
-        
+
         // POST
         std::vector<FilesPost> uplaodFiles;
 
