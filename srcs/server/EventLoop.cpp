@@ -224,13 +224,13 @@ void	EventLoop::handleReadingHeaders(Connection& client, int clientFd, uint32_t 
 	}
 
 	// check if CGI
-	if (client._request._cgi && !client._request.err) {
+	if (client._request.isCgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 		return ;
 	}
 
 	// Normal request
-	if (!client._request.err && !client._request._cgi && !client._request._return) {
+	if (!client._request.err && !client._request.isCgi && !client._request.returnDirective) {
 		client._request.methodHandler();
 	}
 
@@ -258,12 +258,12 @@ void	EventLoop::handleReadingBody(Connection& client, int clientFd, uint32_t ev)
 	else if (client._request.remainingBody)
 		client._request.checkBodySize(client._request.fullBody);
 
-	if (!client._request.chunkRemaining && !client._request.err && !client._request._cgi && !client._request._return \
+	if (!client._request.chunkRemaining && !client._request.err && !client._request.isCgi && !client._request.returnDirective \
 		&& !client._request.multipartRemaining && !client._request.remainingBody) {
 		client._request.methodHandler();
 		client.clearChunkBuffer();
 		transitionToSendingResponse(client, clientFd);
-	} else if (client._request._cgi && !client._request.err) {
+	} else if (client._request.isCgi && !client._request.err) {
 		transitionToCGI(client, clientFd);
 	}
 	else if ((!client._request.chunkRemaining && !client._request.multipartRemaining && !client._request.remainingBody) || client._request.err) {
@@ -326,7 +326,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 		client._sendBuffer = response.prepareRawData();
 		client._sendOffset = 0;
 
-		Logger::accessLog(client.getIP(), client._request._method, client._request._uri, client._request._version, response.getStatusCode(), response.getBodySize());
+		Logger::accessLog(client.getIP(), client._request.method, client._request.uri, client._request.version, response.getStatusCode(), response.getBodySize());
 	}
 
 	size_t	remaining = client._sendBuffer.size() - client._sendOffset;
@@ -349,7 +349,7 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 
 	client.clearSendBuffer();
 
-	if (!client._request._keepAlive) {
+	if (!client._request.keepAlive) {
 		closeConnection(clientFd);
 	} else {
 		transitionToIDLE(client, clientFd);

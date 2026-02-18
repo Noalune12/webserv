@@ -12,21 +12,21 @@ bool Request::bodyChecker() {
         return false;
 
     // check if multipart
-    std::map<std::string, std::string>::iterator it = _headers.find("content-type");
+    std::map<std::string, std::string>::iterator it = headers.find("content-type");
 
-    if (it != _headers.end()) {
+    if (it != headers.end()) {
 
         checkMultipart(it->second);
 
         if (isMultipart && !chunkRemaining) {
 
-            it = _headers.find("content-length");
+            it = headers.find("content-length");
 
-            if (it == _headers.end()) {
-                if (!_reqLocation->root.empty()) {
-                    findErrorPage(411, _reqLocation->root, _reqLocation->errPage);
+            if (it == headers.end()) {
+                if (!reqLocation->root.empty()) {
+                    findErrorPage(411, reqLocation->root, reqLocation->errPage);
                 } else {
-                    findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(411, reqLocation->alias, reqLocation->errPage);
                 }
                 Logger::warn("Multipart: Content-Length missing");
                 return false;
@@ -54,16 +54,16 @@ bool Request::bodyChecker() {
 }
 
 bool Request::checkChunked() {
-    std::map<std::string, std::string>::iterator it = _headers.find("transfer-encoding");
+    std::map<std::string, std::string>::iterator it = headers.find("transfer-encoding");
 
-    if (it != _headers.end() && it->second != "chunked") {
-        if (!_reqLocation->root.empty())
-            findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+    if (it != headers.end() && it->second != "chunked") {
+        if (!reqLocation->root.empty())
+            findErrorPage(400, reqLocation->root, reqLocation->errPage);
         else
-            findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(400, reqLocation->alias, reqLocation->errPage);
         Logger::warn("Transfer Encoding not well defined");
         return false;
-    } else if (it != _headers.end() && it->second == "chunked") {
+    } else if (it != headers.end() && it->second == "chunked") {
         Logger::debug("Body is Chunked");
         isChunked = true;
         chunkRemaining = true;
@@ -78,36 +78,36 @@ bool Request::checkChunked() {
 
 bool Request::checkBodySize(const std::string &body) { 
 
-    if (_reqLocation->bodySize < body.size()) {
-        if (!_reqLocation->root.empty())
-            findErrorPage(413, _reqLocation->root, _reqLocation->errPage);
+    if (reqLocation->bodySize < body.size()) {
+        if (!reqLocation->root.empty())
+            findErrorPage(413, reqLocation->root, reqLocation->errPage);
         else
-            findErrorPage(413, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(413, reqLocation->alias, reqLocation->errPage);
         Logger::warn("Body size higher than client max body size");
         return false;
     }
 
-    std::map<std::string, std::string>::iterator it = _headers.find("content-length");
-    if (it == _headers.end() && !body.empty()) {
-        if (!_reqLocation->root.empty()) {
-            findErrorPage(411, _reqLocation->root, _reqLocation->errPage);
+    std::map<std::string, std::string>::iterator it = headers.find("content-length");
+    if (it == headers.end() && !body.empty()) {
+        if (!reqLocation->root.empty()) {
+            findErrorPage(411, reqLocation->root, reqLocation->errPage);
         } else {
-            findErrorPage(411, _reqLocation->alias, _reqLocation->errPage);
+            findErrorPage(411, reqLocation->alias, reqLocation->errPage);
         }
         Logger::warn("Content Length is missing");
         return false;
 
-    } else if (it != _headers.end()) {
+    } else if (it != headers.end()) {
 
         std::stringstream ss(it->second);
         double contentLength = 0;
         ss >> contentLength;
 
         if (ss.fail()) {
-            if (!_reqLocation->root.empty()) { 
-                findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+            if (!reqLocation->root.empty()) { 
+                findErrorPage(400, reqLocation->root, reqLocation->errPage);
             } else {
-                findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                findErrorPage(400, reqLocation->alias, reqLocation->errPage);
             }
             Logger::warn("Content Length can't be converted");
             return false;
@@ -120,10 +120,10 @@ bool Request::checkBodySize(const std::string &body) {
                 remainingBody = false;
                 return true;
             } else if (bodySize > contentLength) {
-                if (!_reqLocation->root.empty()) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                if (!reqLocation->root.empty()) {
+                    findErrorPage(400, reqLocation->root, reqLocation->errPage);
                 } else {
-                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(400, reqLocation->alias, reqLocation->errPage);
                 }
                 Logger::warn("Body size differs from Content Lentgh");
                 return false;
@@ -131,17 +131,17 @@ bool Request::checkBodySize(const std::string &body) {
         } else {
             if (bodySize < contentLength) {
                 remainingBody = true;
-                fullBody = _body;
+                fullBody = body;
             } else if (bodySize > contentLength) {
-                if (!_reqLocation->root.empty()) {
-                    findErrorPage(400, _reqLocation->root, _reqLocation->errPage);
+                if (!reqLocation->root.empty()) {
+                    findErrorPage(400, reqLocation->root, reqLocation->errPage);
                 } else {
-                    findErrorPage(400, _reqLocation->alias, _reqLocation->errPage);
+                    findErrorPage(400, reqLocation->alias, reqLocation->errPage);
                 }
                 Logger::warn("Body size differs from Content Lentgh");
                 return false;
             } else if (bodySize == contentLength) {
-                fullBody = _body;
+                fullBody = body;
             }
         }
 

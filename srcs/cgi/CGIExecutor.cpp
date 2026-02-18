@@ -17,18 +17,18 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 
 	CGIContext&	cgi = client._cgi;
 
-	Logger::debug("Starting CGI: " + client._request._scriptPath);
+	Logger::debug("Starting CGI: " + client._request.scriptPath);
 
 	if (!createPipes(cgi)) {
 		return (false);
 	}
 
-	if (!verifyCGIScript(client._request._scriptPath, client)) {
+	if (!verifyCGIScript(client._request.scriptPath, client)) {
 		cleanup(cgi, loop);
 		return (false);
 	}
 
-	if (!verifyCGIPath(client._request._reqLocation->cgiPath.c_str(), client)) {
+	if (!verifyCGIPath(client._request.reqLocation->cgiPath.c_str(), client)) {
 		cleanup(cgi, loop);
 		return (false);
 	}
@@ -62,8 +62,8 @@ bool	CGIExecutor::start(Connection& client, int clientFd, EventLoop& loop) {
 		return (false);
 	}
 
-	if (!client._request._body.empty()) {
-		cgi.inputBody = client._request._body;
+	if (!client._request.fullBody.empty()) {
+		cgi.inputBody = client._request.fullBody;
 		cgi.inputOffset = 0;
 
 		if (!loop.addToEpoll(cgi.pipeIn[1], EPOLLOUT)) {
@@ -214,14 +214,14 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 
 	closeAllFds(loop);
 
-	std::string scriptDir = getDirectoryFromPath(client._request._scriptPath);
-	std::string scriptFile = client._request._scriptPath.substr(scriptDir.length() + 1);
+	std::string scriptDir = getDirectoryFromPath(client._request.scriptPath);  // "var/www/cgi-bin-py"
+	std::string scriptFile = client._request.scriptPath.substr(scriptDir.length() + 1);  // "show-env.py"
 
 	if (chdir(scriptDir.c_str()) != 0) {
 		throw std::runtime_error("chdir() failed: " + std::string(strerror(errno)));
 	}
 
-	client._request._scriptPath = scriptFile;
+	client._request.scriptPath = scriptFile;
 
 	// Build environment
 	std::vector<std::string> envStrings = buildEnvironmentStrings(client);
@@ -233,8 +233,8 @@ void	CGIExecutor::setupChildProcess(CGIContext& cgi, Connection& client, EventLo
 	env[envStrings.size()] = NULL;
 
 	char* argv[] = {
-		const_cast<char*>(client._request._reqLocation->cgiPath.c_str()),
-		const_cast<char*>(client._request._scriptPath.c_str()),
+		const_cast<char*>(client._request.reqLocation->cgiPath.c_str()),
+		const_cast<char*>(client._request.scriptPath.c_str()),
 		NULL
 	};
 	execve(argv[0], argv, &env[0]);
