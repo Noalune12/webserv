@@ -316,9 +316,9 @@ void	EventLoop::handleSendingResponse(Connection& client, int clientFd, uint32_t
 			response.buildFromCGI(client._cgi.outputBuff, client._request);
 			client._cgi.outputBuff.clear();
 		} else {
-			if (client._request.err && client._request._reqLocation) {
-				std::string	root = client._request._reqLocation->root.empty() ? client._request._reqLocation->alias : client._request._reqLocation->root;
-				client._request.findErrorPage(client._request.status, root, client._request._reqLocation->errPage);
+			if (client._request.err && client._request.reqLocation) {
+				std::string	root = client._request.reqLocation->root.empty() ? client._request.reqLocation->alias : client._request.reqLocation->root;
+				client._request.findErrorPage(client._request.status, root, client._request.reqLocation->errPage);
 			}
 			response.buildFromRequest(client._request);
 		}
