@@ -1,5 +1,3 @@
-*This project has been created as part of the 42 curriculum by lbuisson, gueberso.*
-
 # webserv
 
 ## Description
@@ -61,8 +59,3 @@ make
 [HTTP Cookies Explained With a Simple Diagram](https://bytebytego.com/guides/http-cookies-explained-with-a-simple-diagram/)
 
 [Session Management notion introduction (read before next link)](https://mojoauth.com/blog/session-management-a-beginners-guide-for-web-developers#conclusion)
-
-## AI Usage
-
-AI was generally used to learn concepts such as I/O multiplexing, implement CI/CD tasks, generate config test files, correct grammar and spelling in documentation, learn basic HTML/CSS to hand-make these beautiful index pages and default error pages as well as a tool to debug code while building this webserv.
-Also **GitHub Copilot** built-in functionalities were used for code review during PRs.
