@@ -23,6 +23,19 @@ make
 ./webserv <path_to_config_file>
 ```
 
+## Core features
+
+- Event-driven architecture using `epoll` for non-blocking I/O
+- HTTP/1.1 support with persistent connections (keep-alive)
+- Virtual hosting (multiple servers on different ports/interfaces)
+- Nginx-style configuration file parsing and logs (errors and client interactions)
+- Chunked transfer encoding
+- Multipart form data parsing for file uploads
+- Path traversal protection
+- Static file serving
+- GET, POST, DELETE HTTP methods handling
+- CGI execution (any script extension can be handled depending on server configuration)
+- Cookie and session management
 
 ## Resources
 
